@@ -10,11 +10,21 @@
     if (window.ResizeObserver) new ResizeObserver(measure).observe(hud);
   })();
 
+  // Меню на узких экранах: кнопка «МЕНЮ» раскрывает все разделы
+  (function () {
+    var btn = document.getElementById('navToggle'), nav = document.getElementById('nav');
+    function setOpen(open) { nav.classList.toggle('is-open', open); btn.setAttribute('aria-expanded', String(open)); }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); setOpen(!nav.classList.contains('is-open')); });
+    nav.addEventListener('click', function (e) { if (e.target.tagName === 'A') setOpen(false); });
+    document.addEventListener('click', function (e) { if (!nav.contains(e.target)) setOpen(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+  })();
+
   /* =====================================================================
      ДАННЫЕ
      ===================================================================== */
 
-  // Три пути чемпиона. jersey/trim — цвета формы персонажа.
+  // Три пути чемпиона. jersey/trim - цвета формы персонажа.
   var PATHS = [
     {
       id: 'young', num: 'МОЛОДОЙ ИГРОК', short: 'ПРОСПЕКТ', name: 'ПУТЬ ПРОСПЕКТА',
@@ -22,81 +32,125 @@
       text: 'Ты в самом начале карьеры. Закладываем фундамент, на котором она будет строиться.',
       stage: 'Начало карьеры', goal: 'Заложить фундамент',
       about: 'Впереди вся карьера, и привычки ещё не затвердели. Сейчас проще всего поставить голову правильно: потом это будет работать на тебя годами, а переучиваться всегда дороже.',
-      focus: ['Понять, кто ты как игрок, раньше, чем это решат за тебя', 'Научиться учиться: ошибка — это материал, а не приговор', 'Собрать первые рабочие инструменты до того, как вырастут ставки'],
+      focus: ['Понять, кто ты как игрок, раньше, чем это решат за тебя', 'Научиться учиться: ошибка - это материал, а не приговор', 'Собрать первые рабочие инструменты до того, как вырастут ставки'],
       jersey: '#63c74d', jerseyDark: '#3e8948', trim: '#ffffff', beard: null, letter: null,
-      hello: 'Ты выбрал путь проспекта. Карьера только начинается — самое время заложить фундамент.'
+      hello: 'Ты выбрал путь проспекта. Карьера только начинается, самое время заложить фундамент.'
     },
     {
       id: 'peak', num: 'ИГРОК НА ПИКЕ', short: 'ГЕРОЙ', name: 'ПУТЬ ГЕРОЯ',
       who: 'Для сильных игроков',
       text: 'Ты уже хорошо играешь и хочешь стать лучшим. Ищем то, что отделяет хорошего игрока от великого.',
-      stage: 'Расцвет карьеры', goal: 'Из хорошего — в лучшие',
-      about: 'Мастерство и физика у тебя уже есть — как и у твоих соперников. На этом уровне разницу делает голова: кто надёжнее играет, когда всё решается.',
+      stage: 'Расцвет карьеры', goal: 'Из хорошего в лучшие',
+      about: 'Мастерство и физика у тебя уже есть. Как и у твоих соперников. На этом уровне разницу делает голова: кто надёжнее играет, когда всё решается.',
       focus: ['Решающие моменты: играть их так же, как обычные', 'Стабильность: лучшая игра не раз в месяц, а из матча в матч', 'Состояние потока по запросу, а не по везению'],
       jersey: '#e43b44', jerseyDark: '#9e2835', trim: '#ffffff', beard: null, letter: 'C',
-      hello: 'Ты выбрал путь героя. Ты уже хорош — будем делать из тебя лучшего.'
+      hello: 'Ты выбрал путь героя. Ты уже хорош. Будем делать из тебя лучшего.'
     },
     {
       id: 'veteran', num: 'ТОП-ИГРОК 30–35', short: 'ВЕТЕРАН', name: 'ПУТЬ СЛАВНОГО ВЕТЕРАНА',
       who: 'Для топ-игроков 30–35 лет',
       text: 'Ты многого добился и хочешь продлить или перезагрузить карьеру. Собираем систему под новый этап.',
       stage: '30–35 лет, топ-уровень', goal: 'Продлить или перезагрузить карьеру',
-      about: 'У тебя есть то, чего нет у молодых, — опыт. Задача в том, чтобы он работал на тебя, пока тело требует всё больше внимания, а роль в команде меняется.',
+      about: 'У тебя есть то, чего нет у молодых: опыт. Задача в том, чтобы он работал на тебя, пока тело требует всё больше внимания, а роль в команде меняется.',
       focus: ['Восстановление как часть профессии: сон, дыхание, длинный сезон', 'Новый ответ на вопрос «кто я как игрок» на новом этапе', 'Опыт вместо запаса сил: играть умнее, а не больше'],
       jersey: '#3b55b8', jerseyDark: '#1b2a6b', trim: '#feae34', beard: '#8b9bb4', letter: 'A',
-      hello: 'Ты выбрал путь славного ветерана. Опыт у тебя есть — продлим карьеру или запустим её заново.'
+      hello: 'Ты выбрал путь славного ветерана. Опыт у тебя есть. Продлим карьеру или запустим её заново.'
     }
   ];
 
-  // Уровни программы. sessions — примеры названий сессий.
-  var WORLDS = [
-    { name: 'МЕСЯЦ 1', sub: 'четыре этажа: фундамент, двигатель, прожектор, курок' },
-    { name: 'МЕСЯЦ 2 · «ГЛУБЖЕ»', sub: 'от инструментов — к состоянию' },
-    { name: 'МЕСЯЦ 3 · «ИНТЕГРАЦИЯ»', sub: 'всё собранное — в одну систему' }
-  ];
-  var LEVELS = [
-    { icon: 'pyramid', title: 'ИДЕНТИЧНОСТЬ', q: 'Кто ты как игрок?',
-      text: 'Первый этаж — фундамент. Отвечаем на главный вопрос и собираем первую версию твоей личной операционной системы.',
-      loot: ['Личная ОС v1.0', 'Правило одного процента (кайдзен)'] },
-    { icon: 'arrow', title: 'МЫШЛЕНИЕ РОСТА', q: 'Как ты растёшь?',
-      text: 'Второй этаж — двигатель. Фиксированное против растущего мышления, осознанная практика и обучение через неудачу.',
-      sessions: ['Фиксированное против растущего: мышление, меняющее всё', 'Осознанная практика: как на самом деле работает мастерство', 'Внутренняя игра: как заглушить «Я-1»', 'Интеграция: твоя система обучения'],
-      loot: ['Личная система обучения', 'Обновление ОС до v1.1'] },
-    { icon: 'target', title: 'КОНЦЕНТРАЦИЯ И ФОКУС', q: 'Куда ты смотришь?',
-      text: 'Третий этаж — прожектор. Ментальные навыки, которые отделяют хорошего игрока от великого: управление вниманием по ходу матча.',
-      loot: ['Циклы внимания: эконом-режим и боевой'] },
-    { icon: 'bolt', title: 'РЕШАЮЩИЙ МОМЕНТ', q: 'Как ты играешь, когда всё решается?',
-      text: 'Четвёртый этаж — курок. Строим рутину, которая срабатывает раньше, чем ты о ней вспомнил.',
-      loot: ['Рутина решающего момента', 'Команда исполнения'] },
-    { icon: 'wave', title: 'СОСТОЯНИЕ ПОТОКА', q: 'Как войти в зону?',
-      text: 'Наука пиковой производительности: тихая игра, в которой комментатор в голове молчит.',
-      sessions: ['Тихая игра: анатомия потока', 'Осознанная практика встречает поток', 'Дашборд: одна страница вместо вердикта'],
-      loot: ['Дашборд недели', 'Ритуал недельного обзора — 15 минут'] },
-    { icon: 'flame', title: 'ИНСТИНКТ УБИЙЦЫ', q: 'Хочешь ли ты, чтобы шайба пришла к тебе?',
-      text: 'Действие без колебания. Учимся замечать, как чувство крутит внутренний «градус», и возвращать его на место.',
-      loot: ['Градус: заметить и вернуть'] },
-    { icon: 'heart', title: 'ЭМОЦИОНАЛЬНЫЙ ИНТЕЛЛЕКТ', q: 'Что ты чувствуешь — и что с этим делать?',
-      text: 'Эмоции как инструменты производительности. Три умения по порядку: знать, что чувствуешь; управлять этим; чувствовать других.',
-      sessions: ['Назвать чувство', 'Чувство как топливо', 'Читать других'],
-      loot: ['Чувство как данные', 'Обновление ОС до v1.5'] },
-    { icon: 'shield', title: 'СТРЕСС-ТЕСТ СИСТЕМЫ', q: 'Что из построенного живёт само?', boss: true,
-      text: 'Новых тем нет: это проверка всего, что построено за два месяца, в игровых условиях. Один матч целиком — от приезда на арену до вечернего разбора.',
-      sessions: ['Матч целиком', 'Починка двух звеньев', 'Два месяца на одной странице'],
-      loot: ['Лист починки', 'ОС v2.0 на одной странице'] },
-    { icon: 'moon', title: 'ФИЗИЧЕСКИЙ ИНТЕЛЛЕКТ', q: 'Насколько ты восстановился?',
-      text: 'Тело как система. Всё собранное работает настолько, насколько ты отдохнул.',
-      sessions: ['Сон: тренировка, которую не видно', 'Дыхание: то, что всегда с тобой', 'Восстановление: как прожить длинный сезон'],
-      loot: ['Протоколы сна, дыхания и восстановления'] },
-    { locked: true }, { locked: true }, { locked: true }
+  // Программа: 12 месяцев, 4 фазы, 45 недель. Фаза 1 расписана по неделям
+  // (недели 1-6 открыты, 7-12 под замком), фазы 2-4 показаны по месяцам под замком:
+  // по задумке закрытые уровни открываются в процессе игры.
+  // sessions - названия сессий недели, loot - что игрок уносит с уровня.
+  var LOCKED = { locked: true };
+  var PHASES = [
+    { name: 'ФУНДАМЕНТ', when: 'МЕСЯЦЫ 1–3 · НЕДЕЛИ 1–12',
+      task: 'Строим систему: личность, привычки, ментальная база, первые шаги в эмоциях и командной работе. Самый плотный период программы.',
+      worlds: [
+        { name: 'МЕСЯЦ 1 · «ПРОБУЖДЕНИЕ»', sub: 'вводный курс, в конце Ворота: решение, идти ли дальше', levels: [
+          { num: 'НЕДЕЛЯ 1', icon: 'pyramid', title: 'ЛИЧНОСТЬ И ХАРАКТЕР', q: 'Кто ты до того, что ты делаешь?',
+            text: 'Начинаем с личности, а не с результата. Кто ты в тот день, когда тебя не поставили в состав? Ловушка в том, чтобы определять себя через голы, очки и номер звена.',
+            sessions: ['Кто ты до того, что ты делаешь', 'Пирамида: с основания', 'Система 1%', 'Твоя операционная система'],
+            loot: ['Личная Конституция: пять ценностей без компромисса', 'Первая версия личной ОС', 'Микропривычка на 1% в день'] },
+          { num: 'НЕДЕЛЯ 2', icon: 'arrow', title: 'МЫШЛЕНИЕ РОСТА', q: 'Как ты растёшь?',
+            text: 'Фиксированное и растущее мышление, осознанная практика, уроки из неудач. Как фиксированное мышление прячется в хоккее: «руки не те», «я не бомбардир», «меня не видят».',
+            sessions: ['Фиксированное мышление и растущее мышление', 'Осознанная практика', 'Внутренняя игра: утихомирить Я-1', 'Твоя система обучения'],
+            loot: ['Обзор после исполнения: три вопроса, пять минут', 'Язык роста вместо фиксированного'] },
+          { num: 'НЕДЕЛЯ 3', icon: 'target', title: 'КОНЦЕНТРАЦИЯ И ФОКУС', q: 'Куда ты смотришь?',
+            text: 'Ментальные навыки, которые отделяют хорошего от великого. Острота на смене в 45 секунд и 15 минут ожидания на скамейке. Табло, трибуны и судья как отвлекатели.',
+            sessions: ['Наука фокуса', 'Кнопка сброса', 'Визуализация: увидеть до того, как сделать', 'Ментальный набор'],
+            loot: ['Кнопка сброса на 10 секунд', 'Личный триггер фокуса', 'Весь ментальный набор на одной карточке'] },
+          { num: 'НЕДЕЛЯ 4', icon: 'star', title: 'ИНТЕГРАЦИЯ И ВОРОТА', q: 'Идёшь дальше?', boss: true,
+            text: 'Закрытие первого месяца и точка решения. Ты представляешь свою Конституцию, Пирамиду, ОС и ментальный набор. После этого решаешь, идти ли в полную программу.',
+            sessions: ['Препятствие как путь', 'Твоя личная Пирамида', 'Пересборка ОС по итогам месяца', 'Ворота: закрытие Месяца 1'],
+            loot: ['Своя Пирамида', 'ОС, пересобранная на данных месяца', 'Решение Ворот'] }
+        ] },
+        { name: 'МЕСЯЦ 2 · «ГЛУБЖЕ»', sub: 'от инструментов к состоянию', levels: [
+          { num: 'НЕДЕЛЯ 5', icon: 'wave', title: 'СОСТОЯНИЕ ПОТОКА', q: 'Как войти в зону?',
+            text: 'Наука пиковой игры. Поток в смене: когда игра «замедляется». Разбираем твой лучший матч сезона и то, что ему предшествовало.',
+            sessions: ['Анатомия потока', 'Осознанная практика встречает поток', 'Лист недели'],
+            loot: ['Карта триггеров потока', 'Лист недели: одна страница до конца программы'] },
+          { num: 'НЕДЕЛЯ 6', icon: 'flame', title: 'ИНСТИНКТ УБИЙЦЫ', q: 'Кто берёт шайбу в последней минуте?',
+            text: 'Соревновательное мышление и разум воина. Действие без колебания. Злость, которая забивает, и злость, которая едет на две минуты.',
+            sessions: ['Cooler, Closer, Cleaner', 'Разум воина', 'Баланс драйва и контроля'],
+            loot: ['Своя карта трёх вопросов под давлением', 'Шкала интенсивности: от рядовой смены до буллита'] },
+          { num: 'НЕДЕЛЯ 7', locked: true }, { num: 'НЕДЕЛЯ 8', locked: true }
+        ] },
+        { name: 'МЕСЯЦ 3 · «ИНТЕГРАЦИЯ»', sub: 'всё собранное в одну систему', levels: [
+          { num: 'НЕДЕЛЯ 9', locked: true }, { num: 'НЕДЕЛЯ 10', locked: true }, { num: 'НЕДЕЛЯ 11', locked: true }, { num: 'НЕДЕЛЯ 12', locked: true }
+        ] }
+      ] },
+    { name: 'ЗАТОЧКА', when: 'МЕСЯЦЫ 4–6 · НЕДЕЛИ 13–24',
+      task: 'Система, построенная в первой фазе, начинает работать под реальным соревновательным давлением. Меньше теории, больше применения.',
+      worlds: [{ name: 'ТРИ МЕСЯЦА ФАЗЫ', sub: 'давление, эмоции, стойкость', levels: [
+        { num: 'МЕСЯЦ 4', title: '«ДАВЛЕНИЕ»', locked: true }, { num: 'МЕСЯЦ 5', title: '«ЭМОЦИИ КАК ОРУЖИЕ»', locked: true }, { num: 'МЕСЯЦ 6', title: '«СТОЙКОСТЬ»', locked: true }
+      ] }] },
+    { name: 'ПОЛИГОН', when: 'МЕСЯЦЫ 7–9 · НЕДЕЛИ 25–33',
+      task: 'Пик сезона и плей-офф. Применение под огнём: сессии реже, работа идёт по твоим реальным матчам, а не по учебнику. Плюс лидерство.',
+      worlds: [{ name: 'ТРИ МЕСЯЦА ФАЗЫ', sub: 'лидерство, плей-офф, восстановление', levels: [
+        { num: 'МЕСЯЦ 7', title: '«ЛИДЕРСТВО»', locked: true }, { num: 'МЕСЯЦ 8', title: '«ПОД ОГНЁМ»', locked: true }, { num: 'МЕСЯЦ 9', title: '«ГЛУБИНА»', locked: true }
+      ] }] },
+    { name: 'ЭВОЛЮЦИЯ', when: 'МЕСЯЦЫ 10–12 · НЕДЕЛИ 34–45',
+      task: 'Тело как система, стратегия карьеры, деньги, дизайн жизни. Все девять доменов собираются в финальную версию твоей системы.',
+      worlds: [{ name: 'ТРИ МЕСЯЦА ФАЗЫ', sub: 'тело, стратегия, финальная сборка', levels: [
+        { num: 'МЕСЯЦ 10', title: '«ТЕЛО КАК СИСТЕМА»', locked: true }, { num: 'МЕСЯЦ 11', title: '«СТРАТЕГИЯ И ДЕНЬГИ»', locked: true }, { num: 'МЕСЯЦ 12', title: '«ПОЛНАЯ ИНТЕГРАЦИЯ»', locked: true }
+      ] }] }
   ];
 
+  // Девять доменов программы
+  var DOMAINS = [
+    { icon: 'pyramid', name: 'ЛИЧНОСТЬ И ХАРАКТЕР', text: 'Пирамида Вудена, Личная Конституция, принципы.' },
+    { icon: 'target', name: 'МЕНТАЛЬНАЯ ЭФФЕКТИВНОСТЬ', text: 'Фокус, сброс, визуализация, Внутренняя игра, поток.' },
+    { icon: 'floppy', name: 'СИСТЕМЫ ПРИВЫЧЕК', text: 'Кайдзен, атомные привычки, личная операционная система.' },
+    { icon: 'flame', name: 'СОРЕВНОВАТЕЛЬНОЕ МЫШЛЕНИЕ', text: 'Инстинкт убийцы, разум воина, решающий момент.' },
+    { icon: 'heart', name: 'ЭМОЦИОНАЛЬНЫЙ ИНТЕЛЛЕКТ', text: 'Эмоции как инструмент, чтение партнёров и соперника.' },
+    { icon: 'shield', name: 'УСТОЙЧИВОСТЬ', text: 'Преодоление, стоицизм, смысл, ментальное здоровье.' },
+    { icon: 'moon', name: 'ФИЗИЧЕСКИЙ ИНТЕЛЛЕКТ', text: 'Сон, дыхание, восстановление, питание.' },
+    { icon: 'star', name: 'КОМАНДА И ЛИДЕРСТВО', text: 'Культура раздевалки, лидерство без титула.' },
+    { icon: 'bars', name: 'СТРАТЕГИЯ И ДИЗАЙН ЖИЗНИ', text: 'Карьерные решения, финансы, жизнь за пределами льда.' }
+  ];
+
+  // Девять принципов программы
+  var PRINCIPLES = [
+    'Быть чемпионом - это не титулы и награды, а образ жизни и способ мышления. Титулы лишь подтверждают это.',
+    'Чем усерднее я работаю сегодня, тем сильнее и увереннее буду завтра.',
+    'Одно действие сильнее тысячи намерений.',
+    'Я принимаю и похвалу, и критику со смирением.',
+    'Я всегда учусь, а не проигрываю. Это часть пути.',
+    '«Не знаю» не существует. Есть «разберусь и научусь».',
+    'Я никогда не сдаюсь. Даже когда ничего не выходит, у меня всегда есть выбор продолжать бороться.',
+    'Я всегда говорю правду. Тонко.',
+    'Великие достижения - всегда командная работа.'
+  ];
+
+  // Сквозные инструменты: проходят через всю программу и остаются у игрока
   var INVENTORY = [
-    { icon: 'floppy', name: 'ЛИЧНАЯ ОС', text: 'Твоя операционная система игрока на одной странице. Обновляется по ходу программы: от v1.0 до v2.0.' },
-    { icon: 'star', name: 'ПРАВИЛО 1%', text: 'Один процент улучшения на неделю. Одна строка, которая становится заданием на матч.' },
-    { icon: 'clock', name: 'РУТИНА РЕШАЮЩЕГО МОМЕНТА', text: 'Последовательность, которая срабатывает сама, когда всё решается.' },
-    { icon: 'thermo', name: 'ГРАДУС', text: 'Умение заметить, что чувство сбило настройку, и вернуть её.' },
-    { icon: 'bars', name: 'ДАШБОРД НЕДЕЛИ', text: 'Панель, которая не ставит оценку, а показывает тренд.' },
-    { icon: 'wrench', name: 'ЛИСТ ПОЧИНКИ', text: 'Что живёт само, а что держится на силе воли — и как это чинить.' }
+    { icon: 'shield', name: 'ЛИЧНАЯ КОНСТИТУЦИЯ', text: 'Пять ценностей без компромисса. Пишется в первую неделю и проверяется на худший сценарий.' },
+    { icon: 'pyramid', name: 'СВОЯ ПИРАМИДА', text: 'Твои блоки, принципы и приоритеты. От основания до соревновательного величия.' },
+    { icon: 'floppy', name: 'ЛИЧНАЯ ОС', text: 'Твоя операционная система игрока. Пересобирается на каждом рубеже программы.' },
+    { icon: 'clock', name: 'ОБЗОР ПОСЛЕ ИСПОЛНЕНИЯ', text: 'Три вопроса, пять минут. После каждой тренировки и матча до конца программы.' },
+    { icon: 'bolt', name: 'КНОПКА СБРОСА', text: 'Десять секунд, чтобы отпустить плохую смену, выдохнуть и вернуть фокус.' },
+    { icon: 'bars', name: 'ЛИСТ НЕДЕЛИ', text: 'Одна страница. Ни одной строки, которую надо считать во время игры.' }
   ];
 
   /* =====================================================================
@@ -244,7 +298,7 @@
   function mSchedule() {
     while (mNext < audio.currentTime + 0.35) {
       var st = mStep % 128, i = st % 16, bar = Math.floor(st / 16), ch = M_CHORDS[bar % 4];
-      // бас: ровные восьмые с октавным скачком — он и даёт напор
+      // бас: ровные восьмые с октавным скачком - он и даёт напор
       if (i % 2 === 0) mNote(hz(ch[0] - (i % 4 === 2 ? 12 : 24)), mNext, 0.13, 'triangle', 0.55);
       // арпеджио шестнадцатыми
       mNote(hz(ch[M_ARP[i % 8]] + (i >= 8 ? 12 : 0)), mNext, 0.07, 'square', 0.085);
@@ -462,13 +516,13 @@
 
   function signupHref(p) {
     // Выбранный путь подставляется в текст сообщения (работает для ссылок t.me и mailto)
-    var msg = 'Здравствуйте! Хочу записаться на The Champion\'s Edge.' + (p ? ' Мой путь: ' + p.name.toLowerCase() + '.' : '');
+    var msg = 'Здравствуйте! Хочу записаться на Champion\'s Edge.' + (p ? ' Мой путь: ' + p.name.toLowerCase() + '.' : '');
     if (/^https:\/\/t\.me\//.test(ctaBase)) return ctaBase + '?text=' + encodeURIComponent(msg);
-    if (/^mailto:/.test(ctaBase)) return ctaBase + '?subject=' + encodeURIComponent('The Champion\'s Edge') + '&body=' + encodeURIComponent(msg);
+    if (/^mailto:/.test(ctaBase)) return ctaBase + '?subject=' + encodeURIComponent('Champion\'s Edge') + '&body=' + encodeURIComponent(msg);
     return ctaBase;
   }
 
-  // На телефоне описание раскрывается сразу под выбранной карточкой, на широком экране — под всеми тремя
+  // На телефоне описание раскрывается сразу под выбранной карточкой, на широком экране - под всеми тремя
   function placePathPanel() {
     var sel = pathCards.filter(function (pc) { return pc.path === currentPath; })[0];
     if (narrow.matches && sel) sel.el.insertAdjacentElement('afterend', pathPanel);
@@ -490,10 +544,10 @@
         '<dl class="pathinfo__meta"><div><dt>ЭТАП</dt><dd>' + p.stage + '</dd></div><div><dt>ЦЕЛЬ</dt><dd>' + p.goal + '</dd></div></dl>' +
         '<p>' + p.about + '</p><div class="level__cols"><div><h4>НА ЧТО ДЕЛАЕМ УПОР</h4><ul>' +
         p.focus.map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul></div>' +
-        '<div><h4>ЧТО ОБЩЕЕ У ВСЕХ ПУТЕЙ</h4><ul><li>Формат один на один с тренером</li><li>Те же 12 уровней программы</li><li>Примеры и задания — из твоей карьеры и твоего этапа</li></ul></div></div>' +
+        '<div><h4>ЧТО ОБЩЕЕ У ВСЕХ ПУТЕЙ</h4><ul><li>Формат один на один с тренером</li><li>Та же программа: 4 фазы, 9 доменов</li><li>Примеры и задания из твоей карьеры и твоего этапа</li></ul></div></div>' +
         '<p class="pathinfo__cta"><a class="btn btn--cta btn--small" href="' + cta.href + '" target="_blank" rel="noopener">▶ ЗАПИСАТЬСЯ НА ЭТОТ ПУТЬ</a></p>';
     } else {
-      pathPanel.innerHTML = '<p class="pathinfo__empty">Путь ещё не выбран. Нажми на карточку или забей в одни из ворот на площадке — здесь появится, на что делаем упор на твоём этапе.</p>';
+      pathPanel.innerHTML = '<p class="pathinfo__empty">Путь ещё не выбран. Нажми на карточку или забей в одни из ворот на площадке. Здесь появится, на что делаем упор на твоём этапе.</p>';
     }
     placePathPanel();
     drawFace(); drawGuide(); guideCta.href = cta.href;
@@ -551,7 +605,7 @@
     dialogGo.hidden = !(lastLine && dialogAction);
     if (dialogAction) dialogGo.textContent = dialogAction.label;
   }
-  // action — кнопка на последней реплике: { label, target }
+  // action - кнопка на последней реплике: { label, target }
   function say(newLines, action) { lines = newLines; lineIdx = 0; dialogAction = action || null; dialogSync(); typeLine(); }
   function advance() {
     var s = lines[lineIdx];
@@ -588,18 +642,18 @@
      ===================================================================== */
 
   var cv = document.getElementById('scene'), g = cv.getContext('2d');
-  // Вид сверху-сбоку: трибуны и борт вверху, трое ворот внизу, бросок — вниз.
+  // Вид сверху-сбоку: трибуны и борт вверху, трое ворот внизу, бросок - вниз.
   var W = 320, H = 240, ICE_Y = 52, GOAL_Y = 212;
   var scoreEl = document.getElementById('score');
   var keys = {}, score = 0;
   var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null, cruise: null };
   var puck = { x: 0, y: 0, vx: 0, vy: 0, live: false };
   var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1, cheerT = 0;
-  // Трое ворот — по одним на каждый путь чемпиона: [левая штанга, правая штанга]
+  // Трое ворот - по одним на каждый путь чемпиона: [левая штанга, правая штанга]
   var NETS = [[26, 98], [124, 196], [222, 294]];
   var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 166;
 
-  // Трибуны — заранее сгенерированные зрители
+  // Трибуны - заранее сгенерированные зрители
   var crowd = [], CROWD_COLS = ['#3a4466', '#5a6988', '#9e2835', '#124e89', '#3e8948', '#733e39', '#262b44', '#68386c'];
   var seed = 7;
   function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
@@ -660,7 +714,7 @@
     [62, 160, 258].forEach(function (dx) { g.fillRect(dx - 2, 172, 4, 4); });
     g.fillRect(0, GOAL_Y, W, 2);
 
-    // трое ворот: цвет — форма пути, выбранный путь подсвечен
+    // трое ворот: цвет - форма пути, выбранный путь подсвечен
     var flash = goalFlash > 0 && Math.floor(goalFlash / 4) % 2 === 0;
     g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center';
     NETS.forEach(function (n, i) {
@@ -732,7 +786,7 @@
       hero.auto = false; hero.idleT = 0; hero.target = null;
       hero.vx = right ? 1.6 : left ? -1.6 : 0;
       hero.vy = down ? 1.2 : up ? -1.2 : 0;
-      // отпустил клавишу — игрок продолжает катиться в ту же сторону
+      // отпустил клавишу - игрок продолжает катиться в ту же сторону
       hero.cruise = { vx: hero.vx, vy: hero.vy };
     } else if (hero.cruise) {
       // тач-режим: катимся без остановки, от бортов отскакиваем
@@ -745,7 +799,7 @@
       // нажали на лёд: встаём напротив этой точки и бросаем
       var dx = hero.target - hero.x;
       hero.auto = false; hero.idleT = 0;
-      if (Math.abs(dx) <= 2) { hero.x = hero.target; hero.target = null; shoot(); }
+      if (Math.abs(dx) <= 2) { hero.x = hero.target; hero.target = null; shoot(); hero.auto = true; } // после броска катится дальше
       else hero.vx = dx > 0 ? 2.4 : -2.4;
     } else if (!hero.auto) { hero.idleT += dt; if (hero.idleT > 6000) hero.auto = true; }
     if (hero.auto && hero.shootT <= 0) {
@@ -818,14 +872,20 @@
   cv.addEventListener('pointerdown', function (e) {
     var pt = scenePoint(e);
     if (e.pointerType === 'mouse') {
-      // мышь: нажал на лёд — игрок встаёт напротив и бросает
+      // мышь: нажал на лёд - игрок встаёт напротив и бросает
       e.preventDefault();
       if (pt.y < ICE_Y) { shoot(); return; }
       hero.cruise = null; // клик мышью отменяет катание по инерции
       hero.target = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, Math.round(pt.x - 27)));
       return;
     }
-    // палец: игрок катится сам, тап задаёт направление, двойной тап — бросок
+    // палец по воротам: игрок встаёт напротив и бросает
+    if (pt.y >= GOAL_Y - 12) {
+      lastTap.t = 0; hero.cruise = null;
+      hero.target = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, Math.round(pt.x - 27)));
+      return;
+    }
+    // палец по льду: игрок катится сам, тап задаёт направление, двойной тап - бросок
     var now = e.timeStamp;
     if (now - lastTap.t < 320 && Math.abs(pt.x - lastTap.x) < 40 && Math.abs(pt.y - lastTap.y) < 40) {
       lastTap.t = 0; shoot(); return;
@@ -842,57 +902,95 @@
 
   var worldsEl = document.getElementById('worlds');
   var levelPanel = document.getElementById('levelPanel');
-  var nodes = [];
+  var phaseTabs = document.getElementById('phaseTabs');
+  var phaseInfo = document.getElementById('phaseInfo');
+  var nodes = [];          // уровни выбранной фазы: { el, lv, row } (row - уровни того же мира)
+  var phaseIdx = 0, levelIdx = 0;
 
   function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
   function list(arr) { return '<ul>' + arr.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>'; }
 
-  WORLDS.forEach(function (w, wi) {
-    var el = document.createElement('div'); el.className = 'world';
-    el.innerHTML = '<div class="world__head"><span class="world__name">' + w.name + '</span><span class="world__sub">' + w.sub + '</span></div>';
-    var pathEl = document.createElement('div'); pathEl.className = 'world__path';
-    for (var i = 0; i < 4; i++) (function (idx) {
-      var lv = LEVELS[idx], b = document.createElement('button');
-      b.type = 'button'; b.className = 'node' + (lv.locked ? ' node--locked' : '');
-      b.setAttribute('aria-pressed', 'false');
-      b.innerHTML = '<span class="node__tile"><canvas aria-hidden="true"></canvas></span>' +
-        '<span class="node__num">НЕДЕЛЯ ' + (idx + 1) + '</span>' + (lv.locked ? '???' : lv.title);
-      drawIcon(b.querySelector('canvas'), lv.locked ? 'lock' : lv.icon);
-      b.addEventListener('click', function () { openLevel(idx, true); });
-      pathEl.appendChild(b); nodes.push(b);
-    })(wi * 4 + i);
-    el.appendChild(pathEl); worldsEl.appendChild(el);
+  PHASES.forEach(function (ph, i) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'phase'; b.setAttribute('role', 'tab');
+    b.innerHTML = '<span class="phase__num">ФАЗА ' + (i + 1) + '</span>' + ph.name;
+    b.addEventListener('click', function () { openPhase(i, true); });
+    phaseTabs.appendChild(b);
   });
 
+  function openPhase(i, byUser) {
+    var ph = PHASES[i];
+    phaseIdx = i; nodes = [];
+    [].forEach.call(phaseTabs.children, function (t, k) { t.setAttribute('aria-selected', String(k === i)); });
+    phaseInfo.innerHTML = '<span class="phase__when">' + ph.when + '</span>' + esc(ph.task);
+    section.appendChild(levelPanel);              // вынимаем панель, прежде чем перерисовать уровни
+    worldsEl.innerHTML = '';
+    ph.worlds.forEach(function (w) {
+      var el = document.createElement('div'); el.className = 'world';
+      el.innerHTML = '<div class="world__head"><span class="world__name">' + w.name + '</span><span class="world__sub">' + w.sub + '</span></div>';
+      var pathEl = document.createElement('div'); pathEl.className = 'world__path world__path--' + w.levels.length;
+      var row = [];
+      w.levels.forEach(function (lv) {
+        var idx = nodes.length, b = document.createElement('button');
+        b.type = 'button'; b.className = 'node' + (lv.locked ? ' node--locked' : '');
+        b.setAttribute('aria-pressed', 'false');
+        b.innerHTML = '<span class="node__tile"><canvas aria-hidden="true"></canvas></span>' +
+          '<span class="node__num">' + lv.num + '</span>' + (lv.title || '???');
+        drawIcon(b.querySelector('canvas'), lv.locked ? 'lock' : lv.icon);
+        b.addEventListener('click', function () { openLevel(idx, true); });
+        pathEl.appendChild(b); row.push(b); nodes.push({ el: b, lv: lv, row: row });
+      });
+      el.appendChild(pathEl); worldsEl.appendChild(el);
+    });
+    openLevel(0, false);
+    if (byUser) SFX.move();
+  }
+
   // На телефоне описание уровня раскрывается под рядом, в котором стоит нажатый уровень
-  var levelIdx = 0;
+  var section = document.getElementById('map'), mapNote = section.querySelector('.map__note');
   function placeLevelPanel() {
-    if (narrow.matches) {
-      var rowEnd = nodes[Math.min(levelIdx - levelIdx % 2 + 1, nodes.length - 1)];
-      rowEnd.insertAdjacentElement('afterend', levelPanel);
-    } else worldsEl.insertAdjacentElement('afterend', levelPanel);
+    var n = nodes[levelIdx];
+    if (narrow.matches && n) {
+      var k = n.row.indexOf(n.el);
+      n.row[Math.min(k - k % 2 + 1, n.row.length - 1)].insertAdjacentElement('afterend', levelPanel);
+    } else section.insertBefore(levelPanel, mapNote);
   }
   function openLevel(idx, byUser) {
-    var lv = LEVELS[idx];
+    var lv = nodes[idx].lv;
     levelIdx = idx; placeLevelPanel();
     if (byUser) guideTuck();
     if (byUser) setTimeout(function () { reveal(levelPanel); }, 0);
-    nodes.forEach(function (n, i) { n.setAttribute('aria-pressed', String(i === idx)); });
-    var num = 'УРОВЕНЬ ' + (idx + 1) + ' · НЕДЕЛЯ ' + (idx + 1);
+    nodes.forEach(function (n, i) { n.el.setAttribute('aria-pressed', String(i === idx)); });
     if (lv.locked) {
-      levelPanel.innerHTML = '<div class="level__top"><span class="level__tag">' + num + '</span><h3 class="level__title">??? ЗАКРЫТО</h3></div>' +
-        '<p>Этот уровень откроется по ходу игры. Финал третьего месяца собирает всё построенное в одну систему.</p>';
+      levelPanel.innerHTML = '<div class="level__top"><span class="level__tag">' + lv.num + '</span><h3 class="level__title">' + (lv.title || '???') + ' · ЗАКРЫТО</h3></div>' +
+        '<p>Этот уровень пока закрыт. Он откроется в процессе игры.</p>';
       if (byUser) SFX.locked();
       return;
     }
-    var html = '<div class="level__top"><span class="level__tag' + (lv.boss ? ' level__tag--boss' : '') + '">' + (lv.boss ? 'БОСС · ' : '') + num + '</span>' +
+    var html = '<div class="level__top"><span class="level__tag' + (lv.boss ? ' level__tag--boss' : '') + '">' + (lv.boss ? 'ВОРОТА · ' : '') + lv.num + '</span>' +
       '<h3 class="level__title">' + lv.title + '</h3></div>' +
       '<p class="level__q">«' + esc(lv.q) + '»</p><p>' + esc(lv.text) + '</p><div class="level__cols">';
-    if (lv.sessions) html += '<div><h4>СЕССИИ</h4>' + list(lv.sessions) + '</div>';
+    if (lv.sessions) html += '<div><h4>СЕССИИ НЕДЕЛИ</h4>' + list(lv.sessions) + '</div>';
     html += '<div><h4>ТРОФЕИ УРОВНЯ</h4>' + list(lv.loot) + '</div></div>';
     levelPanel.innerHTML = html;
     if (byUser) SFX.select();
   }
+
+  /* =====================================================================
+     ДОМЕНЫ И ПРИНЦИПЫ
+     ===================================================================== */
+
+  var domEl = document.getElementById('domainList');
+  DOMAINS.forEach(function (d, i) {
+    var el = document.createElement('div'); el.className = 'panel item';
+    el.innerHTML = '<canvas aria-hidden="true"></canvas><div><b>' + (i + 1) + '. ' + d.name + '</b><span>' + d.text + '</span></div>';
+    drawIcon(el.querySelector('canvas'), d.icon);
+    domEl.appendChild(el);
+  });
+  var codeEl = document.getElementById('principles');
+  PRINCIPLES.forEach(function (t) {
+    var li = document.createElement('li'); li.textContent = t; codeEl.appendChild(li);
+  });
 
   /* =====================================================================
      ИНВЕНТАРЬ
@@ -911,11 +1009,13 @@
      ===================================================================== */
 
   var GUIDE = [
-    { id: 'path', text: 'Здесь три пути чемпиона. Нажми на карточку — под ней появится, на что делаем упор именно на твоём этапе.' },
-    { id: 'about', text: 'Коротко о формате: один на один с тренером, 12 недель, теория в беседе и практика на льду.' },
-    { id: 'map', text: 'Это карта программы. Нажимай на уровни: внутри тема недели, сессии и трофеи. Замки откроются по ходу игры.' },
-    { id: 'loot', text: 'А это ты унесёшь с собой. Инструменты остаются у тебя и после программы.' },
-    { id: 'science', text: 'Здесь — на чьих идеях построена программа. Всё переложено на хоккей.' },
+    { id: 'path', text: 'Здесь три пути чемпиона. Нажми на карточку: под ней появится, на что делаем упор именно на твоём этапе.' },
+    { id: 'about', text: 'Коротко о формате: один на один с тренером, 12 месяцев, старт в любой точке сезона.' },
+    { id: 'map', text: 'Это карта программы. Переключай фазы и нажимай на уровни: внутри тема, сессии и трофеи. Замки откроются в процессе игры.' },
+    { id: 'domains', text: 'Девять доменов. Это ветки навыков, которые программа прокачивает за год.' },
+    { id: 'loot', text: 'А это ты унесёшь с собой. Инструменты проходят через всю программу и остаются у тебя.' },
+    { id: 'code', text: 'Кодекс. Девять принципов, на которых стоит программа.' },
+    { id: 'science', text: 'А это лор: откуда взялась методика и на чьи идеи она опирается.' },
     { id: 'start', text: 'Готов? Жми «Записаться»: откроется Telegram с готовым сообщением.' }
   ];
   var guideEl = document.getElementById('guide');
@@ -938,7 +1038,10 @@
     guideEl.hidden = idx < 0 || onScreen(cta);
     if (idx < 0 || idx === guideIdx) return;
     guideIdx = idx;
-    guideBubble.hidden = guideClosed;                  // в новом разделе подсказка возвращается
+    // в новом разделе подсказка возвращается; на телефоне она свёрнута, а на проводнике загорается метка
+    guideBubble.hidden = guideClosed || narrow.matches;
+    guideEl.classList.toggle('guide--new', guideBubble.hidden);
+    guideOpenY = window.scrollY;
     guideText.textContent = GUIDE[idx].text;
     var lastStep = idx === GUIDE.length - 1;
     guideNext.hidden = lastStep; guideCta.hidden = !lastStep;
@@ -946,23 +1049,31 @@
   // На телефоне подсказка прячется, когда человек раскрыл описание, чтобы не закрывать текст
   function guideTuck() { if (narrow.matches) guideBubble.hidden = true; }
   function guideShow(open) {
-    guideClosed = !open; guideBubble.hidden = guideClosed;
-    store('ce-guide', open ? '1' : '0');
+    guideBubble.hidden = !open;
+    if (!narrow.matches) { guideClosed = !open; store('ce-guide', open ? '1' : '0'); }
   }
   guideNext.addEventListener('click', function () {
     var target = document.getElementById(GUIDE[guideIdx + 1].id);
     SFX.move(); target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
   });
   document.getElementById('guideClose').addEventListener('click', function () { SFX.move(); guideShow(false); });
-  document.getElementById('guideHero').addEventListener('click', function () { SFX.move(); guideShow(guideBubble.hidden); });
+  document.getElementById('guideHero').addEventListener('click', function () { SFX.move(); guideShow(guideBubble.hidden); guideOpenY = window.scrollY; guideEl.classList.remove('guide--new'); });
   var guideTick = false;
+  var guideOpenY = 0, tight = window.matchMedia('(max-width: 1500px)');
   function guideOnScroll() {
+    // на телефоне открытая подсказка прячется, как только страницу начали листать
+    // на экранах, где у подсказки нет свободного поля сбоку, она тоже не висит над текстом:
+    // показалась в новом разделе и убралась, когда читатель пролистал дальше
+    var moved = Math.abs(window.scrollY - guideOpenY);
+    if (!guideBubble.hidden && ((narrow.matches && moved > 40) || (tight.matches && moved > 260))) {
+      guideBubble.hidden = true; guideEl.classList.add('guide--new');
+    }
     if (guideTick) return; guideTick = true;
     requestAnimationFrame(function () { guideTick = false; guideSync(); });
   }
   window.addEventListener('scroll', guideOnScroll, { passive: true });
   window.addEventListener('resize', guideOnScroll);
-  guideBubble.hidden = guideClosed;
+  guideBubble.hidden = guideClosed || narrow.matches;
 
   /* =====================================================================
      ЗАПУСК
@@ -976,13 +1087,13 @@
 
   var saved = store('ce-path');
   choosePath(PATHS.filter(function (p) { return p.id === saved; })[0] || null, false);
-  openLevel(0, false);
+  openPhase(0, false);
 
   say([
-    'Привет! Я твой проводник по The Champion\'s Edge.',
-    'Это программа ментальной подготовки для хоккеистов. Один на один с тренером.',
-    '12 недель — 12 уровней. С каждого уровня ты уносишь инструмент, который остаётся с тобой.',
-    'Выбери свой путь чемпиона броском: внизу трое ворот, каждые — свой путь. Забей в нужные.'
+    'Привет! Я твой проводник по Champion\'s Edge.',
+    'Это программа индивидуального развития профессиональных атлетов. Один на один с тренером.',
+    'Программа идёт 12 месяцев: 4 фазы, 45 недель. Первый месяц можно пройти отдельно, как вводный курс.',
+    'Выбери свой путь чемпиона броском: внизу трое ворот, у каждых свой путь. Забей в нужные.'
   ], { label: 'ИЛИ ВЫБРАТЬ КАРТОЧКОЙ ▼', target: document.getElementById('path') });
 
   document.getElementById('pressStart').addEventListener('click', function () {

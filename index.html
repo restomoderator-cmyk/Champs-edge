@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Champion's Edge — программа для хоккеистов</title>
-<meta name="description" content="The Champion's Edge — индивидуальная программа ментальной подготовки для хоккеистов. Книга 1: Фундамент. 12 недель один на один с тренером.">
+<title>Champion's Edge</title>
+<meta name="description" content="Champion's Edge (Грани Чемпионов): индивидуальное развитие профессиональных атлетов. 12 месяцев один на один с тренером: 4 фазы, 9 доменов, 45 недель. Из любой точки мира.">
 <meta name="theme-color" content="#181425">
 <link rel="preload" href="fonts/press-start-2p-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
@@ -14,10 +14,16 @@
 <!-- Верхняя панель -->
 <header class="hud">
   <a class="hud__logo" href="#top">CE</a>
-  <nav class="hud__nav" aria-label="Разделы">
+  <button class="hud__burger" id="navToggle" type="button" aria-expanded="false" aria-controls="nav">МЕНЮ</button>
+  <nav class="hud__nav" id="nav" aria-label="Разделы">
+    <a href="#rink">ПЛОЩАДКА</a>
     <a href="#path">ПУТЬ</a>
     <a href="#about">ПРОГРАММА</a>
     <a href="#map">КАРТА</a>
+    <a href="#domains">ДОМЕНЫ</a>
+    <a href="#loot">ИНВЕНТАРЬ</a>
+    <a href="#code">КОДЕКС</a>
+    <a href="#science">МЕТОДИКА</a>
     <a href="#start">ЗАПИСЬ</a>
   </nav>
   <button class="hud__sound" id="musicToggle" type="button" aria-pressed="true" aria-label="Музыка">МУЗЫКА</button>
@@ -30,15 +36,15 @@
 <section class="title">
   <div class="title__stars" aria-hidden="true"></div>
   <div class="title__inner">
-    <p class="title__kicker">КНИГА 1 · ФУНДАМЕНТ</p>
+    <p class="title__kicker">12 МЕСЯЦЕВ · 4 ФАЗЫ · 9 ДОМЕНОВ</p>
     <h1 class="title__logo">
-      <span>THE</span>
       <span class="title__big">CHAMPION'S</span>
       <span class="title__big title__big--edge">EDGE</span>
     </h1>
-    <p class="title__sub">ВЕРСИЯ ДЛЯ ХОККЕИСТОВ</p>
+    <p class="title__sub">ГРАНИ ЧЕМПИОНОВ</p>
+    <p class="title__tag">Индивидуальное развитие профессиональных атлетов</p>
     <button class="btn btn--start" id="pressStart" type="button">▶ НАЖМИ START</button>
-    <p class="title__hint">1 ИГРОК · 1 ТРЕНЕР · 12 УРОВНЕЙ</p>
+    <p class="title__hint">1 ИГРОК · 1 ТРЕНЕР · 45 НЕДЕЛЬ</p>
   </div>
 </section>
 
@@ -54,14 +60,18 @@
     <span class="dialog__next" aria-hidden="true">▼</span>
     <button class="dialog__go" id="dialogGo" type="button" hidden></button>
   </div>
-  <p class="stage__help stage__help--keys">Забей в ворота — выберешь путь · СТРЕЛКИ или WASD — кататься · ПРОБЕЛ — бросок · или просто нажми на ворота</p>
-  <p class="stage__help stage__help--touch">Забей в ворота — выберешь путь · тап по льду — сменить направление · двойной тап — бросок</p>
+  <p class="stage__help stage__help--keys">Забей в ворота и выберешь путь · СТРЕЛКИ или WASD: кататься · ПРОБЕЛ: бросок · или просто нажми на ворота</p>
+  <ul class="stage__help stage__help--touch">
+    <li><b>Нажми на ворота:</b> игрок подъедет и бросит. Так выбирается путь.</li>
+    <li><b>Тап по льду:</b> сменить направление.</li>
+    <li><b>Двойной тап:</b> бросок с места.</li>
+  </ul>
 </section>
 
 <!-- Выбор пути -->
 <section class="section" id="path">
   <h2 class="h2"><span>01</span> ВЫБЕРИ ПУТЬ ЧЕМПИОНА</h2>
-  <p class="lead">Три пути — три этапа карьеры. Выбери свой броском на площадке или карточкой здесь: проводник и запись на программу подстроятся под него.</p>
+  <p class="lead">Три пути для трёх этапов карьеры. Выбери свой броском на площадке или карточкой здесь: проводник и запись на программу подстроятся под него.</p>
   <div class="grid grid--3 paths" id="paths" role="radiogroup" aria-label="Путь чемпиона">
     <div class="panel level pathinfo" id="pathPanel" aria-live="polite"></div>
   </div>
@@ -72,19 +82,24 @@
   <h2 class="h2"><span>02</span> ЧТО ЭТО ЗА ПРОГРАММА</h2>
   <div class="grid grid--2">
     <div class="panel">
-      <p>The Champion's Edge — индивидуальная программа ментальной подготовки для хоккеистов. Работа идёт один на один: тренер и игрок.</p>
-      <p>Теория разбирается в живой беседе на примерах из твоей карьеры. Практика уходит в домашние задания — на лёд и в быт. Так идея сначала понята в разговоре, а потом закреплена в деле.</p>
-      <p>Программа подстраивается под игрока: под его путь — этап карьеры — и под амплуа. У вратаря своя редакция, у полевого игрока — своя.</p>
+      <p>Champion's Edge - программа индивидуального развития профессиональных атлетов. Основная версия сейчас написана для хоккеистов: все примеры, ситуации и язык хоккейные. Работа идёт один на один, тренер и игрок, из любой точки мира.</p>
+      <p>Программа длится 12 месяцев и проходит четыре фазы: Фундамент, Заточка, Полигон, Эволюция. Начать можно в любой точке сезона: фазы привязаны к ходу программы, а не к календарю.</p>
+      <p>Первый месяц - самостоятельный вводный курс. Он заканчивается Воротами: в этой точке ты решаешь, идти ли в полную программу.</p>
+      <p>Программа подстраивается под игрока: под его путь, то есть этап карьеры, и под амплуа. У вратаря своя редакция, у полевого игрока своя.</p>
     </div>
     <div class="panel panel--stats">
       <h3 class="h3">ПАРАМЕТРЫ</h3>
       <dl class="stats">
         <div><dt>РЕЖИМ</dt><dd>1 НА 1</dd></div>
-        <div><dt>КНИГА 1</dt><dd>3 МЕСЯЦА</dd></div>
-        <div><dt>УРОВНИ</dt><dd>12 НЕДЕЛЬ</dd></div>
-        <div><dt>СЕССИЙ В НЕДЕЛЮ</dt><dd>3–4</dd></div>
-        <div><dt>ОДНА СЕССИЯ</dt><dd>2 ЧАСА</dd></div>
-        <div><dt>ДОМАШКА</dt><dd>ЛЁД + БЫТ</dd></div>
+        <div><dt>ПРОГРАММА</dt><dd>12 МЕСЯЦЕВ</dd></div>
+        <div><dt>ФАЗЫ</dt><dd>4</dd></div>
+        <div><dt>ДОМЕНЫ</dt><dd>9</dd></div>
+        <div><dt>НЕДЕЛИ</dt><dd>45</dd></div>
+        <div><dt>ОДНА СЕССИЯ</dt><dd>120 МИНУТ</dd></div>
+        <div><dt>СЕССИЙ В НЕДЕЛЮ</dt><dd>ОТ 1 ДО 4</dd></div>
+        <div><dt>СТАРТ</dt><dd>В ЛЮБОЙ ТОЧКЕ СЕЗОНА</dd></div>
+        <div><dt>ГДЕ</dt><dd>ИЗ ЛЮБОЙ ТОЧКИ МИРА</dd></div>
+        <div><dt>ЦЕНА</dt><dd class="stats__ask">??? · УЗНАЙ В ЛИЧКЕ</dd></div>
       </dl>
     </div>
   </div>
@@ -92,30 +107,68 @@
 
 <!-- Карта уровней -->
 <section class="section" id="map">
-  <h2 class="h2"><span>03</span> КАРТА УРОВНЕЙ</h2>
-  <p class="lead">Каждая неделя — уровень. Выбери уровень, чтобы увидеть, что внутри.</p>
+  <h2 class="h2"><span>03</span> КАРТА ПРОГРАММЫ</h2>
+  <p class="lead">Четыре фазы, 45 недель. Одна неделя - один уровень. Выбери фазу, потом уровень, чтобы увидеть, что внутри.</p>
+  <div class="phases" id="phaseTabs" role="tablist" aria-label="Фазы программы"></div>
+  <p class="phase__info" id="phaseInfo" aria-live="polite"></p>
   <div class="worlds" id="worlds"></div>
   <div class="panel level" id="levelPanel" aria-live="polite"></div>
+  <p class="map__note">ОСТАЛЬНЫЕ УРОВНИ ОТКРОЮТСЯ В ПРОЦЕССЕ ИГРЫ</p>
+</section>
+
+<!-- Домены -->
+<section class="section" id="domains">
+  <h2 class="h2"><span>04</span> ДЕВЯТЬ ДОМЕНОВ</h2>
+  <p class="lead">Ветки навыков, которые программа прокачивает за год. К концу четвёртой фазы все девять собраны в одну систему.</p>
+  <div class="grid grid--3" id="domainList"></div>
 </section>
 
 <!-- Инвентарь -->
 <section class="section" id="loot">
-  <h2 class="h2"><span>04</span> ИНВЕНТАРЬ</h2>
-  <p class="lead">С каждого уровня ты уносишь инструмент. Он остаётся с тобой после программы.</p>
+  <h2 class="h2"><span>05</span> ИНВЕНТАРЬ</h2>
+  <p class="lead">Инструменты, которые проходят через всю программу. Они остаются с тобой после неё.</p>
   <div class="grid grid--3" id="inventory"></div>
 </section>
 
-<!-- На чём построено -->
+<!-- Кодекс: девять принципов -->
+<section class="section" id="code">
+  <h2 class="h2"><span>06</span> КОДЕКС ЧЕМПИОНА</h2>
+  <p class="lead">Девять принципов программы. Каждая сессия опирается на один из них.</p>
+  <ol class="code" id="principles"></ol>
+</section>
+
+<!-- Методика: откуда взялась книга и на чьи идеи опирается -->
 <section class="section" id="science">
-  <h2 class="h2"><span>05</span> НА ЧЁМ ПОСТРОЕНО</h2>
-  <p class="lead">Программа опирается на проверенные модели спортивной психологии, переложенные на хоккей.</p>
+  <h2 class="h2"><span>07</span> ОТКУДА ВЗЯЛАСЬ МЕТОДИКА</h2>
+  <div class="panel lore">
+    <p class="lore__tag">ЛОР</p>
+    <p>Методика выросла из многолетнего изучения того, как устроены чемпионы. Как думают и готовятся доминирующие игроки. Что отличает чемпионские команды. Как работают тренеры, которые выигрывают снова и снова.</p>
+    <p>Исследования шли в академиях, клубах и школах, в разных видах спорта.</p>
+    <ul class="lore__sports" aria-label="Виды спорта">
+      <li>ХОККЕЙ</li><li>ФУТБОЛ</li><li>ТЕННИС</li><li>БАСКЕТБОЛ</li><li>БОКС</li><li>ММА</li>
+    </ul>
+    <p>Из этого выделены общие закономерности, которые повторяются у лучших независимо от вида спорта. Они переложены в пошаговую систему для одного игрока.</p>
+    <dl class="lore__stats">
+      <div><dd>15</dd><dt>ЛЕТ ИССЛЕДОВАНИЙ</dt></div>
+      <div><dd>6</dd><dt>ВИДОВ СПОРТА</dt></div>
+      <div><dd>1</dd><dt>ИГРОК В ЦЕНТРЕ СИСТЕМЫ</dt></div>
+    </dl>
+  </div>
+  <h3 class="h3 lore__sub">НА ЧЬИ ИДЕИ ОПИРАЕТСЯ</h3>
+  <p class="lead">Кроме собственных наблюдений, программа опирается на проверенные модели спортивной психологии.</p>
   <ul class="masters">
     <li><b>ДЖОН ВУДЕН</b><span>Пирамида успеха</span></li>
+    <li><b>ДЖЕЙМС КЛИР</b><span>Атомные привычки, 1% в день</span></li>
     <li><b>КЭРОЛ ДВЕК</b><span>Мышление роста</span></li>
     <li><b>АНДЕРС ЭРИКССОН</b><span>Осознанная практика</span></li>
-    <li><b>ТИМОТИ ГОЛВИ</b><span>Внутренняя игра</span></li>
+    <li><b>ТИМОТИ ГОЛУЭЙ</b><span>Внутренняя игра</span></li>
+    <li><b>МИХАЙ ЧИКСЕНТМИХАЙИ</b><span>Состояние потока</span></li>
+    <li><b>ТИМ ГРОВЕР</b><span>Relentless</span></li>
+    <li><b>МИЯМОТО МУСАСИ</b><span>Книга пяти колец</span></li>
     <li><b>ДЭНИЕЛ ГОУЛМАН</b><span>Эмоциональный интеллект</span></li>
-    <li><b>КАЙДЗЕН</b><span>1% каждый день</span></li>
+    <li><b>МАРК АВРЕЛИЙ</b><span>Стоицизм</span></li>
+    <li><b>ВИКТОР ФРАНКЛ</b><span>Смысл</span></li>
+    <li><b>ФИЛ ДЖЕКСОН</b><span>Команда как единое целое</span></li>
   </ul>
 </section>
 
@@ -124,8 +177,9 @@
   <div class="panel panel--cta">
     <p class="cta__blink">ГОТОВ?</p>
     <h2 class="cta__title">НОВАЯ ИГРА</h2>
-    <p class="cta__path">ТВОЙ ПУТЬ: <span id="ctaPath">—</span> <a id="ctaPick" href="#path" hidden>ВЫБРАТЬ ▲</a></p>
-    <p>Напиши нам — расскажем, как проходит программа, и подберём редакцию под твой путь и амплуа.</p>
+    <p class="cta__path">ТВОЙ ПУТЬ: <span id="ctaPath"></span> <a id="ctaPick" href="#path" hidden>ВЫБРАТЬ ▲</a></p>
+    <p>Напиши нам. Расскажем, как проходит программа, и подберём редакцию под твой путь и амплуа.</p>
+    <p class="cta__terms">ИЗ ЛЮБОЙ ТОЧКИ МИРА · ЦЕНА: ??? · УЗНАЙ В ЛИЧКЕ</p>
     <a class="btn btn--cta" id="cta" href="https://t.me/call_pascal" target="_blank" rel="noopener">▶ ЗАПИСАТЬСЯ</a>
   </div>
 </section>
@@ -146,7 +200,7 @@
 </aside>
 
 <footer class="footer">
-  <p>THE CHAMPION'S EDGE · ВЕРСИЯ ДЛЯ ХОККЕИСТОВ</p>
+  <p>CHAMPION'S EDGE · ГРАНИ ЧЕМПИОНОВ</p>
   <p class="footer__small">© 2026 · Все права защищены</p>
 </footer>
 
