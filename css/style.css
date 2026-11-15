@@ -305,7 +305,6 @@ p:last-child { margin-bottom: 0; }
   .panel { padding: 18px; }
 }
 @media (max-width: 420px) {
-  .hud__nav a:nth-child(3) { display: none; }
   .masters { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -383,10 +382,26 @@ p:last-child { margin-bottom: 0; }
 @media (prefers-reduced-motion: reduce) { .guide__hero canvas { animation: none; } }
 
 .hud__sound + .hud__sound { margin-left: -8px; }
-@media (max-width: 520px) { .hud__nav a:nth-child(n+3) { display: none; } }
+@media (max-width: 520px) { .hud__nav a:nth-child(2), .hud__nav a:nth-child(3) { display: none; } }
 
 .stage__help--touch { display: none; }
 @media (hover: none) and (pointer: coarse) {
   .stage__help--keys { display: none; }
   .stage__help--touch { display: block; }
 }
+
+/* ---------- Навигация: правки после проверки ---------- */
+.paths > .pathinfo { grid-column: 1 / -1; margin-top: 8px; min-height: 0; }
+.world__path > .level { grid-column: 1 / -1; margin: 6px var(--px) 26px; min-height: 0; text-align: left; }
+.pathinfo__empty { color: var(--steel); margin: 0; }
+.pathinfo__cta { margin: 22px 0 6px; }
+.btn--small { font-size: 11px; padding: 14px 16px; margin-top: 0; }
+.dialog__go {
+  justify-self: start; grid-column: 2; margin-top: 12px;
+  font-family: var(--head); font-size: 10px; line-height: 1.4; color: var(--ink); background: var(--yellow);
+  border: 0; padding: 10px 12px 9px; cursor: pointer; box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--white);
+}
+.dialog__go:hover { background: var(--white); }
+.cta__path a { color: var(--cyan); margin-left: 8px; }
+a.guide__next { text-decoration: none; display: inline-block; line-height: 1; background: var(--green); color: var(--ink); }
+a.guide__next:hover { background: #8be06f; }

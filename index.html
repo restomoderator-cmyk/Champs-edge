@@ -16,10 +16,9 @@
   <a class="hud__logo" href="#top">CE</a>
   <nav class="hud__nav" aria-label="Разделы">
     <a href="#path">ПУТЬ</a>
-    <a href="#about">ИГРА</a>
+    <a href="#about">ПРОГРАММА</a>
     <a href="#map">КАРТА</a>
-    <a href="#loot">ИНВЕНТАРЬ</a>
-    <a href="#start">СТАРТ</a>
+    <a href="#start">ЗАПИСЬ</a>
   </nav>
   <button class="hud__sound" id="musicToggle" type="button" aria-pressed="true" aria-label="Музыка">МУЗЫКА</button>
   <button class="hud__sound" id="soundToggle" type="button" aria-pressed="true" aria-label="Звуковые эффекты">ЗВУК</button>
@@ -53,27 +52,24 @@
     <canvas class="dialog__face" id="face" width="16" height="16" aria-hidden="true"></canvas>
     <p class="dialog__text" id="dialogText"></p>
     <span class="dialog__next" aria-hidden="true">▼</span>
+    <button class="dialog__go" id="dialogGo" type="button" hidden></button>
   </div>
-  <ul class="stage__legend" aria-label="Ворота и пути">
-    <li><b style="background:#63c74d"></b>путь проспекта</li>
-    <li><b style="background:#e43b44"></b>путь героя</li>
-    <li><b style="background:#3b55b8"></b>путь славного ветерана</li>
-  </ul>
   <p class="stage__help stage__help--keys">Забей в ворота — выберешь путь · СТРЕЛКИ или WASD — кататься · ПРОБЕЛ — бросок · или просто нажми на ворота</p>
   <p class="stage__help stage__help--touch">Забей в ворота — выберешь путь · тап по льду — сменить направление · двойной тап — бросок</p>
 </section>
 
 <!-- Выбор пути -->
 <section class="section" id="path">
-  <h2 class="h2"><span>00</span> ВЫБЕРИ ПУТЬ ЧЕМПИОНА</h2>
+  <h2 class="h2"><span>01</span> ВЫБЕРИ ПУТЬ ЧЕМПИОНА</h2>
   <p class="lead">Три пути — три этапа карьеры. Выбери свой броском на площадке или карточкой здесь: проводник и запись на программу подстроятся под него.</p>
-  <div class="grid grid--3 paths" id="paths" role="radiogroup" aria-label="Путь чемпиона"></div>
-  <div class="panel level pathinfo" id="pathPanel" aria-live="polite"></div>
+  <div class="grid grid--3 paths" id="paths" role="radiogroup" aria-label="Путь чемпиона">
+    <div class="panel level pathinfo" id="pathPanel" aria-live="polite"></div>
+  </div>
 </section>
 
 <!-- О программе -->
 <section class="section" id="about">
-  <h2 class="h2"><span>01</span> ЧТО ЭТО ЗА ИГРА</h2>
+  <h2 class="h2"><span>02</span> ЧТО ЭТО ЗА ПРОГРАММА</h2>
   <div class="grid grid--2">
     <div class="panel">
       <p>The Champion's Edge — индивидуальная программа ментальной подготовки для хоккеистов. Работа идёт один на один: тренер и игрок.</p>
@@ -96,7 +92,7 @@
 
 <!-- Карта уровней -->
 <section class="section" id="map">
-  <h2 class="h2"><span>02</span> КАРТА УРОВНЕЙ</h2>
+  <h2 class="h2"><span>03</span> КАРТА УРОВНЕЙ</h2>
   <p class="lead">Каждая неделя — уровень. Выбери уровень, чтобы увидеть, что внутри.</p>
   <div class="worlds" id="worlds"></div>
   <div class="panel level" id="levelPanel" aria-live="polite"></div>
@@ -104,14 +100,14 @@
 
 <!-- Инвентарь -->
 <section class="section" id="loot">
-  <h2 class="h2"><span>03</span> ИНВЕНТАРЬ</h2>
+  <h2 class="h2"><span>04</span> ИНВЕНТАРЬ</h2>
   <p class="lead">С каждого уровня ты уносишь инструмент. Он остаётся с тобой после программы.</p>
   <div class="grid grid--3" id="inventory"></div>
 </section>
 
 <!-- На чём построено -->
 <section class="section" id="science">
-  <h2 class="h2"><span>04</span> НА ЧЁМ ПОСТРОЕНО</h2>
+  <h2 class="h2"><span>05</span> НА ЧЁМ ПОСТРОЕНО</h2>
   <p class="lead">Программа опирается на проверенные модели спортивной психологии, переложенные на хоккей.</p>
   <ul class="masters">
     <li><b>ДЖОН ВУДЕН</b><span>Пирамида успеха</span></li>
@@ -128,7 +124,7 @@
   <div class="panel panel--cta">
     <p class="cta__blink">ГОТОВ?</p>
     <h2 class="cta__title">НОВАЯ ИГРА</h2>
-    <p class="cta__path">ТВОЙ ПУТЬ: <span id="ctaPath">—</span></p>
+    <p class="cta__path">ТВОЙ ПУТЬ: <span id="ctaPath">—</span> <a id="ctaPick" href="#path" hidden>ВЫБРАТЬ ▲</a></p>
     <p>Напиши нам — расскажем, как проходит программа, и подберём редакцию под твой путь и амплуа.</p>
     <a class="btn btn--cta" id="cta" href="https://t.me/call_pascal" target="_blank" rel="noopener">▶ ЗАПИСАТЬСЯ</a>
   </div>
@@ -142,6 +138,7 @@
     <p id="guideText"></p>
     <div class="guide__row">
       <button class="guide__next" id="guideNext" type="button">ДАЛЬШЕ ▶</button>
+      <a class="guide__next" id="guideCta" href="https://t.me/call_pascal" target="_blank" rel="noopener" hidden>ЗАПИСАТЬСЯ ▶</a>
       <button class="guide__close" id="guideClose" type="button" aria-label="Скрыть подсказку">×</button>
     </div>
   </div>

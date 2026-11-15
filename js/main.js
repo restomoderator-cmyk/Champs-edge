@@ -422,13 +422,19 @@
      ВЫБОР ПУТИ
      ===================================================================== */
 
-  var currentPath = PATHS[1];
+  // Пока посетитель сам не выбрал путь, пути нет: игрок в нейтральной форме
+  var currentPath = null;
+  var NEUTRAL = { jersey: '#8b9bb4', jerseyDark: '#5a6988', trim: '#ffffff', beard: null, letter: null };
+  function look() { return currentPath || NEUTRAL; }
+  var narrow = window.matchMedia('(max-width: 760px)');
   var pathsEl = document.getElementById('paths');
   var ctaPathEl = document.getElementById('ctaPath');
+  var ctaPick = document.getElementById('ctaPick');
   var cta = document.getElementById('cta');
   var ctaBase = cta.getAttribute('href');
   var pathCards = [];
   var pathPanel = document.getElementById('pathPanel');
+  var guideCta = document.getElementById('guideCta');
 
   PATHS.forEach(function (p) {
     var b = document.createElement('button');
@@ -445,6 +451,21 @@
     pathCards.push({ path: p, el: b, ctx: b.querySelector('canvas').getContext('2d') });
   });
 
+  function signupHref(p) {
+    // Выбранный путь подставляется в текст сообщения (работает для ссылок t.me и mailto)
+    var msg = 'Здравствуйте! Хочу записаться на The Champion\'s Edge.' + (p ? ' Мой путь: ' + p.name.toLowerCase() + '.' : '');
+    if (/^https:\/\/t\.me\//.test(ctaBase)) return ctaBase + '?text=' + encodeURIComponent(msg);
+    if (/^mailto:/.test(ctaBase)) return ctaBase + '?subject=' + encodeURIComponent('The Champion\'s Edge') + '&body=' + encodeURIComponent(msg);
+    return ctaBase;
+  }
+
+  // На телефоне описание раскрывается сразу под выбранной карточкой, на широком экране — под всеми тремя
+  function placePathPanel() {
+    var sel = pathCards.filter(function (pc) { return pc.path === currentPath; })[0];
+    if (narrow.matches && sel) sel.el.insertAdjacentElement('afterend', pathPanel);
+    else pathsEl.appendChild(pathPanel);
+  }
+
   function choosePath(p, byUser, quiet) {
     currentPath = p;
     pathCards.forEach(function (pc) {
@@ -452,23 +473,32 @@
       pc.el.setAttribute('aria-checked', String(on));
       pc.el.querySelector('.path__pick').textContent = on ? '★ ВЫБРАН' : 'ВЫБРАТЬ';
     });
-    ctaPathEl.textContent = p.name;
-    pathPanel.innerHTML = '<div class="level__top"><span class="level__tag">' + p.num + '</span><h3 class="level__title">' + p.name + '</h3></div>' +
-      '<dl class="pathinfo__meta"><div><dt>ЭТАП</dt><dd>' + p.stage + '</dd></div><div><dt>ЦЕЛЬ</dt><dd>' + p.goal + '</dd></div></dl>' +
-      '<p>' + p.about + '</p><div class="level__cols"><div><h4>НА ЧТО ДЕЛАЕМ УПОР</h4><ul>' +
-      p.focus.map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul></div>' +
-      '<div><h4>ЧТО ОБЩЕЕ У ВСЕХ ПУТЕЙ</h4><ul><li>Формат один на один с тренером</li><li>Те же 12 уровней программы</li><li>Примеры и задания — из твоей карьеры и твоего этапа</li></ul></div></div>';
-    // Подставляем выбранный путь в текст сообщения (работает для ссылок t.me и mailto)
-    var msg = 'Здравствуйте! Хочу записаться на The Champion\'s Edge. Мой путь: ' + p.name.toLowerCase() + '.';
-    if (/^https:\/\/t\.me\//.test(ctaBase)) cta.href = ctaBase + '?text=' + encodeURIComponent(msg);
-    else if (/^mailto:/.test(ctaBase)) cta.href = ctaBase + '?subject=' + encodeURIComponent('The Champion\'s Edge') + '&body=' + encodeURIComponent(msg);
-    drawFace(); drawGuide();
+    cta.href = signupHref(p);
+    ctaPathEl.textContent = p ? p.name : 'НЕ ВЫБРАН';
+    ctaPick.hidden = !!p;
+    if (p) {
+      pathPanel.innerHTML = '<div class="level__top"><span class="level__tag">' + p.num + '</span><h3 class="level__title">' + p.name + '</h3></div>' +
+        '<dl class="pathinfo__meta"><div><dt>ЭТАП</dt><dd>' + p.stage + '</dd></div><div><dt>ЦЕЛЬ</dt><dd>' + p.goal + '</dd></div></dl>' +
+        '<p>' + p.about + '</p><div class="level__cols"><div><h4>НА ЧТО ДЕЛАЕМ УПОР</h4><ul>' +
+        p.focus.map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul></div>' +
+        '<div><h4>ЧТО ОБЩЕЕ У ВСЕХ ПУТЕЙ</h4><ul><li>Формат один на один с тренером</li><li>Те же 12 уровней программы</li><li>Примеры и задания — из твоей карьеры и твоего этапа</li></ul></div></div>' +
+        '<p class="pathinfo__cta"><a class="btn btn--cta btn--small" href="' + cta.href + '" target="_blank" rel="noopener">▶ ЗАПИСАТЬСЯ НА ЭТОТ ПУТЬ</a></p>';
+    } else {
+      pathPanel.innerHTML = '<p class="pathinfo__empty">Путь ещё не выбран. Нажми на карточку или забей в одни из ворот на площадке — здесь появится, на что делаем упор на твоём этапе.</p>';
+    }
+    placePathPanel();
+    drawFace(); drawGuide(); guideCta.href = cta.href;
     if (byUser) {
       store('ce-path', p.id);
-      if (!quiet) SFX.select();
-      say([p.hello, 'Листай вниз — покажу, как устроена программа и что ты из неё вынесешь.']);
+      if (!quiet) {
+        // выбрали карточкой: показываем раскрывшееся описание
+        SFX.select(); guideTuck();
+        pathPanel.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+      }
+      say([p.hello], { label: 'К ОПИСАНИЮ ПУТИ ▼', target: pathPanel });
     }
   }
+  narrow.addEventListener('change', function () { placePathPanel(); placeLevelPanel(); });
 
   /* =====================================================================
      ДИАЛОГ
@@ -483,7 +513,7 @@
   function drawFace() {
     faceCtx.clearRect(0, 0, 16, 16);
     faceCtx.fillStyle = '#262b44'; faceCtx.fillRect(0, 0, 16, 16);
-    drawPlayer(faceCtx, 0, 3, currentPath, 0, false);
+    drawPlayer(faceCtx, 0, 3, look(), 0, false);
   }
 
   function typeLine() {
@@ -497,13 +527,29 @@
       if (charIdx >= s.length) clearInterval(typer);
     }, 28);
   }
-  function say(newLines) { lines = newLines; lineIdx = 0; typeLine(); }
+  var dialogNext = dialog.querySelector('.dialog__next');
+  var dialogGo = document.getElementById('dialogGo');
+  var dialogAction = null;
+  function dialogSync() {
+    var lastLine = lineIdx === lines.length - 1;
+    dialogNext.hidden = lastLine;                       // листать дальше некуда
+    dialogGo.hidden = !(lastLine && dialogAction);
+    if (dialogAction) dialogGo.textContent = dialogAction.label;
+  }
+  // action — кнопка на последней реплике: { label, target }
+  function say(newLines, action) { lines = newLines; lineIdx = 0; dialogAction = action || null; dialogSync(); typeLine(); }
   function advance() {
     var s = lines[lineIdx];
     if (charIdx < s.length) { clearInterval(typer); charIdx = s.length; dialogText.textContent = s; return; }
-    lineIdx = (lineIdx + 1) % lines.length;
+    if (lineIdx === lines.length - 1) return;           // последняя реплика: по кругу не ходим
+    lineIdx++; dialogSync();
     SFX.move(); typeLine();
   }
+  dialogGo.addEventListener('click', function (e) {
+    e.stopPropagation(); SFX.move();
+    dialogAction.target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  });
+  dialogGo.addEventListener('keydown', function (e) { e.stopPropagation(); });
   dialog.addEventListener('click', advance);
   dialog.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); advance(); }
@@ -618,7 +664,7 @@
     g.fillStyle = 'rgba(38,43,68,0.25)'; g.fillRect(Math.round(hero.x) - 1, hy + 32, 22, 3);
     g.save();
     if (hero.dir < 0) { g.translate(Math.round(hero.x) * 2 + 18, 0); g.scale(-1, 1); }
-    drawPlayer(g, Math.round(hero.x), hy, currentPath, frame, hero.shootT > 0);
+    drawPlayer(g, Math.round(hero.x), hy, look(), frame, hero.shootT > 0);
     g.restore();
 
     // шайба
@@ -795,8 +841,19 @@
     el.appendChild(pathEl); worldsEl.appendChild(el);
   });
 
+  // На телефоне описание уровня раскрывается под рядом, в котором стоит нажатый уровень
+  var levelIdx = 0;
+  function placeLevelPanel() {
+    if (narrow.matches) {
+      var rowEnd = nodes[Math.min(levelIdx - levelIdx % 2 + 1, nodes.length - 1)];
+      rowEnd.insertAdjacentElement('afterend', levelPanel);
+    } else worldsEl.insertAdjacentElement('afterend', levelPanel);
+  }
   function openLevel(idx, byUser) {
     var lv = LEVELS[idx];
+    levelIdx = idx; placeLevelPanel();
+    if (byUser) guideTuck();
+    if (byUser) setTimeout(function () { levelPanel.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' }); }, 0);
     nodes.forEach(function (n, i) { n.setAttribute('aria-pressed', String(i === idx)); });
     var num = 'УРОВЕНЬ ' + (idx + 1) + ' · НЕДЕЛЯ ' + (idx + 1);
     if (lv.locked) {
@@ -831,12 +888,12 @@
      ===================================================================== */
 
   var GUIDE = [
-    { id: 'path', text: 'Здесь три пути чемпиона. Нажми на карточку — ниже появится, на что делаем упор именно на твоём этапе.' },
+    { id: 'path', text: 'Здесь три пути чемпиона. Нажми на карточку — под ней появится, на что делаем упор именно на твоём этапе.' },
     { id: 'about', text: 'Коротко о формате: один на один с тренером, 12 недель, теория в беседе и практика на льду.' },
     { id: 'map', text: 'Это карта программы. Нажимай на уровни: внутри тема недели, сессии и трофеи. Замки откроются по ходу игры.' },
     { id: 'loot', text: 'А это ты унесёшь с собой. Инструменты остаются у тебя и после программы.' },
     { id: 'science', text: 'Здесь — на чьих идеях построена программа. Всё переложено на хоккей.' },
-    { id: 'start', text: 'Готов? Жми «Записаться»: откроется Telegram, твой путь уже вписан в сообщение.' }
+    { id: 'start', text: 'Готов? Жми «Записаться»: откроется Telegram с готовым сообщением.' }
   ];
   var guideEl = document.getElementById('guide');
   var guideText = document.getElementById('guideText');
@@ -847,7 +904,7 @@
 
   function drawGuide() {
     guideCtx.clearRect(0, 0, 32, 40);
-    drawPlayer(guideCtx, 1, 4, currentPath, 0, false);
+    drawPlayer(guideCtx, 1, 4, look(), 0, false);
   }
   function guideSync() {
     // какой раздел сейчас перед глазами
@@ -857,19 +914,23 @@
     guideEl.hidden = idx < 0 || onScreen(dialog);
     if (idx < 0 || idx === guideIdx) return;
     guideIdx = idx;
+    guideBubble.hidden = guideClosed;                  // в новом разделе подсказка возвращается
     guideText.textContent = GUIDE[idx].text;
-    guideNext.textContent = idx === GUIDE.length - 1 ? '▲ НАВЕРХ' : 'ДАЛЬШЕ ▶';
+    var lastStep = idx === GUIDE.length - 1;
+    guideNext.hidden = lastStep; guideCta.hidden = !lastStep;
   }
+  // На телефоне подсказка прячется, когда человек раскрыл описание, чтобы не закрывать текст
+  function guideTuck() { if (narrow.matches) guideBubble.hidden = true; }
   function guideShow(open) {
     guideClosed = !open; guideBubble.hidden = guideClosed;
     store('ce-guide', open ? '1' : '0');
   }
   guideNext.addEventListener('click', function () {
-    var target = guideIdx === GUIDE.length - 1 ? document.getElementById('rink') : document.getElementById(GUIDE[guideIdx + 1].id);
+    var target = document.getElementById(GUIDE[guideIdx + 1].id);
     SFX.move(); target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
   });
   document.getElementById('guideClose').addEventListener('click', function () { SFX.move(); guideShow(false); });
-  document.getElementById('guideHero').addEventListener('click', function () { SFX.move(); guideShow(guideClosed); });
+  document.getElementById('guideHero').addEventListener('click', function () { SFX.move(); guideShow(guideBubble.hidden); });
   var guideTick = false;
   function guideOnScroll() {
     if (guideTick) return; guideTick = true;
@@ -890,15 +951,15 @@
   });
 
   var saved = store('ce-path');
-  choosePath(PATHS.filter(function (p) { return p.id === saved; })[0] || PATHS[1], false);
+  choosePath(PATHS.filter(function (p) { return p.id === saved; })[0] || null, false);
   openLevel(0, false);
 
   say([
     'Привет! Я твой проводник по The Champion\'s Edge.',
     'Это программа ментальной подготовки для хоккеистов. Один на один с тренером.',
     '12 недель — 12 уровней. С каждого уровня ты уносишь инструмент, который остаётся с тобой.',
-    'Выбери свой путь чемпиона броском: внизу трое ворот, каждые — свой путь. Забей в нужные. Описание путей — ниже.'
-  ]);
+    'Выбери свой путь чемпиона броском: внизу трое ворот, каждые — свой путь. Забей в нужные.'
+  ], { label: 'ИЛИ ВЫБРАТЬ КАРТОЧКОЙ ▼', target: document.getElementById('path') });
 
   document.getElementById('pressStart').addEventListener('click', function () {
     unlockAudio();
