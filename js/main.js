@@ -298,26 +298,49 @@
   // Рёв трибун и сирена после гола
   function crowdRoar() {
     if (!soundOn || !audio) return;
-    var t = audio.currentTime + 0.02;
+    var t = audio.currentTime + 0.02, out = audio.destination;
     if (!sfxNoise) {
-      sfxNoise = audio.createBuffer(1, audio.sampleRate, audio.sampleRate);
+      sfxNoise = audio.createBuffer(1, audio.sampleRate * 2, audio.sampleRate);
       var d = sfxNoise.getChannelData(0);
       for (var n = 0; n < d.length; n++) d[n] = Math.random() * 2 - 1;
     }
-    var src = audio.createBufferSource(), f = audio.createBiquadFilter(), gn = audio.createGain();
+    // Рёв: шум через «гласные» фильтры — получается протяжное «а-а-а» толпы
+    var src = audio.createBufferSource(), low = audio.createBiquadFilter(), roar = audio.createGain();
     src.buffer = sfxNoise; src.loop = true;
-    f.type = 'bandpass'; f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(1300, t + 0.5);
-    f.frequency.linearRampToValueAtTime(800, t + 2.2); f.Q.value = 0.7;
-    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.054, t + 0.25);
-    gn.gain.setValueAtTime(0.054, t + 0.9); gn.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
-    src.connect(f); f.connect(gn); gn.connect(audio.destination);
-    src.start(t); src.stop(t + 2.5);
+    low.type = 'lowpass'; low.frequency.value = 1400;
+    roar.gain.setValueAtTime(0.0001, t);
+    roar.gain.exponentialRampToValueAtTime(0.11, t + 0.35);
+    roar.gain.setValueAtTime(0.11, t + 1.1);
+    roar.gain.exponentialRampToValueAtTime(0.0001, t + 2.8);
+    src.connect(low);
+    [[520, 3, 1], [820, 4, 0.8], [1150, 5, 0.45]].forEach(function (fm) {
+      var bp = audio.createBiquadFilter(), fg = audio.createGain();
+      bp.type = 'bandpass'; bp.Q.value = fm[1];
+      bp.frequency.setValueAtTime(fm[0] * 0.85, t);
+      bp.frequency.linearRampToValueAtTime(fm[0] * 1.1, t + 0.5);   // голоса «поднимаются»
+      bp.frequency.linearRampToValueAtTime(fm[0] * 0.9, t + 2.6);
+      fg.gain.value = fm[2];
+      low.connect(bp); bp.connect(fg); fg.connect(roar);
+    });
+    roar.connect(out);
+    src.start(t); src.stop(t + 2.9);
+    // Аплодисменты: отдельные короткие хлопки, а не сплошное шипение
+    for (var c = 0; c < 34; c++) {
+      var ct = t + 0.25 + Math.pow(Math.random(), 1.4) * 2.3;
+      var cs = audio.createBufferSource(), cb = audio.createBiquadFilter(), cg = audio.createGain();
+      cs.buffer = sfxNoise;
+      cb.type = 'bandpass'; cb.frequency.value = 900 + Math.random() * 900; cb.Q.value = 1.2;
+      cg.gain.setValueAtTime(0.012 + Math.random() * 0.012, ct);
+      cg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.035);
+      cs.connect(cb); cb.connect(cg); cg.connect(out);
+      cs.start(ct, Math.random() * 1.5, 0.05);
+    }
     [116.5, 174.6].forEach(function (fr) {           // сирена
       var o = audio.createOscillator(), og = audio.createGain();
       o.type = 'sawtooth'; o.frequency.value = fr;
-      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.011, t + 0.05);
-      og.gain.setValueAtTime(0.011, t + 0.7); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
-      o.connect(og); og.connect(audio.destination); o.start(t); o.stop(t + 1);
+      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.008, t + 0.05);
+      og.gain.setValueAtTime(0.008, t + 0.6); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+      o.connect(og); og.connect(out); o.start(t); o.stop(t + 0.9);
     });
   }
   var SFX = {
@@ -487,7 +510,7 @@
 
   var cv = document.getElementById('scene'), g = cv.getContext('2d');
   // Вид сверху-сбоку: трибуны и борт вверху, трое ворот внизу, бросок — вниз.
-  var W = 320, H = 200, ICE_Y = 52, GOAL_Y = 172;
+  var W = 320, H = 240, ICE_Y = 52, GOAL_Y = 212;
   var scoreEl = document.getElementById('score');
   var keys = {}, score = 0;
   var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null, cruise: null };
@@ -495,7 +518,7 @@
   var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1, cheerT = 0;
   // Трое ворот — по одним на каждый путь чемпиона: [левая штанга, правая штанга]
   var NETS = [[26, 98], [124, 196], [222, 294]];
-  var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 126;
+  var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 166;
 
   // Трибуны — заранее сгенерированные зрители
   var crowd = [], CROWD_COLS = ['#3a4466', '#5a6988', '#9e2835', '#124e89', '#3e8948', '#733e39', '#262b44', '#68386c'];
@@ -553,9 +576,9 @@
     g.fillStyle = 'rgba(255,255,255,0.7)';
     [60, 160, 260].forEach(function (lx) { g.fillRect(lx - 12, 74, 24, 1); g.fillRect(lx - 6, 77, 12, 1); });
     // синяя линия, точки вбрасывания, линия ворот
-    g.fillStyle = '#0099db'; g.fillRect(0, 106, W, 4);
+    g.fillStyle = '#0099db'; g.fillRect(0, 124, W, 4);
     g.fillStyle = '#e43b44';
-    [62, 160, 258].forEach(function (dx) { g.fillRect(dx - 2, 138, 4, 4); });
+    [62, 160, 258].forEach(function (dx) { g.fillRect(dx - 2, 172, 4, 4); });
     g.fillRect(0, GOAL_Y, W, 2);
 
     // трое ворот: цвет — форма пути, выбранный путь подсвечен
@@ -596,7 +619,7 @@
 
     // надпись
     if (bannerT > 0) {
-      var by0 = 138 + (bannerT > 60 ? (bannerT - 60) : 0), col = Math.floor(bannerT / 5) % 2 ? '#fee761' : '#ffffff';
+      var by0 = 88 + (bannerT > 60 ? (bannerT - 60) : 0), col = Math.floor(bannerT / 5) % 2 ? '#fee761' : '#ffffff';
       var shadow = [[-2, 0], [2, 0], [0, -2], [0, 2], [2, 2]];
       g.textAlign = 'center';
       g.font = '16px "Press Start 2P", monospace';
