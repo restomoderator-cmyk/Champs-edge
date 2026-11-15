@@ -604,3 +604,23 @@ body::before {
 .dialog__go--blink { animation: blink 1.1s steps(1) infinite; }
 .dialog__go--blink:hover, .dialog__go--blink:focus-visible { animation: none; }
 @media (prefers-reduced-motion: reduce) { .dialog__go--blink { animation: none; } }
+
+/* ---------- Телефон: площадка, реплика и подсказка помещаются в один экран ---------- */
+@media (max-width: 760px) {
+  .stage {
+    /* высота экрана минус шапка, системные поля и всё, что стоит под площадкой */
+    --rink-h: max(150px, calc(100svh - var(--hud-h) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 278px));
+    padding-top: 10px; padding-bottom: 8px;
+  }
+  .dialog { margin-top: 14px; padding: 12px 12px 14px; min-height: 164px; align-content: start; }
+  .dialog__text { font-size: 19px; line-height: 1.25; }
+  .dialog__go { margin-top: 10px; padding: 9px 10px 8px; }
+  .dialog__next { bottom: 4px; }
+  ul.stage__help--touch { margin-top: 12px; padding: 9px 12px; font-size: 18px; line-height: 1.25; }
+  ul.stage__help--touch li + li { margin-top: 3px; }
+}
+@media (max-width: 760px) {
+  /* сужается только сама площадка; реплика и подсказка остаются во всю ширину, чтобы текст не переносился лишний раз */
+  .stage { max-width: none; }
+  .stage__screen { max-width: calc(var(--rink-h) * 4 / 3); margin-left: auto; margin-right: auto; }
+}
