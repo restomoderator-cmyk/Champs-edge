@@ -752,6 +752,7 @@
       // мышь: нажал на лёд — игрок встаёт напротив и бросает
       e.preventDefault();
       if (pt.y < ICE_Y) { shoot(); return; }
+      hero.cruise = null; // клик мышью отменяет катание по инерции
       hero.target = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, Math.round(pt.x - 27)));
       return;
     }
