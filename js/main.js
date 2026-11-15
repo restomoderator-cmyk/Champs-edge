@@ -203,7 +203,7 @@
      половине вступает тема. */
   var musicBtn = document.getElementById('musicToggle');
   var musicOn = false, musicGain = null, musicTimer = null, mStep = 0, mNext = 0;
-  var M_STEP = 0.15; // длительность шестнадцатой, сек
+  var M_STEP = 0.112; // длительность шестнадцатой, сек (~134 удара в минуту)
   var M_CHORDS = [[62, 66, 69, 74], [59, 62, 66, 71], [55, 59, 62, 67], [57, 61, 64, 69]];
   var M_ARP = [0, 1, 2, 3, 2, 1, 2, 3];
   var M_LEAD = { 64: [78, 4], 68: [81, 4], 72: [86, 8], 80: [83, 6], 86: [81, 2], 88: [78, 8],
@@ -219,15 +219,33 @@
     o.connect(gn); gn.connect(musicGain);
     o.start(t); o.stop(t + dur + 0.02);
   }
+  var noiseBuf = null;
+  function mNoise(t, dur, vol, cutoff) {
+    if (!noiseBuf) {
+      noiseBuf = audio.createBuffer(1, audio.sampleRate * 0.2, audio.sampleRate);
+      var d = noiseBuf.getChannelData(0);
+      for (var n = 0; n < d.length; n++) d[n] = Math.random() * 2 - 1;
+    }
+    var src = audio.createBufferSource(), f = audio.createBiquadFilter(), gn = audio.createGain();
+    src.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = cutoff;
+    gn.gain.setValueAtTime(vol, t); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(gn); gn.connect(musicGain);
+    src.start(t); src.stop(t + dur + 0.02);
+  }
   function mSchedule() {
     while (mNext < audio.currentTime + 0.35) {
-      var st = mStep % 128, i = st % 16, ch = M_CHORDS[Math.floor(st / 16) % 4];
-      if (i % 4 === 0) mNote(hz(ch[0] - 24), mNext, 0.3, 'triangle', 0.5);
-      if (i === 14) mNote(hz(ch[0] - 12), mNext, 0.12, 'triangle', 0.35);
-      if (i % 2 === 0) mNote(hz(ch[M_ARP[i / 2]]), mNext, 0.11, 'square', 0.1);
-      if (i === 0 || i === 8) mNote(110, mNext, 0.12, 'sine', 0.5, 45);
+      var st = mStep % 128, i = st % 16, bar = Math.floor(st / 16), ch = M_CHORDS[bar % 4];
+      // бас: ровные восьмые с октавным скачком — он и даёт напор
+      if (i % 2 === 0) mNote(hz(ch[0] - (i % 4 === 2 ? 12 : 24)), mNext, 0.13, 'triangle', 0.55);
+      // арпеджио шестнадцатыми
+      mNote(hz(ch[M_ARP[i % 8]] + (i >= 8 ? 12 : 0)), mNext, 0.07, 'square', 0.085);
+      // ударные: бочка на каждую долю, малый на вторую и четвёртую, хэт на слабые
+      if (i % 4 === 0) mNote(120, mNext, 0.11, 'sine', 0.7, 42);
+      if (i === 4 || i === 12) mNoise(mNext, 0.09, 0.28, 1800);
+      if (i % 4 === 2) mNoise(mNext, 0.03, 0.12, 7000);
+      if (bar % 4 === 3 && i >= 12) mNoise(mNext, 0.05, 0.2, 2500); // сбивка в конце фразы
       var ld = M_LEAD[st];
-      if (ld) mNote(hz(ld[0]), mNext, ld[1] * M_STEP * 0.95, 'triangle', 0.4);
+      if (ld) mNote(hz(ld[0]), mNext, ld[1] * M_STEP * 0.95, 'square', 0.16);
       mNext += M_STEP; mStep++;
     }
   }
@@ -239,7 +257,7 @@
   }
   function setMusic(on) {
     musicOn = on && ensureAudio();
-    if (musicOn && !musicGain) { musicGain = audio.createGain(); musicGain.gain.value = 0.07; musicGain.connect(audio.destination); }
+    if (musicOn && !musicGain) { musicGain = audio.createGain(); musicGain.gain.value = 0.11; musicGain.connect(audio.destination); }
     mRun(musicOn && !document.hidden);
     musicBtn.setAttribute('aria-pressed', String(musicOn));
     store('ce-music', musicOn ? '1' : '0');
@@ -432,7 +450,7 @@
   var W = 320, H = 200, ICE_Y = 52, GOAL_Y = 172;
   var scoreEl = document.getElementById('score');
   var keys = {}, score = 0;
-  var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null };
+  var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null, follow: null };
   var puck = { x: 0, y: 0, vx: 0, vy: 0, live: false };
   var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1;
   // Трое ворот — по одним на каждый путь чемпиона: [левая штанга, правая штанга]
@@ -568,6 +586,11 @@
       hero.auto = false; hero.idleT = 0; hero.target = null;
       hero.vx = right ? 1.6 : left ? -1.6 : 0;
       hero.vy = down ? 1.2 : up ? -1.2 : 0;
+    } else if (hero.follow) {
+      // палец на льду: едем за ним
+      var fx = hero.follow.x - hero.x, fy = hero.follow.y - hero.y, fd = Math.hypot(fx, fy);
+      hero.auto = false; hero.idleT = 0;
+      if (fd > 1.5) { var sp = Math.min(2.6, fd); hero.vx = fx / fd * sp; hero.vy = fy / fd * sp; }
     } else if (hero.target !== null) {
       // нажали на лёд: встаём напротив этой точки и бросаем
       var dx = hero.target - hero.x;
@@ -580,7 +603,7 @@
       if (hero.x > 260) hero.autoDir = -1;
       if (hero.x < 24) hero.autoDir = 1;
     }
-    if (hero.vx) hero.dir = hero.vx > 0 ? 1 : -1;
+    if (Math.abs(hero.vx) > 0.3) hero.dir = hero.vx > 0 ? 1 : -1;
     hero.x = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, hero.x + hero.vx));
     hero.y = Math.max(HERO_MIN_Y, Math.min(HERO_MAX_Y, hero.y + hero.vy));
     if (hero.shootT > 0) hero.shootT--;
@@ -630,13 +653,43 @@
     keys[RU_KEYS[k] || k] = false;
   });
   window.addEventListener('blur', function () { keys = {}; });
+  function scenePoint(e) {
+    var r = cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
+  }
+  function followTo(pt) {
+    hero.follow = {
+      x: Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, pt.x - 12)),
+      y: Math.max(HERO_MIN_Y, Math.min(HERO_MAX_Y, pt.y - 30))
+    };
+  }
+  var lastTap = { t: 0, x: 0, y: 0 }, touchId = null;
   cv.addEventListener('pointerdown', function (e) {
     e.preventDefault();
-    var r = cv.getBoundingClientRect();
-    var px = (e.clientX - r.left) / r.width * W, py = (e.clientY - r.top) / r.height * H;
-    if (py < ICE_Y) { shoot(); return; }
-    hero.target = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, Math.round(px - 27)));
+    var pt = scenePoint(e);
+    if (e.pointerType === 'mouse') {
+      // мышь: нажал на лёд — игрок встаёт напротив и бросает
+      if (pt.y < ICE_Y) { shoot(); return; }
+      hero.target = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, Math.round(pt.x - 27)));
+      return;
+    }
+    // палец: двойной тап — бросок, ведение пальцем — движение
+    var now = e.timeStamp;
+    if (now - lastTap.t < 320 && Math.abs(pt.x - lastTap.x) < 30 && Math.abs(pt.y - lastTap.y) < 30) {
+      lastTap.t = 0; hero.follow = null; shoot(); return;
+    }
+    lastTap = { t: now, x: pt.x, y: pt.y };
+    touchId = e.pointerId;
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    hero.target = null; followTo(pt);
   });
+  cv.addEventListener('pointermove', function (e) {
+    if (e.pointerId !== touchId) return;
+    followTo(scenePoint(e));
+  });
+  function touchEnd(e) { if (e.pointerId === touchId) { touchId = null; hero.follow = null; } }
+  cv.addEventListener('pointerup', touchEnd);
+  cv.addEventListener('pointercancel', touchEnd);
 
   /* =====================================================================
      КАРТА УРОВНЕЙ

@@ -179,7 +179,7 @@ p:last-child { margin-bottom: 0; }
   box-shadow: 0 0 0 var(--px) var(--ink), 0 calc(var(--px) * 3) 0 0 #0c0a14;
 }
 #scene:focus-visible { outline: none; }
-#scene { display: block; width: 100%; height: auto; cursor: crosshair; touch-action: manipulation; }
+#scene { display: block; width: 100%; height: auto; cursor: crosshair; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .stage__score {
   position: absolute; top: 10px; right: 12px;
   font-family: var(--head); font-size: clamp(8px, 1.6vw, 14px);
@@ -384,3 +384,9 @@ p:last-child { margin-bottom: 0; }
 
 .hud__sound + .hud__sound { margin-left: -8px; }
 @media (max-width: 520px) { .hud__nav a:nth-child(n+3) { display: none; } }
+
+.stage__help--touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .stage__help--keys { display: none; }
+  .stage__help--touch { display: block; }
+}
