@@ -336,36 +336,3 @@ p:last-child { margin-bottom: 0; }
 .path[aria-checked="true"] .path__name { color: var(--yellow); }
 .cta__path { font-family: var(--head); font-size: 10px; line-height: 1.8; color: var(--mist) !important; }
 .cta__path span { color: var(--yellow); }
-
-/* ---------- 8-битный режим (?style=8bit) ---------- */
-.bit8 {
-  --ink: #000000; --navy: #000000; --slate: #7c7c7c; --steel: #7c7c7c; --mist: #bcbcbc; --white: #fcfcfc;
-  --red: #d82800; --red-dark: #881400; --gold: #f8b800; --yellow: #f8b800; --green: #00a800;
-  --cyan: #3cbcfc; --blue: #0058f8; --pink: #fca044;
-  --body: "Press Start 2P", "Courier New", monospace;
-}
-.bit8 body { font-size: 11px; line-height: 2; }
-.bit8 .panel, .bit8 .dialog { background: #000; box-shadow:
-    0 calc(var(--px) * -1) 0 0 var(--white), 0 var(--px) 0 0 var(--white),
-    calc(var(--px) * -1) 0 0 0 var(--white), var(--px) 0 0 0 var(--white); }
-.bit8 .path[aria-checked="true"] { background: #000; box-shadow:
-    0 calc(var(--px) * -1) 0 0 var(--yellow), 0 var(--px) 0 0 var(--yellow),
-    calc(var(--px) * -1) 0 0 0 var(--yellow), var(--px) 0 0 0 var(--yellow); }
-.bit8 .path:hover { background: #000; }
-.bit8 .btn, .bit8 .btn--cta { box-shadow:
-    0 calc(var(--px) * -1) 0 0 var(--white), 0 var(--px) 0 0 var(--white),
-    calc(var(--px) * -1) 0 0 0 var(--white), var(--px) 0 0 0 var(--white); }
-.bit8 .btn--cta:hover { background: var(--white); }
-.bit8 .title { background: #000; }
-.bit8 .title__logo .title__big { text-shadow: 4px 4px 0 var(--red); }
-.bit8 .title__logo .title__big--edge { text-shadow: 4px 4px 0 var(--blue); }
-.bit8 .stage__screen { box-shadow: none; }
-.bit8 .cta__title { text-shadow: 4px 4px 0 var(--red); }
-.bit8 .dialog__text, .bit8 .level__q { font-size: 12px; line-height: 2; }
-.bit8 .path, .bit8 .node, .bit8 .item span, .bit8 .masters span, .bit8 .stats dt, .bit8 .world__sub, .bit8 .level__note { font-size: 10px; line-height: 1.9; }
-.bit8 .path canvas { margin-bottom: 18px; }
-.bit8 .node__tile, .bit8 .node--locked .node__tile { background: #000; box-shadow: 0 0 0 var(--px) var(--white); }
-.bit8 .node[aria-pressed="true"] .node__tile { background: #000; box-shadow: 0 0 0 var(--px) var(--yellow); }
-.bit8 .node:hover .node__tile { background: #000; }
-.bit8 .item canvas { box-shadow: none; }
-.bit8 .hud__logo { box-shadow: none; }
