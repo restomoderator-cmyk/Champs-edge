@@ -304,26 +304,36 @@
       var d = sfxNoise.getChannelData(0);
       for (var n = 0; n < d.length; n++) d[n] = Math.random() * 2 - 1;
     }
-    // Рёв: шум через «гласные» фильтры — получается протяжное «а-а-а» толпы
-    var src = audio.createBufferSource(), low = audio.createBiquadFilter(), roar = audio.createGain();
-    src.buffer = sfxNoise; src.loop = true;
-    low.type = 'lowpass'; low.frequency.value = 1400;
+    // Возглас «ва-а-у-у»: голоса толпы (расстроенные пилы) и немного шума идут
+    // через два «гласных» фильтра, которые скользят у → а → у; тон сначала
+    // взлетает, потом долго опускается.
+    var mix = audio.createGain(), roar = audio.createGain();
+    var f1 = audio.createBiquadFilter(), f2 = audio.createBiquadFilter(), g2 = audio.createGain();
+    f1.type = 'bandpass'; f1.Q.value = 4; f2.type = 'bandpass'; f2.Q.value = 6; g2.gain.value = 0.6;
+    //            «в/у»        «а»              «у-у-у»
+    f1.frequency.setValueAtTime(320, t); f1.frequency.linearRampToValueAtTime(780, t + 0.3);
+    f1.frequency.setValueAtTime(780, t + 0.55); f1.frequency.linearRampToValueAtTime(340, t + 1.2);
+    f2.frequency.setValueAtTime(700, t); f2.frequency.linearRampToValueAtTime(1250, t + 0.3);
+    f2.frequency.setValueAtTime(1250, t + 0.55); f2.frequency.linearRampToValueAtTime(760, t + 1.2);
+    mix.connect(f1); mix.connect(f2); f1.connect(roar); f2.connect(g2); g2.connect(roar);
     roar.gain.setValueAtTime(0.0001, t);
-    roar.gain.exponentialRampToValueAtTime(0.11, t + 0.35);
-    roar.gain.setValueAtTime(0.11, t + 1.1);
-    roar.gain.exponentialRampToValueAtTime(0.0001, t + 2.8);
-    src.connect(low);
-    [[520, 3, 1], [820, 4, 0.8], [1150, 5, 0.45]].forEach(function (fm) {
-      var bp = audio.createBiquadFilter(), fg = audio.createGain();
-      bp.type = 'bandpass'; bp.Q.value = fm[1];
-      bp.frequency.setValueAtTime(fm[0] * 0.85, t);
-      bp.frequency.linearRampToValueAtTime(fm[0] * 1.1, t + 0.5);   // голоса «поднимаются»
-      bp.frequency.linearRampToValueAtTime(fm[0] * 0.9, t + 2.6);
-      fg.gain.value = fm[2];
-      low.connect(bp); bp.connect(fg); fg.connect(roar);
-    });
+    roar.gain.exponentialRampToValueAtTime(0.16, t + 0.3);
+    roar.gain.setValueAtTime(0.16, t + 0.9);
+    roar.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
     roar.connect(out);
-    src.start(t); src.stop(t + 2.9);
+    for (var v = 0; v < 10; v++) {                 // десять «голосов» разной высоты
+      var o = audio.createOscillator(), vg = audio.createGain();
+      var base = 120 + Math.random() * 150, st = t + Math.random() * 0.08;
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(base * 0.9, st);
+      o.frequency.linearRampToValueAtTime(base * (1.25 + Math.random() * 0.1), st + 0.35);
+      o.frequency.linearRampToValueAtTime(base * (0.8 + Math.random() * 0.08), st + 2.4);
+      vg.gain.value = 0.12;
+      o.connect(vg); vg.connect(mix); o.start(st); o.stop(t + 2.7);
+    }
+    var src = audio.createBufferSource(), ng = audio.createGain();   // дыхание толпы
+    src.buffer = sfxNoise; src.loop = true; ng.gain.value = 0.5;
+    src.connect(ng); ng.connect(mix); src.start(t); src.stop(t + 2.7);
     // Аплодисменты: отдельные короткие хлопки, а не сплошное шипение
     for (var c = 0; c < 34; c++) {
       var ct = t + 0.25 + Math.pow(Math.random(), 1.4) * 2.3;
