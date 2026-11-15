@@ -263,6 +263,19 @@
     store('ce-music', musicOn ? '1' : '0');
   }
   musicBtn.addEventListener('click', function () { setMusic(!musicOn); });
+
+  // Звук и музыка включены по умолчанию. Браузеры не дают играть звук, пока
+  // человек не коснулся страницы, поэтому запускаем их на первом же действии.
+  var audioUnlocked = false;
+  function unlockAudio() {
+    if (audioUnlocked) return; audioUnlocked = true;
+    ['pointerup', 'keydown', 'click'].forEach(function (ev) { document.removeEventListener(ev, unlockAudio, true); });
+    if (store('ce-sound') !== '0') setSound(true);
+    if (store('ce-music') !== '0') setMusic(true);
+  }
+  ['pointerup', 'keydown', 'click'].forEach(function (ev) { document.addEventListener(ev, unlockAudio, true); });
+  soundBtn.setAttribute('aria-pressed', String(store('ce-sound') !== '0'));
+  musicBtn.setAttribute('aria-pressed', String(store('ce-music') !== '0'));
   document.addEventListener('visibilitychange', function () { if (musicOn) mRun(!document.hidden); });
 
   // notes: [частота, длительность, тип?] подряд
@@ -477,7 +490,7 @@
   var W = 320, H = 200, ICE_Y = 52, GOAL_Y = 172;
   var scoreEl = document.getElementById('score');
   var keys = {}, score = 0;
-  var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null, follow: null };
+  var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null, cruise: null };
   var puck = { x: 0, y: 0, vx: 0, vy: 0, live: false };
   var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1, cheerT = 0;
   // Трое ворот — по одним на каждый путь чемпиона: [левая штанга, правая штанга]
@@ -614,14 +627,16 @@
     var up = keys.ArrowUp || keys.w, down = keys.ArrowDown || keys.s;
     hero.vx = 0; hero.vy = 0;
     if (left || right || up || down) {
-      hero.auto = false; hero.idleT = 0; hero.target = null;
+      hero.auto = false; hero.idleT = 0; hero.target = null; hero.cruise = null;
       hero.vx = right ? 1.6 : left ? -1.6 : 0;
       hero.vy = down ? 1.2 : up ? -1.2 : 0;
-    } else if (hero.follow) {
-      // палец на льду: едем за ним
-      var fx = hero.follow.x - hero.x, fy = hero.follow.y - hero.y, fd = Math.hypot(fx, fy);
+    } else if (hero.cruise) {
+      // тач-режим: катимся без остановки, от бортов отскакиваем
+      var cr = hero.cruise;
       hero.auto = false; hero.idleT = 0;
-      if (fd > 1.5) { var sp = Math.min(2.6, fd); hero.vx = fx / fd * sp; hero.vy = fy / fd * sp; }
+      if ((hero.x <= HERO_MIN_X && cr.vx < 0) || (hero.x >= HERO_MAX_X && cr.vx > 0)) cr.vx *= -1;
+      if ((hero.y <= HERO_MIN_Y && cr.vy < 0) || (hero.y >= HERO_MAX_Y && cr.vy > 0)) cr.vy *= -1;
+      hero.vx = cr.vx; hero.vy = cr.vy;
     } else if (hero.target !== null) {
       // нажали на лёд: встаём напротив этой точки и бросаем
       var dx = hero.target - hero.x;
@@ -695,39 +710,26 @@
     var r = cv.getBoundingClientRect();
     return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
   }
-  function followTo(pt) {
-    hero.follow = {
-      x: Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, pt.x - 12)),
-      y: Math.max(HERO_MIN_Y, Math.min(HERO_MAX_Y, pt.y - 30))
-    };
-  }
-  var lastTap = { t: 0, x: 0, y: 0 }, touchId = null;
+  var lastTap = { t: 0, x: 0, y: 0 };
   cv.addEventListener('pointerdown', function (e) {
-    e.preventDefault();
     var pt = scenePoint(e);
     if (e.pointerType === 'mouse') {
       // мышь: нажал на лёд — игрок встаёт напротив и бросает
+      e.preventDefault();
       if (pt.y < ICE_Y) { shoot(); return; }
       hero.target = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, Math.round(pt.x - 27)));
       return;
     }
-    // палец: двойной тап — бросок, ведение пальцем — движение
+    // палец: игрок катится сам, тап задаёт направление, двойной тап — бросок
     var now = e.timeStamp;
-    if (now - lastTap.t < 320 && Math.abs(pt.x - lastTap.x) < 30 && Math.abs(pt.y - lastTap.y) < 30) {
-      lastTap.t = 0; hero.follow = null; shoot(); return;
+    if (now - lastTap.t < 320 && Math.abs(pt.x - lastTap.x) < 40 && Math.abs(pt.y - lastTap.y) < 40) {
+      lastTap.t = 0; shoot(); return;
     }
     lastTap = { t: now, x: pt.x, y: pt.y };
-    touchId = e.pointerId;
-    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-    hero.target = null; followTo(pt);
+    var dx = pt.x - (hero.x + 12), dy = pt.y - (hero.y + 30), d = Math.hypot(dx, dy) || 1;
+    hero.target = null;
+    hero.cruise = { vx: dx / d * 1.5, vy: dy / d * 1.5 };
   });
-  cv.addEventListener('pointermove', function (e) {
-    if (e.pointerId !== touchId) return;
-    followTo(scenePoint(e));
-  });
-  function touchEnd(e) { if (e.pointerId === touchId) { touchId = null; hero.follow = null; } }
-  cv.addEventListener('pointerup', touchEnd);
-  cv.addEventListener('pointercancel', touchEnd);
 
   /* =====================================================================
      КАРТА УРОВНЕЙ
@@ -863,8 +865,7 @@
   ]);
 
   document.getElementById('pressStart').addEventListener('click', function () {
-    if (store('ce-sound') !== '0') setSound(true);
-    if (store('ce-music') !== '0' && !musicOn) setMusic(true);
+    unlockAudio();
     SFX.start();
     cv.focus({ preventScroll: true }); // чтобы ПРОБЕЛ сразу бросал, а не нажимал кнопку
     document.getElementById('rink').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
