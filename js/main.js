@@ -1,6 +1,15 @@
 (function () {
   'use strict';
 
+  // Высота шапки нужна стилям, чтобы переходы по странице не уезжали под неё
+  (function () {
+    var hud = document.querySelector('.hud');
+    function measure() { document.documentElement.style.setProperty('--hud-h', hud.offsetHeight + 'px'); }
+    measure();
+    window.addEventListener('resize', measure);
+    if (window.ResizeObserver) new ResizeObserver(measure).observe(hud);
+  })();
+
   /* =====================================================================
      ДАННЫЕ
      ===================================================================== */
@@ -490,12 +499,12 @@
     drawFace(); drawGuide(); guideCta.href = cta.href;
     if (byUser) {
       store('ce-path', p.id);
+      say([p.hello], { label: 'К ОПИСАНИЮ ПУТИ ▼', target: pathPanel });
       if (!quiet) {
         // выбрали карточкой: показываем раскрывшееся описание
         SFX.select(); guideTuck();
-        pathPanel.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+        reveal(pathPanel);
       }
-      say([p.hello], { label: 'К ОПИСАНИЮ ПУТИ ▼', target: pathPanel });
     }
   }
   narrow.addEventListener('change', function () { placePathPanel(); placeLevelPanel(); });
@@ -516,13 +525,19 @@
     drawPlayer(faceCtx, 0, 3, look(), 0, false);
   }
 
+  // Реплика печатается по буквам, но место под весь текст занято сразу:
+  // высота рамки не «дышит» и страница под ней не прыгает.
+  var dShown = document.createElement('span'), dRest = document.createElement('span');
+  dRest.style.visibility = 'hidden';
+  dialogText.appendChild(dShown); dialogText.appendChild(dRest);
+  function showChars(s, n) { dShown.textContent = s.slice(0, n); dRest.textContent = s.slice(n); }
   function typeLine() {
     clearInterval(typer);
-    var s = lines[lineIdx]; charIdx = 0; dialogText.textContent = '';
-    if (reduced) { dialogText.textContent = s; charIdx = s.length; return; }
+    var s = lines[lineIdx]; charIdx = 0; showChars(s, 0);
+    if (reduced) { charIdx = s.length; showChars(s, charIdx); return; }
     typer = setInterval(function () {
       charIdx++;
-      dialogText.textContent = s.slice(0, charIdx);
+      showChars(s, charIdx);
       if (charIdx % 3 === 0 && onScreen(dialog)) SFX.blip();
       if (charIdx >= s.length) clearInterval(typer);
     }, 28);
@@ -540,7 +555,7 @@
   function say(newLines, action) { lines = newLines; lineIdx = 0; dialogAction = action || null; dialogSync(); typeLine(); }
   function advance() {
     var s = lines[lineIdx];
-    if (charIdx < s.length) { clearInterval(typer); charIdx = s.length; dialogText.textContent = s; return; }
+    if (charIdx < s.length) { clearInterval(typer); charIdx = s.length; showChars(s, charIdx); return; }
     if (lineIdx === lines.length - 1) return;           // последняя реплика: по кругу не ходим
     lineIdx++; dialogSync();
     SFX.move(); typeLine();
@@ -555,6 +570,14 @@
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); advance(); }
   });
 
+  // Показывает раскрывшийся блок: верх не под шапкой, низ по возможности на экране
+  function reveal(el) {
+    var r = el.getBoundingClientRect(), top = document.querySelector('.hud').offsetHeight + 14, vh = window.innerHeight;
+    var dy = 0;
+    if (r.top < top || r.height > vh - top - 12) dy = r.top - top;
+    else if (r.bottom > vh - 12) dy = r.bottom - vh + 12;
+    if (Math.abs(dy) > 2) window.scrollBy({ top: dy, behavior: reduced ? 'auto' : 'smooth' });
+  }
   function onScreen(el) {
     var r = el.getBoundingClientRect();
     return r.bottom > 0 && r.top < window.innerHeight;
@@ -853,7 +876,7 @@
     var lv = LEVELS[idx];
     levelIdx = idx; placeLevelPanel();
     if (byUser) guideTuck();
-    if (byUser) setTimeout(function () { levelPanel.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' }); }, 0);
+    if (byUser) setTimeout(function () { reveal(levelPanel); }, 0);
     nodes.forEach(function (n, i) { n.setAttribute('aria-pressed', String(i === idx)); });
     var num = 'УРОВЕНЬ ' + (idx + 1) + ' · НЕДЕЛЯ ' + (idx + 1);
     if (lv.locked) {
@@ -911,7 +934,8 @@
     var idx = -1, mid = window.innerHeight * 0.55;
     GUIDE.forEach(function (gd, i) { if (document.getElementById(gd.id).getBoundingClientRect().top < mid) idx = i; });
     // на титуле и рядом с репликой под площадкой проводник не дублируется
-    guideEl.hidden = idx < 0 || onScreen(dialog);
+    // пока читатель на площадке, говорит реплика под ней; у кнопки записи проводник её не загораживает
+    guideEl.hidden = idx < 0 || onScreen(cta);
     if (idx < 0 || idx === guideIdx) return;
     guideIdx = idx;
     guideBubble.hidden = guideClosed;                  // в новом разделе подсказка возвращается

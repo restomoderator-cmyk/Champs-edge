@@ -42,7 +42,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background: var(--ink);
@@ -405,3 +405,16 @@ p:last-child { margin-bottom: 0; }
 .cta__path a { color: var(--cyan); margin-left: 8px; }
 a.guide__next { text-decoration: none; display: inline-block; line-height: 1; background: var(--green); color: var(--ink); }
 a.guide__next:hover { background: #8be06f; }
+
+/* ---------- Ничего не прячется под шапкой и не вылезает за экран ---------- */
+:root { --hud-h: 56px; }
+/* любой переход по странице останавливается ниже шапки (высоту шапки меряет скрипт) */
+[id] { scroll-margin-top: calc(var(--hud-h) + 14px); }
+/* площадка целиком помещается в экран вместе с репликой проводника под ней;
+   на низких экранах (телефон боком) — хотя бы сама площадка */
+.stage {
+  --rink-h: max(calc(100svh - var(--hud-h) - 190px), min(calc(100svh - var(--hud-h) - 28px), 300px));
+  max-width: min(1000px, calc(var(--rink-h) * 4 / 3 + 40px));
+  padding-top: 14px; scroll-margin-top: var(--hud-h);
+}
+.title { min-height: calc(100svh - var(--hud-h)); }
