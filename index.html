@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Champion's Edge — программа для хоккеистов</title>
+<meta name="description" content="The Champion's Edge — индивидуальная программа ментальной подготовки для хоккеистов. Книга 1: Фундамент. 12 недель один на один с тренером.">
+<meta name="theme-color" content="#181425">
+<link rel="preload" href="fonts/press-start-2p-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Верхняя панель -->
+<header class="hud">
+  <a class="hud__logo" href="#top">CE</a>
+  <nav class="hud__nav" aria-label="Разделы">
+    <a href="#path">ПУТЬ</a>
+    <a href="#about">ИГРА</a>
+    <a href="#map">КАРТА</a>
+    <a href="#loot">ИНВЕНТАРЬ</a>
+    <a href="#start">СТАРТ</a>
+  </nav>
+  <button class="hud__sound" id="soundToggle" type="button" aria-pressed="false">ЗВУК: ВЫКЛ</button>
+</header>
+
+<main id="top">
+
+<!-- Титульный экран -->
+<section class="title">
+  <div class="title__stars" aria-hidden="true"></div>
+  <div class="title__inner">
+    <p class="title__kicker">КНИГА 1 · ФУНДАМЕНТ</p>
+    <h1 class="title__logo">
+      <span>THE</span>
+      <span class="title__big">CHAMPION'S</span>
+      <span class="title__big title__big--edge">EDGE</span>
+    </h1>
+    <p class="title__sub">ВЕРСИЯ ДЛЯ ХОККЕИСТОВ</p>
+    <button class="btn btn--start" id="pressStart" type="button">▶ НАЖМИ START</button>
+    <p class="title__hint">1 ИГРОК · 1 ТРЕНЕР · 12 УРОВНЕЙ</p>
+  </div>
+</section>
+
+<!-- Сцена с персонажем -->
+<section class="stage" id="rink">
+  <div class="stage__screen">
+    <canvas id="scene" width="320" height="180" tabindex="0" aria-label="Пиксельная хоккейная площадка: игрок катается и бросает по воротам"></canvas>
+    <div class="stage__score" aria-live="polite">ГОЛЫ <span id="score">000</span></div>
+  </div>
+  <div class="dialog" id="dialog" role="button" tabindex="0" aria-label="Реплика проводника. Нажми, чтобы продолжить">
+    <canvas class="dialog__face" id="face" width="16" height="16" aria-hidden="true"></canvas>
+    <p class="dialog__text" id="dialogText"></p>
+    <span class="dialog__next" aria-hidden="true">▼</span>
+  </div>
+  <p class="stage__help">СТРЕЛКИ или A / D — кататься · ПРОБЕЛ или тап по льду — бросок</p>
+</section>
+
+<!-- Выбор пути -->
+<section class="section" id="path">
+  <h2 class="h2"><span>00</span> ВЫБЕРИ ПУТЬ ЧЕМПИОНА</h2>
+  <p class="lead">Три пути — три этапа карьеры. Выбери свой: проводник и запись на программу подстроятся под него.</p>
+  <div class="grid grid--3 paths" id="paths" role="radiogroup" aria-label="Путь чемпиона"></div>
+</section>
+
+<!-- О программе -->
+<section class="section" id="about">
+  <h2 class="h2"><span>01</span> ЧТО ЭТО ЗА ИГРА</h2>
+  <div class="grid grid--2">
+    <div class="panel">
+      <p>The Champion's Edge — индивидуальная программа ментальной подготовки для хоккеистов. Работа идёт один на один: тренер и игрок.</p>
+      <p>Теория разбирается в живой беседе на примерах из твоей карьеры. Практика уходит в домашние задания — на лёд и в быт. Так идея сначала понята в разговоре, а потом закреплена в деле.</p>
+      <p>Программа подстраивается под игрока: под его путь — этап карьеры — и под амплуа. У вратаря своя редакция, у полевого игрока — своя.</p>
+    </div>
+    <div class="panel panel--stats">
+      <h3 class="h3">ПАРАМЕТРЫ</h3>
+      <dl class="stats">
+        <div><dt>РЕЖИМ</dt><dd>1 НА 1</dd></div>
+        <div><dt>КНИГА 1</dt><dd>3 МЕСЯЦА</dd></div>
+        <div><dt>УРОВНИ</dt><dd>12 НЕДЕЛЬ</dd></div>
+        <div><dt>СЕССИЙ В НЕДЕЛЮ</dt><dd>3–4</dd></div>
+        <div><dt>ОДНА СЕССИЯ</dt><dd>2 ЧАСА</dd></div>
+        <div><dt>ДОМАШКА</dt><dd>ЛЁД + БЫТ</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- Карта уровней -->
+<section class="section" id="map">
+  <h2 class="h2"><span>02</span> КАРТА УРОВНЕЙ</h2>
+  <p class="lead">Каждая неделя — уровень. Выбери уровень, чтобы увидеть, что внутри.</p>
+  <div class="worlds" id="worlds"></div>
+  <div class="panel level" id="levelPanel" aria-live="polite"></div>
+</section>
+
+<!-- Инвентарь -->
+<section class="section" id="loot">
+  <h2 class="h2"><span>03</span> ИНВЕНТАРЬ</h2>
+  <p class="lead">С каждого уровня ты уносишь инструмент. Он остаётся с тобой после программы.</p>
+  <div class="grid grid--3" id="inventory"></div>
+</section>
+
+<!-- На чём построено -->
+<section class="section" id="science">
+  <h2 class="h2"><span>04</span> НА ЧЁМ ПОСТРОЕНО</h2>
+  <p class="lead">Программа опирается на проверенные модели спортивной психологии, переложенные на хоккей.</p>
+  <ul class="masters">
+    <li><b>ДЖОН ВУДЕН</b><span>Пирамида успеха</span></li>
+    <li><b>КЭРОЛ ДВЕК</b><span>Мышление роста</span></li>
+    <li><b>АНДЕРС ЭРИКССОН</b><span>Осознанная практика</span></li>
+    <li><b>ТИМОТИ ГОЛВИ</b><span>Внутренняя игра</span></li>
+    <li><b>ДЭНИЕЛ ГОУЛМАН</b><span>Эмоциональный интеллект</span></li>
+    <li><b>КАЙДЗЕН</b><span>1% каждый день</span></li>
+  </ul>
+</section>
+
+<!-- Призыв -->
+<section class="section section--cta" id="start">
+  <div class="panel panel--cta">
+    <p class="cta__blink">ГОТОВ?</p>
+    <h2 class="cta__title">НОВАЯ ИГРА</h2>
+    <p class="cta__path">ТВОЙ ПУТЬ: <span id="ctaPath">—</span></p>
+    <p>Напиши нам — расскажем, как проходит программа, и подберём редакцию под твой путь и амплуа.</p>
+    <!-- TODO: заменить ссылку на реальный контакт (Telegram, почта или форма) -->
+    <a class="btn btn--cta" id="cta" href="https://t.me/your_username" target="_blank" rel="noopener">▶ ЗАПИСАТЬСЯ</a>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <p>THE CHAMPION'S EDGE · ВЕРСИЯ ДЛЯ ХОККЕИСТОВ</p>
+  <p class="footer__small">© 2026 · Все права защищены</p>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
