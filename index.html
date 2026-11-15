@@ -45,7 +45,7 @@
 <!-- Сцена с персонажем -->
 <section class="stage" id="rink">
   <div class="stage__screen">
-    <canvas id="scene" width="320" height="180" tabindex="0" aria-label="Пиксельная хоккейная площадка: игрок катается и бросает по воротам"></canvas>
+    <canvas id="scene" width="320" height="180" tabindex="0" aria-label="Пиксельная хоккейная площадка: игрок катается и бросает по трём воротам, каждые выбирают путь чемпиона"></canvas>
     <div class="stage__score" aria-live="polite">ГОЛЫ <span id="score">000</span></div>
   </div>
   <div class="dialog" id="dialog" role="button" tabindex="0" aria-label="Реплика проводника. Нажми, чтобы продолжить">
@@ -53,13 +53,18 @@
     <p class="dialog__text" id="dialogText"></p>
     <span class="dialog__next" aria-hidden="true">▼</span>
   </div>
-  <p class="stage__help">СТРЕЛКИ или A / D — кататься · ПРОБЕЛ или тап по льду — бросок</p>
+  <ul class="stage__legend" aria-label="Ворота и пути">
+    <li><b style="background:#63c74d">1</b> молодой чемпион</li>
+    <li><b style="background:#e43b44">2</b> чемпион на пике</li>
+    <li><b style="background:#3b55b8">3</b> ветеран</li>
+  </ul>
+  <p class="stage__help">Забей в ворота — выберешь путь · СТРЕЛКИ или WASD — кататься · ПРОБЕЛ — бросок · или просто нажми на ворота</p>
 </section>
 
 <!-- Выбор пути -->
 <section class="section" id="path">
   <h2 class="h2"><span>00</span> ВЫБЕРИ ПУТЬ ЧЕМПИОНА</h2>
-  <p class="lead">Три пути — три этапа карьеры. Выбери свой: проводник и запись на программу подстроятся под него.</p>
+  <p class="lead">Три пути — три этапа карьеры. Выбери свой броском на площадке или карточкой здесь: проводник и запись на программу подстроятся под него.</p>
   <div class="grid grid--3 paths" id="paths" role="radiogroup" aria-label="Путь чемпиона"></div>
   <div class="panel level pathinfo" id="pathPanel" aria-live="polite"></div>
 </section>
@@ -128,6 +133,18 @@
 </section>
 
 </main>
+
+<!-- Проводник: сопровождает по странице -->
+<aside class="guide" id="guide" hidden>
+  <div class="guide__bubble" id="guideBubble" aria-live="polite">
+    <p id="guideText"></p>
+    <div class="guide__row">
+      <button class="guide__next" id="guideNext" type="button">ДАЛЬШЕ ▶</button>
+      <button class="guide__close" id="guideClose" type="button" aria-label="Скрыть подсказку">×</button>
+    </div>
+  </div>
+  <button class="guide__hero" id="guideHero" type="button" aria-label="Проводник: показать или скрыть подсказку"><canvas width="32" height="40" aria-hidden="true"></canvas></button>
+</aside>
 
 <footer class="footer">
   <p>THE CHAMPION'S EDGE · ВЕРСИЯ ДЛЯ ХОККЕИСТОВ</p>

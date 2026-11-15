@@ -342,3 +342,41 @@ p:last-child { margin-bottom: 0; }
 .pathinfo__meta div { display: flex; gap: 10px; align-items: baseline; }
 .pathinfo__meta dt { font-family: var(--head); font-size: 9px; color: var(--steel); }
 .pathinfo__meta dd { margin: 0; color: var(--cyan); }
+
+.stage__legend { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; margin: 18px 0 0; padding: 0; font-size: 21px; color: var(--mist); }
+.stage__legend b { display: inline-block; font-family: var(--head); font-weight: 400; font-size: 10px; color: var(--ink); padding: 5px 6px 4px; margin-right: 6px; box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--mist); }
+.stage__help { margin-top: 14px; }
+
+/* ---------- Проводник ---------- */
+[hidden] { display: none !important; }
+.guide {
+  position: fixed; z-index: 30; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: flex-end; gap: 12px; pointer-events: none;
+}
+.guide > * { pointer-events: auto; }
+.guide__bubble {
+  position: relative; max-width: min(320px, calc(100vw - 110px)); padding: 12px 14px;
+  background: var(--white); color: var(--ink); font-size: 20px; line-height: 1.25;
+  box-shadow: 0 0 0 var(--px) var(--ink), 0 var(--px) 0 var(--px) #0c0a14;
+  margin-bottom: 22px;
+}
+.guide__bubble::after { content: ""; position: absolute; right: -12px; bottom: 14px; width: 8px; height: 8px; background: var(--white); box-shadow: 0 0 0 var(--px) var(--ink); clip-path: inset(-4px -4px -4px 4px); }
+.guide__bubble p { margin: 0 0 10px; }
+.guide__row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.guide__next, .guide__close { font-family: var(--head); font-size: 9px; border: 0; cursor: pointer; padding: 8px 10px 7px; }
+.guide__next { background: var(--red); color: var(--white); }
+.guide__next:hover { background: var(--red-dark); }
+.guide__close { background: none; color: var(--steel); font-size: 12px; padding: 6px 8px; }
+.guide__hero {
+  flex: none; width: 72px; height: 88px; padding: 4px; border: 0; cursor: pointer;
+  background: var(--navy); box-shadow: 0 0 0 var(--px) var(--ink), 0 0 0 calc(var(--px) * 2) var(--yellow);
+  margin: 0 8px 8px 0;
+}
+.guide__hero canvas { width: 64px; height: 80px; display: block; animation: hop 1s steps(2) infinite; }
+.footer { padding-bottom: 130px; }
+@media (max-width: 760px) {
+  .guide__bubble { font-size: 18px; padding: 10px 12px; }
+  .guide__hero { width: 56px; height: 68px; }
+  .guide__hero canvas { width: 48px; height: 60px; }
+}
+@media (prefers-reduced-motion: reduce) { .guide__hero canvas { animation: none; } }

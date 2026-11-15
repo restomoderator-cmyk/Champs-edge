@@ -302,7 +302,7 @@
     pathCards.push({ path: p, el: b, ctx: b.querySelector('canvas').getContext('2d') });
   });
 
-  function choosePath(p, byUser) {
+  function choosePath(p, byUser, quiet) {
     currentPath = p;
     pathCards.forEach(function (pc) {
       var on = pc.path === p;
@@ -319,10 +319,10 @@
     var msg = 'Здравствуйте! Хочу записаться на The Champion\'s Edge. Мой путь: ' + p.name.toLowerCase() + '.';
     if (/^https:\/\/t\.me\//.test(ctaBase)) cta.href = ctaBase + '?text=' + encodeURIComponent(msg);
     else if (/^mailto:/.test(ctaBase)) cta.href = ctaBase + '?subject=' + encodeURIComponent('The Champion\'s Edge') + '&body=' + encodeURIComponent(msg);
-    drawFace();
+    drawFace(); drawGuide();
     if (byUser) {
       store('ce-path', p.id);
-      SFX.select();
+      if (!quiet) SFX.select();
       say([p.hello, 'Листай вниз — покажу, как устроена программа и что ты из неё вынесешь.']);
     }
   }
@@ -379,10 +379,13 @@
   var W = 320, H = 180, ICE_Y = 96;
   var scoreEl = document.getElementById('score');
   var keys = {}, score = 0;
-  var hero = { x: 60, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0 };
+  var hero = { x: 60, y: 110, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null };
   var puck = { x: 0, y: 0, vx: 0, vy: 0, live: false };
   var goalFlash = 0, banner = '', bannerT = 0;
-  var GOAL = { x: 278, top: 118, bottom: 150 };
+  var GOAL = { x: 278 };
+  // Трое ворот — по одним на каждый путь чемпиона: [верх, низ] проёма
+  var NETS = [[100, 122], [124, 146], [148, 170]];
+  var HERO_MIN_Y = 76, HERO_MAX_Y = 140, lastZone = -1;
 
   // Трибуны — заранее сгенерированные зрители
   var crowd = [], CROWD_COLS = ['#3a4466', '#5a6988', '#9e2835', '#124e89', '#3e8948', '#733e39', '#262b44', '#68386c'];
@@ -445,25 +448,28 @@
     // синяя линия и линия ворот
     g.fillStyle = '#0099db'; g.fillRect(150, ICE_Y + 2, 5, H);
     g.fillStyle = '#e43b44'; g.fillRect(GOAL.x + 2, ICE_Y + 2, 2, H);
-    // площадь ворот
-    g.fillStyle = '#9fd6f5'; g.fillRect(GOAL.x - 16, GOAL.top + 2, 18, GOAL.bottom - GOAL.top - 2);
-    g.fillStyle = '#e43b44'; g.fillRect(GOAL.x - 17, GOAL.top + 1, 19, 1); g.fillRect(GOAL.x - 17, GOAL.bottom, 19, 1); g.fillRect(GOAL.x - 17, GOAL.top + 1, 1, GOAL.bottom - GOAL.top);
-
-    // ворота (сетка позади линии)
+    // трое ворот: цвет — форма пути, выбранный путь подсвечен
     var flash = goalFlash > 0 && Math.floor(goalFlash / 4) % 2 === 0;
-    g.fillStyle = flash ? '#fee761' : '#c0cbdc';
-    for (var ny = GOAL.top - 14; ny < GOAL.bottom; ny += 3) g.fillRect(GOAL.x + 4, ny, 20, 1);
-    for (var nx = GOAL.x + 6; nx < GOAL.x + 26; nx += 3) g.fillRect(nx, GOAL.top - 14, 1, GOAL.bottom - GOAL.top + 14);
-    g.fillStyle = '#e43b44';
-    g.fillRect(GOAL.x + 2, GOAL.top - 16, 3, GOAL.bottom - GOAL.top + 16);
-    g.fillRect(GOAL.x + 2, GOAL.top - 16, 24, 3);
-    g.fillRect(GOAL.x + 24, GOAL.top - 16, 2, GOAL.bottom - GOAL.top + 14);
-    // сирена
-    g.fillStyle = flash ? '#ff0044' : '#9e2835'; g.fillRect(GOAL.x + 10, GOAL.top - 22, 6, 5);
-    if (flash) { g.fillStyle = 'rgba(255,0,68,0.25)'; g.fillRect(GOAL.x + 2, GOAL.top - 30, 22, 14); }
+    NETS.forEach(function (n, i) {
+      var p = PATHS[i], top = n[0], bot = n[1], hit = flash && lastZone === i, cur = p === currentPath;
+      g.fillStyle = '#9fd6f5'; g.fillRect(GOAL.x - 10, top + 2, 12, bot - top - 4);       // площадь ворот
+      g.fillStyle = cur ? p.jerseyDark : '#262b44'; g.fillRect(GOAL.x + 4, top, 18, bot - top);
+      g.fillStyle = hit ? '#fee761' : '#c0cbdc';                                            // сетка
+      for (var ny = top + 2; ny < bot; ny += 3) g.fillRect(GOAL.x + 4, ny, 18, 1);
+      for (var nx = GOAL.x + 6; nx < GOAL.x + 22; nx += 3) g.fillRect(nx, top, 1, bot - top);
+      g.fillStyle = hit ? '#fee761' : p.jersey;                                             // рама
+      g.fillRect(GOAL.x + 2, top - 2, 22, 2); g.fillRect(GOAL.x + 2, bot, 22, 2);
+      g.fillRect(GOAL.x + 22, top - 2, 2, bot - top + 4);
+      g.fillRect(GOAL.x + 2, top - 2, 2, 3); g.fillRect(GOAL.x + 2, bot - 1, 2, 3);
+      // номер пути
+      g.fillStyle = OUT; g.fillRect(GOAL.x + 27, top + 5, 12, 12);
+      g.fillStyle = cur ? '#fee761' : p.jersey; g.fillRect(GOAL.x + 28, top + 6, 10, 10);
+      g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'left';
+      g.fillStyle = OUT; g.fillText(String(i + 1), GOAL.x + 30, top + 15);
+    });
 
     // игрок
-    var hy = 116, moving = hero.vx !== 0;
+    var hy = Math.round(hero.y), moving = hero.vx !== 0 || hero.vy !== 0;
     var frame = moving ? Math.floor(t / 140) % 2 : Math.floor(t / 500) % 2;
     g.fillStyle = 'rgba(38,43,68,0.25)'; g.fillRect(Math.round(hero.x) - 1, hy + 32, 22, 3);
     g.save();
@@ -491,19 +497,29 @@
     if (puck.live || hero.shootT > 0) return;
     hero.dir = 1; hero.shootT = 14;
     puck.live = true;
-    puck.x = hero.x + 28; puck.y = 143;
+    puck.x = hero.x + 28; puck.y = hero.y + 27;
     // чем дальше от ворот, тем больше разброс
     var dist = Math.max(0, GOAL.x - puck.x);
     var spread = (Math.random() - 0.5) * (0.25 + dist / 260);
-    puck.vx = 4.2; puck.vy = -0.12 + spread;
+    puck.vx = 4.2; puck.vy = spread * 0.5;
     SFX.shot();
   }
 
   function update(dt) {
     var left = keys.ArrowLeft || keys.a, right = keys.ArrowRight || keys.d;
-    hero.vx = 0;
-    if (left || right) { hero.auto = false; hero.idleT = 0; hero.vx = right ? 1.4 : -1.4; }
-    else if (!hero.auto) { hero.idleT += dt; if (hero.idleT > 6000) hero.auto = true; }
+    var up = keys.ArrowUp || keys.w, down = keys.ArrowDown || keys.s;
+    hero.vx = 0; hero.vy = 0;
+    if (left || right || up || down) {
+      hero.auto = false; hero.idleT = 0; hero.target = null;
+      hero.vx = right ? 1.4 : left ? -1.4 : 0;
+      hero.vy = down ? 1.1 : up ? -1.1 : 0;
+    } else if (hero.target !== null) {
+      // нажали на лёд: подъезжаем на эту высоту и бросаем
+      var dy = hero.target - hero.y;
+      hero.auto = false; hero.idleT = 0;
+      if (Math.abs(dy) <= 1.5) { hero.y = hero.target; hero.target = null; shoot(); }
+      else hero.vy = dy > 0 ? 1.5 : -1.5;
+    } else if (!hero.auto) { hero.idleT += dt; if (hero.idleT > 6000) hero.auto = true; }
     if (hero.auto && hero.shootT <= 0) {
       hero.vx = hero.autoDir * 0.6;
       if (hero.x > 190) hero.autoDir = -1;
@@ -511,6 +527,7 @@
     }
     if (hero.vx) hero.dir = hero.vx > 0 ? 1 : -1;
     hero.x = Math.max(6, Math.min(220, hero.x + hero.vx));
+    hero.y = Math.max(HERO_MIN_Y, Math.min(HERO_MAX_Y, hero.y + hero.vy));
     if (hero.shootT > 0) hero.shootT--;
 
     if (puck.live) {
@@ -518,10 +535,13 @@
       if (puck.y < ICE_Y + 4 || puck.y > H - 6) { puck.vy *= -1; }
       if (puck.x >= GOAL.x + 2) {
         puck.live = false;
-        if (puck.y > GOAL.top && puck.y < GOAL.bottom - 2) {
+        var cy = puck.y + 1, zone = -1;
+        NETS.forEach(function (n, i) { if (cy > n[0] && cy < n[1]) zone = i; });
+        if (zone >= 0) {
           score++; scoreEl.textContent = ('00' + score).slice(-3);
-          goalFlash = 70; banner = 'ГОЛ!'; bannerT = 70; SFX.goal();
-        } else { banner = 'МИМО'; bannerT = 40; SFX.miss(); }
+          lastZone = zone; goalFlash = 70; banner = 'ГОЛ! ПУТЬ ' + (zone + 1); bannerT = 80; SFX.goal();
+          choosePath(PATHS[zone], true, true);
+        } else { banner = 'ШТАНГА!'; bannerT = 40; SFX.miss(); }
       }
     }
     if (goalFlash > 0) goalFlash--;
@@ -540,21 +560,27 @@
     new IntersectionObserver(function (es) { sceneVisible = es[0].isIntersecting; }).observe(cv);
   }
 
+  var RU_KEYS = { 'ф': 'a', 'в': 'd', 'ц': 'w', 'ы': 's' };
+  var MOVE_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's'];
   window.addEventListener('keydown', function (e) {
     var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    if (k === 'ф') k = 'a'; if (k === 'в') k = 'd';
+    k = RU_KEYS[k] || k;
     if (!onScreen(cv)) return;
     if (/^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(e.target.tagName) && k === ' ') return;
     if (k === ' ') { e.preventDefault(); shoot(); return; }
-    if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'a' || k === 'd') { keys[k] = true; if (k.length > 1) e.preventDefault(); }
+    if (MOVE_KEYS.indexOf(k) >= 0) { keys[k] = true; if (k.length > 1) e.preventDefault(); }
   });
   window.addEventListener('keyup', function (e) {
     var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    if (k === 'ф') k = 'a'; if (k === 'в') k = 'd';
-    keys[k] = false;
+    keys[RU_KEYS[k] || k] = false;
   });
   window.addEventListener('blur', function () { keys = {}; });
-  cv.addEventListener('pointerdown', function (e) { e.preventDefault(); shoot(); });
+  cv.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    var r = cv.getBoundingClientRect(), cy = (e.clientY - r.top) / r.height * H;
+    if (cy < ICE_Y) { shoot(); return; }
+    hero.target = Math.max(HERO_MIN_Y, Math.min(HERO_MAX_Y, Math.round(cy - 28)));
+  });
 
   /* =====================================================================
      КАРТА УРОВНЕЙ
@@ -616,6 +642,59 @@
   });
 
   /* =====================================================================
+     ПРОВОДНИК: идёт за читателем по странице и подсказывает, что делать
+     ===================================================================== */
+
+  var GUIDE = [
+    { id: 'path', text: 'Здесь три пути чемпиона. Нажми на карточку — ниже появится, на что делаем упор именно на твоём этапе.' },
+    { id: 'about', text: 'Коротко о формате: один на один с тренером, 12 недель, теория в беседе и практика на льду.' },
+    { id: 'map', text: 'Это карта программы. Нажимай на уровни: внутри тема недели, сессии и трофеи. Замки откроются по ходу игры.' },
+    { id: 'loot', text: 'А это ты унесёшь с собой. Инструменты остаются у тебя и после программы.' },
+    { id: 'science', text: 'Здесь — на чьих идеях построена программа. Всё переложено на хоккей.' },
+    { id: 'start', text: 'Готов? Жми «Записаться»: откроется Telegram, твой путь уже вписан в сообщение.' }
+  ];
+  var guideEl = document.getElementById('guide');
+  var guideText = document.getElementById('guideText');
+  var guideNext = document.getElementById('guideNext');
+  var guideBubble = document.getElementById('guideBubble');
+  var guideCtx = document.getElementById('guideHero').querySelector('canvas').getContext('2d');
+  var guideIdx = -1, guideClosed = store('ce-guide') === '0';
+
+  function drawGuide() {
+    guideCtx.clearRect(0, 0, 32, 40);
+    drawPlayer(guideCtx, 1, 4, currentPath, 0, false);
+  }
+  function guideSync() {
+    // какой раздел сейчас перед глазами
+    var idx = -1, mid = window.innerHeight * 0.55;
+    GUIDE.forEach(function (gd, i) { if (document.getElementById(gd.id).getBoundingClientRect().top < mid) idx = i; });
+    // на титуле и рядом с репликой под площадкой проводник не дублируется
+    guideEl.hidden = idx < 0 || onScreen(dialog);
+    if (idx < 0 || idx === guideIdx) return;
+    guideIdx = idx;
+    guideText.textContent = GUIDE[idx].text;
+    guideNext.textContent = idx === GUIDE.length - 1 ? '▲ НАВЕРХ' : 'ДАЛЬШЕ ▶';
+  }
+  function guideShow(open) {
+    guideClosed = !open; guideBubble.hidden = guideClosed;
+    store('ce-guide', open ? '1' : '0');
+  }
+  guideNext.addEventListener('click', function () {
+    var target = guideIdx === GUIDE.length - 1 ? document.getElementById('rink') : document.getElementById(GUIDE[guideIdx + 1].id);
+    SFX.move(); target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+  });
+  document.getElementById('guideClose').addEventListener('click', function () { SFX.move(); guideShow(false); });
+  document.getElementById('guideHero').addEventListener('click', function () { SFX.move(); guideShow(guideClosed); });
+  var guideTick = false;
+  function guideOnScroll() {
+    if (guideTick) return; guideTick = true;
+    requestAnimationFrame(function () { guideTick = false; guideSync(); });
+  }
+  window.addEventListener('scroll', guideOnScroll, { passive: true });
+  window.addEventListener('resize', guideOnScroll);
+  guideBubble.hidden = guideClosed;
+
+  /* =====================================================================
      ЗАПУСК
      ===================================================================== */
 
@@ -633,7 +712,7 @@
     'Привет! Я твой проводник по The Champion\'s Edge.',
     'Это программа ментальной подготовки для хоккеистов. Один на один с тренером.',
     '12 недель — 12 уровней. С каждого уровня ты уносишь инструмент, который остаётся с тобой.',
-    'Сначала выбери свой путь чемпиона — он чуть ниже. А пока можешь побросать: жми на лёд или ПРОБЕЛ.'
+    'Выбери свой путь чемпиона броском: справа трое ворот, каждые — свой путь. Забей в нужные. Описание путей — ниже.'
   ]);
 
   document.getElementById('pressStart').addEventListener('click', function () {
@@ -647,5 +726,6 @@
   document.querySelectorAll('.hud__nav a, .hud__logo').forEach(function (a) { a.addEventListener('click', SFX.move); });
   cta.addEventListener('click', SFX.select);
 
+  guideSync();
   requestAnimationFrame(loop);
 })();
