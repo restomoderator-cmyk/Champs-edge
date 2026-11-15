@@ -287,7 +287,7 @@
       o.type = n[2] || 'square';
       o.frequency.setValueAtTime(n[0], t);
       if (n[3]) o.frequency.exponentialRampToValueAtTime(n[3], t + n[1]);
-      g.gain.setValueAtTime((vol || 0.06) * 0.7, t);
+      g.gain.setValueAtTime((vol || 0.06) * 0.42, t);
       g.gain.exponentialRampToValueAtTime(0.0001, t + n[1]);
       o.connect(g); g.connect(audio.destination);
       o.start(t); o.stop(t + n[1] + 0.02);
@@ -308,15 +308,15 @@
     src.buffer = sfxNoise; src.loop = true;
     f.type = 'bandpass'; f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(1300, t + 0.5);
     f.frequency.linearRampToValueAtTime(800, t + 2.2); f.Q.value = 0.7;
-    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.09, t + 0.25);
-    gn.gain.setValueAtTime(0.09, t + 0.9); gn.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.054, t + 0.25);
+    gn.gain.setValueAtTime(0.054, t + 0.9); gn.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
     src.connect(f); f.connect(gn); gn.connect(audio.destination);
     src.start(t); src.stop(t + 2.5);
     [116.5, 174.6].forEach(function (fr) {           // сирена
       var o = audio.createOscillator(), og = audio.createGain();
       o.type = 'sawtooth'; o.frequency.value = fr;
-      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.018, t + 0.05);
-      og.gain.setValueAtTime(0.018, t + 0.7); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
+      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.011, t + 0.05);
+      og.gain.setValueAtTime(0.011, t + 0.7); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
       o.connect(og); og.connect(audio.destination); o.start(t); o.stop(t + 1);
     });
   }
