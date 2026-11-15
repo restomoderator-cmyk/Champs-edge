@@ -650,9 +650,11 @@
     var up = keys.ArrowUp || keys.w, down = keys.ArrowDown || keys.s;
     hero.vx = 0; hero.vy = 0;
     if (left || right || up || down) {
-      hero.auto = false; hero.idleT = 0; hero.target = null; hero.cruise = null;
+      hero.auto = false; hero.idleT = 0; hero.target = null;
       hero.vx = right ? 1.6 : left ? -1.6 : 0;
       hero.vy = down ? 1.2 : up ? -1.2 : 0;
+      // отпустил клавишу — игрок продолжает катиться в ту же сторону
+      hero.cruise = { vx: hero.vx, vy: hero.vy };
     } else if (hero.cruise) {
       // тач-режим: катимся без остановки, от бортов отскакиваем
       var cr = hero.cruise;
