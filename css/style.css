@@ -560,19 +560,19 @@ ul.stage__help--touch b { font-weight: 400; color: var(--yellow); }
 .sheet__bar, .sheet__back { display: none; }
 .guide--under { visibility: hidden; }
 @media (max-width: 760px) {
+  /* окно = неподвижная полоса с кнопками + тело, которое прокручивается отдельно */
   #levelPanel {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0; min-height: 0;
-    max-height: 76svh; overflow-y: auto; overscroll-behavior: contain;
-    padding: 0 18px calc(22px + env(safe-area-inset-bottom, 0px));
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0; padding: 0; min-height: 0;
+    max-height: 76svh; display: flex; flex-direction: column; overflow: hidden;
     box-shadow: 0 calc(var(--px) * -1) 0 0 var(--white), 0 calc(var(--px) * -2) 0 0 var(--ink);
     transform: translateY(105%); visibility: hidden;
-    transition: transform .22s steps(6), visibility 0s .22s;
+    transition: transform .2s ease-out, visibility 0s .2s;
   }
-  #levelPanel.is-open { transform: none; visibility: visible; transition: transform .22s steps(6); }
+  #levelPanel.is-open { transform: none; visibility: visible; transition: transform .2s ease-out; }
   .sheet__back { display: block; position: fixed; inset: 0; z-index: 39; background: rgba(12, 10, 20, .72); }
   .sheet__bar {
-    display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 1;
-    margin: 0 -18px 16px; padding: 12px 18px; background: var(--ink);
+    display: flex; flex: none; align-items: center; gap: 14px;
+    padding: 12px 18px; background: var(--ink);
     font-family: var(--head); font-size: 10px; color: var(--mist); border-bottom: var(--px) solid var(--slate);
   }
   .sheet__bar button {
@@ -581,5 +581,26 @@ ul.stage__help--touch b { font-weight: 400; color: var(--yellow); }
   }
   .sheet__bar button:disabled { background: var(--slate); color: var(--steel); }
   .sheet__bar .sheet__close { margin-left: auto; background: var(--red); color: var(--white); }
+  .sheet__body {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    padding: 18px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
 }
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) { #levelPanel, #levelPanel.is-open { transition: none; } }
+
+/* ---------- Вырез и системная полоса телефона ---------- */
+/* шапка стоит ниже системной полосы, а сама полоса закрашена, чтобы под ней не просвечивал текст */
+.hud { top: env(safe-area-inset-top, 0px); }
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 20; background: var(--ink);
+}
+[id] { scroll-margin-top: calc(var(--hud-h) + env(safe-area-inset-top, 0px) + 14px); }
+.stage { scroll-margin-top: calc(var(--hud-h) + env(safe-area-inset-top, 0px)); }
+.stage { --rink-h: max(calc(100svh - var(--hud-h) - env(safe-area-inset-top, 0px) - 190px), min(calc(100svh - var(--hud-h) - env(safe-area-inset-top, 0px) - 28px), 300px)); }
+@media (max-width: 1180px) { .hud__nav.is-open { max-height: calc(100svh - var(--hud-h) - env(safe-area-inset-top, 0px)); } }
+
+/* кнопка «Изучить путь» мигает, как START: сюда нужно нажать */
+.dialog__go--blink { animation: blink 1.1s steps(1) infinite; }
+.dialog__go--blink:hover, .dialog__go--blink:focus-visible { animation: none; }
+@media (prefers-reduced-motion: reduce) { .dialog__go--blink { animation: none; } }

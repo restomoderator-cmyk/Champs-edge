@@ -624,6 +624,7 @@
     dialogNext.hidden = lastLine;                       // листать дальше некуда
     dialogGo.hidden = !(lastLine && dialogAction);
     if (dialogAction) dialogGo.textContent = dialogAction.label;
+    dialogGo.classList.toggle('dialog__go--blink', !!(dialogAction && dialogAction.exit));
   }
   // action - кнопка на последней реплике: { label, target }
   function say(newLines, action) { lines = newLines; lineIdx = 0; dialogAction = action || null; dialogSync(); typeLine(); }
@@ -650,7 +651,7 @@
 
   // Показывает раскрывшийся блок: верх не под шапкой, низ по возможности на экране
   function reveal(el) {
-    var r = el.getBoundingClientRect(), top = document.querySelector('.hud').offsetHeight + 14, vh = window.innerHeight;
+    var r = el.getBoundingClientRect(), top = document.querySelector('.hud').getBoundingClientRect().bottom + 14, vh = window.innerHeight;
     var dy = 0;
     if (r.top < top || r.height > vh - top - 12) dy = r.top - top;
     else if (r.bottom > vh - 12) dy = r.bottom - vh + 12;
@@ -682,6 +683,7 @@
     if (exit) return;
     exit = { zone: zone, t: 0, done: done, fired: false };
     hero.target = null; hero.cruise = null; hero.auto = false; puck.live = false; keys = {};
+    cheerT = 150; SFX.crowd();                          // трибуны провожают овацией
   }
   function updateExit() {
     var e = exit, z = e.zone, slide = 124 - NETS[z][0];          // на сколько сдвинуть свои ворота до центра
@@ -690,13 +692,13 @@
     for (var i = 0; i < 3; i++) {
       if (i === z) netOff[i] = slide * ease; else netAlpha[i] = 1 - Math.min(1, e.t / 30);
     }
-    // игрок: сначала встаёт над центром ворот, потом едет вниз, за них и за край площадки
-    var dx = 148 - hero.x;
-    hero.vx = Math.abs(dx) > 1.5 ? (dx > 0 ? 1.8 : -1.8) : 0;
+    // игрок объезжает свои ворота справа и уезжает за нижний край площадки
+    var sideX = 210, dx = sideX - hero.x;
+    hero.vx = Math.abs(dx) > 1.5 ? (dx > 0 ? 2 : -2) : 0;
     hero.vy = 0;
-    if (!hero.vx) { hero.x = 148; if (e.t > 30) hero.vy = 1.7; }
-    else if (hero.y < 150) hero.vy = 1;
-    if (hero.vx) hero.dir = hero.vx > 0 ? 1 : -1;
+    if (!hero.vx) { hero.x = sideX; if (e.t > 30) hero.vy = 1.8; }
+    else if (hero.y < 150) hero.vy = 1;                 // по пути подъезжает ближе к воротам
+    if (hero.vx) hero.dir = hero.vx > 0 ? 1 : -1; else hero.dir = -1;
     hero.x += hero.vx; hero.y += hero.vy;
     if (hero.y > H + 4 && !e.fired) { e.fired = true; e.fireT = e.t; e.done(); }
     // площадка возвращается в исходный вид, когда страница уже уехала к описанию пути
@@ -770,8 +772,6 @@
     // трое ворот: цвет - форма пути, выбранный путь подсвечен
     var flash = goalFlash > 0 && Math.floor(goalFlash / 4) % 2 === 0;
     g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center';
-    var heroBehind = exit && hero.y + 30 > GOAL_Y;       // игрок за воротами: рисуем его раньше них
-    if (heroBehind) drawHero(t);
     NETS.forEach(function (n, i) {
       if (netAlpha[i] <= 0) return;
       g.globalAlpha = netAlpha[i];
@@ -794,7 +794,7 @@
       g.globalAlpha = 1;
     });
 
-    if (!heroBehind) drawHero(t);
+    drawHero(t);
 
     // шайба
     if (puck.live) {
@@ -1039,20 +1039,20 @@
       '<button type="button" data-sheet="next"' + (idx === nodes.length - 1 ? ' disabled' : '') + ' aria-label="Следующий уровень">►</button>' +
       '<button type="button" data-sheet="close" class="sheet__close" aria-label="Закрыть">✕</button></div>';
     if (lv.locked) {
-      levelPanel.innerHTML = bar + '<div class="level__top"><span class="level__tag">' + lv.num + '</span><h3 class="level__title">' + (lv.title || '???') + ' · ЗАКРЫТО</h3></div>' +
-        '<p>Этот уровень пока закрыт. Он откроется в процессе игры.</p>';
+      levelPanel.innerHTML = bar + '<div class="sheet__body"><div class="level__top"><span class="level__tag">' + lv.num + '</span><h3 class="level__title">' + (lv.title || '???') + ' · ЗАКРЫТО</h3></div>' +
+        '<p>Этот уровень пока закрыт. Он откроется в процессе игры.</p></div>';
       if (byUser) SFX.locked();
     } else {
-      var html = bar + '<div class="level__top"><span class="level__tag' + (lv.boss ? ' level__tag--boss' : '') + '">' + (lv.boss ? 'ВОРОТА · ' : '') + lv.num + '</span>' +
+      var html = bar + '<div class="sheet__body"><div class="level__top"><span class="level__tag' + (lv.boss ? ' level__tag--boss' : '') + '">' + (lv.boss ? 'ВОРОТА · ' : '') + lv.num + '</span>' +
         '<h3 class="level__title">' + lv.title + '</h3></div>' +
         '<p class="level__q">«' + esc(lv.q) + '»</p><p>' + esc(lv.text) + '</p><div class="level__cols">';
       if (lv.sessions) html += '<div><h4>СЕССИИ НЕДЕЛИ</h4>' + list(lv.sessions) + '</div>';
-      html += '<div><h4>ТРОФЕИ УРОВНЯ</h4>' + list(lv.loot) + '</div></div>';
+      html += '<div><h4>ТРОФЕИ УРОВНЯ</h4>' + list(lv.loot) + '</div></div></div>';
       levelPanel.innerHTML = html;
       if (byUser) SFX.select();
     }
     if (!byUser) return;
-    if (narrow.matches) { levelPanel.scrollTop = 0; sheet(true); }
+    if (narrow.matches) sheet(true);
     else setTimeout(function () { reveal(levelPanel); }, 0);
   }
 
