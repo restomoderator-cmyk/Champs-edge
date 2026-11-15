@@ -123,6 +123,7 @@ p:last-child { margin-bottom: 0; }
   border: 2px solid var(--steel); padding: 8px; cursor: pointer; white-space: nowrap;
 }
 .hud__sound[aria-pressed="true"] { color: var(--green); border-color: var(--green); }
+.hud__sound[aria-pressed="false"] { text-decoration: line-through; }
 
 /* ---------- Титульный экран ---------- */
 .title {
@@ -344,7 +345,7 @@ p:last-child { margin-bottom: 0; }
 .pathinfo__meta dd { margin: 0; color: var(--cyan); }
 
 .stage__legend { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; margin: 18px 0 0; padding: 0; font-size: 21px; color: var(--mist); }
-.stage__legend b { display: inline-block; font-family: var(--head); font-weight: 400; font-size: 10px; color: var(--ink); padding: 5px 6px 4px; margin-right: 6px; box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--mist); }
+.stage__legend b { display: inline-block; width: 14px; height: 14px; vertical-align: -1px; font-family: var(--head); font-weight: 400; font-size: 10px; color: var(--ink); padding: 5px 6px 4px; margin-right: 6px; box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--mist); }
 .stage__help { margin-top: 14px; }
 
 /* ---------- Проводник ---------- */
@@ -380,3 +381,6 @@ p:last-child { margin-bottom: 0; }
   .guide__hero canvas { width: 48px; height: 60px; }
 }
 @media (prefers-reduced-motion: reduce) { .guide__hero canvas { animation: none; } }
+
+.hud__sound + .hud__sound { margin-left: -8px; }
+@media (max-width: 520px) { .hud__nav a:nth-child(n+3) { display: none; } }

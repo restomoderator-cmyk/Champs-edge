@@ -21,7 +21,8 @@
     <a href="#loot">ИНВЕНТАРЬ</a>
     <a href="#start">СТАРТ</a>
   </nav>
-  <button class="hud__sound" id="soundToggle" type="button" aria-pressed="false">ЗВУК: ВЫКЛ</button>
+  <button class="hud__sound" id="musicToggle" type="button" aria-pressed="false" aria-label="Музыка">МУЗЫКА</button>
+  <button class="hud__sound" id="soundToggle" type="button" aria-pressed="false" aria-label="Звуковые эффекты">ЗВУК</button>
 </header>
 
 <main id="top">
@@ -45,7 +46,7 @@
 <!-- Сцена с персонажем -->
 <section class="stage" id="rink">
   <div class="stage__screen">
-    <canvas id="scene" width="320" height="180" tabindex="0" aria-label="Пиксельная хоккейная площадка: игрок катается и бросает по трём воротам, каждые выбирают путь чемпиона"></canvas>
+    <canvas id="scene" width="320" height="200" tabindex="0" aria-label="Пиксельная хоккейная площадка: игрок катается и бросает вниз по трём воротам, каждые выбирают путь чемпиона"></canvas>
     <div class="stage__score" aria-live="polite">ГОЛЫ <span id="score">000</span></div>
   </div>
   <div class="dialog" id="dialog" role="button" tabindex="0" aria-label="Реплика проводника. Нажми, чтобы продолжить">
@@ -54,9 +55,9 @@
     <span class="dialog__next" aria-hidden="true">▼</span>
   </div>
   <ul class="stage__legend" aria-label="Ворота и пути">
-    <li><b style="background:#63c74d">1</b> молодой чемпион</li>
-    <li><b style="background:#e43b44">2</b> чемпион на пике</li>
-    <li><b style="background:#3b55b8">3</b> ветеран</li>
+    <li><b style="background:#63c74d"></b>путь проспекта</li>
+    <li><b style="background:#e43b44"></b>путь героя</li>
+    <li><b style="background:#3b55b8"></b>путь славного ветерана</li>
   </ul>
   <p class="stage__help">Забей в ворота — выберешь путь · СТРЕЛКИ или WASD — кататься · ПРОБЕЛ — бросок · или просто нажми на ворота</p>
 </section>

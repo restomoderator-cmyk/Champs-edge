@@ -8,34 +8,34 @@
   // Три пути чемпиона. jersey/trim — цвета формы персонажа.
   var PATHS = [
     {
-      id: 'young', num: 'ПУТЬ 1', name: 'ПУТЬ МОЛОДОГО ЧЕМПИОНА',
+      id: 'young', num: 'МОЛОДОЙ ИГРОК', short: 'ПРОСПЕКТ', name: 'ПУТЬ ПРОСПЕКТА',
       who: 'Для молодых игроков',
       text: 'Ты в самом начале карьеры. Закладываем фундамент, на котором она будет строиться.',
       stage: 'Начало карьеры', goal: 'Заложить фундамент',
       about: 'Впереди вся карьера, и привычки ещё не затвердели. Сейчас проще всего поставить голову правильно: потом это будет работать на тебя годами, а переучиваться всегда дороже.',
       focus: ['Понять, кто ты как игрок, раньше, чем это решат за тебя', 'Научиться учиться: ошибка — это материал, а не приговор', 'Собрать первые рабочие инструменты до того, как вырастут ставки'],
       jersey: '#63c74d', jerseyDark: '#3e8948', trim: '#ffffff', beard: null, letter: null,
-      hello: 'Ты выбрал путь молодого чемпиона. Карьера только начинается — самое время заложить фундамент.'
+      hello: 'Ты выбрал путь проспекта. Карьера только начинается — самое время заложить фундамент.'
     },
     {
-      id: 'peak', num: 'ПУТЬ 2', name: 'ПУТЬ ЧЕМПИОНА НА ПИКЕ',
+      id: 'peak', num: 'ИГРОК НА ПИКЕ', short: 'ГЕРОЙ', name: 'ПУТЬ ГЕРОЯ',
       who: 'Для сильных игроков',
       text: 'Ты уже хорошо играешь и хочешь стать лучшим. Ищем то, что отделяет хорошего игрока от великого.',
       stage: 'Расцвет карьеры', goal: 'Из хорошего — в лучшие',
       about: 'Мастерство и физика у тебя уже есть — как и у твоих соперников. На этом уровне разницу делает голова: кто надёжнее играет, когда всё решается.',
       focus: ['Решающие моменты: играть их так же, как обычные', 'Стабильность: лучшая игра не раз в месяц, а из матча в матч', 'Состояние потока по запросу, а не по везению'],
       jersey: '#e43b44', jerseyDark: '#9e2835', trim: '#ffffff', beard: null, letter: 'C',
-      hello: 'Ты выбрал путь чемпиона на пике. Ты уже хорош — будем делать из тебя лучшего.'
+      hello: 'Ты выбрал путь героя. Ты уже хорош — будем делать из тебя лучшего.'
     },
     {
-      id: 'veteran', num: 'ПУТЬ 3', name: 'ПУТЬ ВЕТЕРАНА',
+      id: 'veteran', num: 'ТОП-ИГРОК 30–35', short: 'ВЕТЕРАН', name: 'ПУТЬ СЛАВНОГО ВЕТЕРАНА',
       who: 'Для топ-игроков 30–35 лет',
       text: 'Ты многого добился и хочешь продлить или перезагрузить карьеру. Собираем систему под новый этап.',
       stage: '30–35 лет, топ-уровень', goal: 'Продлить или перезагрузить карьеру',
       about: 'У тебя есть то, чего нет у молодых, — опыт. Задача в том, чтобы он работал на тебя, пока тело требует всё больше внимания, а роль в команде меняется.',
       focus: ['Восстановление как часть профессии: сон, дыхание, длинный сезон', 'Новый ответ на вопрос «кто я как игрок» на новом этапе', 'Опыт вместо запаса сил: играть умнее, а не больше'],
       jersey: '#3b55b8', jerseyDark: '#1b2a6b', trim: '#feae34', beard: '#8b9bb4', letter: 'A',
-      hello: 'Ты выбрал путь ветерана. Опыт у тебя есть — продлим карьеру или запустим её заново.'
+      hello: 'Ты выбрал путь славного ветерана. Опыт у тебя есть — продлим карьеру или запустим её заново.'
     }
   ];
 
@@ -183,17 +183,69 @@
     } catch (e) { return null; }
   }
 
-  function setSound(on) {
-    soundOn = on;
-    if (on && !audio) {
+  function ensureAudio() {
+    if (!audio) {
       var AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) audio = new AC(); else soundOn = false;
+      if (AC) audio = new AC();
     }
     if (audio && audio.state === 'suspended') audio.resume();
+    return !!audio;
+  }
+
+  function setSound(on) {
+    soundOn = on && ensureAudio();
     soundBtn.setAttribute('aria-pressed', String(soundOn));
-    soundBtn.textContent = 'ЗВУК: ' + (soundOn ? 'ВКЛ' : 'ВЫКЛ');
     store('ce-sound', soundOn ? '1' : '0');
   }
+
+  /* Фоновая музыка: собственная короткая мелодия, синтезируется на лету.
+     Восемь тактов по кругу: бас, тихое арпеджио, мягкий бит; во второй
+     половине вступает тема. */
+  var musicBtn = document.getElementById('musicToggle');
+  var musicOn = false, musicGain = null, musicTimer = null, mStep = 0, mNext = 0;
+  var M_STEP = 0.15; // длительность шестнадцатой, сек
+  var M_CHORDS = [[62, 66, 69, 74], [59, 62, 66, 71], [55, 59, 62, 67], [57, 61, 64, 69]];
+  var M_ARP = [0, 1, 2, 3, 2, 1, 2, 3];
+  var M_LEAD = { 64: [78, 4], 68: [81, 4], 72: [86, 8], 80: [83, 6], 86: [81, 2], 88: [78, 8],
+    96: [79, 4], 100: [83, 4], 104: [86, 8], 112: [85, 4], 116: [83, 4], 120: [81, 8] };
+  function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  function mNote(freq, t, dur, type, vol, endFreq) {
+    var o = audio.createOscillator(), gn = audio.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, t + dur);
+    gn.gain.setValueAtTime(0.0001, t);
+    gn.gain.linearRampToValueAtTime(vol, t + 0.01);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(gn); gn.connect(musicGain);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  function mSchedule() {
+    while (mNext < audio.currentTime + 0.35) {
+      var st = mStep % 128, i = st % 16, ch = M_CHORDS[Math.floor(st / 16) % 4];
+      if (i % 4 === 0) mNote(hz(ch[0] - 24), mNext, 0.3, 'triangle', 0.5);
+      if (i === 14) mNote(hz(ch[0] - 12), mNext, 0.12, 'triangle', 0.35);
+      if (i % 2 === 0) mNote(hz(ch[M_ARP[i / 2]]), mNext, 0.11, 'square', 0.1);
+      if (i === 0 || i === 8) mNote(110, mNext, 0.12, 'sine', 0.5, 45);
+      var ld = M_LEAD[st];
+      if (ld) mNote(hz(ld[0]), mNext, ld[1] * M_STEP * 0.95, 'triangle', 0.4);
+      mNext += M_STEP; mStep++;
+    }
+  }
+  function mRun(run) {
+    clearInterval(musicTimer); musicTimer = null;
+    if (!run) return;
+    mNext = audio.currentTime + 0.06;
+    musicTimer = setInterval(mSchedule, 100); mSchedule();
+  }
+  function setMusic(on) {
+    musicOn = on && ensureAudio();
+    if (musicOn && !musicGain) { musicGain = audio.createGain(); musicGain.gain.value = 0.07; musicGain.connect(audio.destination); }
+    mRun(musicOn && !document.hidden);
+    musicBtn.setAttribute('aria-pressed', String(musicOn));
+    store('ce-music', musicOn ? '1' : '0');
+  }
+  musicBtn.addEventListener('click', function () { setMusic(!musicOn); });
+  document.addEventListener('visibilitychange', function () { if (musicOn) mRun(!document.hidden); });
 
   // notes: [частота, длительность, тип?] подряд
   function play(notes, vol) {
@@ -376,32 +428,31 @@
      ===================================================================== */
 
   var cv = document.getElementById('scene'), g = cv.getContext('2d');
-  var W = 320, H = 180, ICE_Y = 96;
+  // Вид сверху-сбоку: трибуны и борт вверху, трое ворот внизу, бросок — вниз.
+  var W = 320, H = 200, ICE_Y = 52, GOAL_Y = 172;
   var scoreEl = document.getElementById('score');
   var keys = {}, score = 0;
-  var hero = { x: 60, y: 110, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null };
+  var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null };
   var puck = { x: 0, y: 0, vx: 0, vy: 0, live: false };
-  var goalFlash = 0, banner = '', bannerT = 0;
-  var GOAL = { x: 278 };
-  // Трое ворот — по одним на каждый путь чемпиона: [верх, низ] проёма
-  var NETS = [[100, 122], [124, 146], [148, 170]];
-  var HERO_MIN_Y = 76, HERO_MAX_Y = 140, lastZone = -1;
+  var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1;
+  // Трое ворот — по одним на каждый путь чемпиона: [левая штанга, правая штанга]
+  var NETS = [[26, 98], [124, 196], [222, 294]];
+  var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 126;
 
   // Трибуны — заранее сгенерированные зрители
   var crowd = [], CROWD_COLS = ['#3a4466', '#5a6988', '#9e2835', '#124e89', '#3e8948', '#733e39', '#262b44', '#68386c'];
   var seed = 7;
   function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
-  for (var cy = 0; cy < 9; cy++) for (var cx = 0; cx < 90; cx++) {
-    crowd.push({ x: cx * 4 - 16 + (cy % 2) * 2, y: 14 + cy * 6, c: CROWD_COLS[Math.floor(rnd() * CROWD_COLS.length)], p: rnd() });
+  for (var cy = 0; cy < 4; cy++) for (var cx = 0; cx < 90; cx++) {
+    crowd.push({ x: cx * 4 - 16 + (cy % 2) * 2, y: 10 + cy * 6, c: CROWD_COLS[Math.floor(rnd() * CROWD_COLS.length)], p: rnd() });
   }
 
   function drawScene(t) {
-    var par = (hero.x - 120) * 0.08;
+    var par = (hero.x - 150) * 0.05;
 
-    // свод арены
-    g.fillStyle = '#0c0a14'; g.fillRect(0, 0, W, 12);
-    g.fillStyle = '#181425'; g.fillRect(0, 12, W, 60);
-    // зрители
+    // свод арены и зрители
+    g.fillStyle = '#0c0a14'; g.fillRect(0, 0, W, 6);
+    g.fillStyle = '#181425'; g.fillRect(0, 6, W, 28);
     crowd.forEach(function (s) {
       var x = Math.round(s.x - par), up = Math.sin(t / 300 + s.p * 40) > 0.92 ? 1 : 0;
       g.fillStyle = s.c; g.fillRect(x, s.y - up, 3, 4);
@@ -410,62 +461,60 @@
     // вспышки камер
     for (var f = 0; f < 3; f++) {
       var k = Math.floor(t / 180 + f * 37);
-      var fx = (k * 73 + f * 51) % W, fy = 14 + (k * 29) % 50;
+      var fx = (k * 73 + f * 51) % W, fy = 9 + (k * 29) % 20;
       if ((k + f) % 4 === 0) { g.fillStyle = '#ffffff'; g.fillRect(fx, fy, 2, 2); g.fillRect(fx - 1, fy, 4, 1); g.fillRect(fx, fy - 1, 1, 4); }
     }
     // прожекторы
     g.fillStyle = '#fee761';
-    [40, 120, 200].forEach(function (lx) { g.fillRect(lx - 4, 4, 8, 3); });
-    g.fillStyle = 'rgba(254,231,97,0.05)';
-    [40, 120, 200].forEach(function (lx) {
-      g.beginPath(); g.moveTo(lx - 4, 7); g.lineTo(lx + 4, 7); g.lineTo(lx + 34, ICE_Y); g.lineTo(lx - 34, ICE_Y); g.fill();
-    });
+    [60, 160, 260].forEach(function (lx) { g.fillRect(lx - 4, 1, 8, 2); });
 
     // стекло и борт
     var bo = Math.round(-par * 2);
-    g.fillStyle = 'rgba(192,203,220,0.18)'; g.fillRect(0, 66, W, 12);
+    g.fillStyle = 'rgba(192,203,220,0.18)'; g.fillRect(0, 32, W, 8);
     g.fillStyle = '#8b9bb4';
-    for (var gx = bo % 40 - 40; gx < W; gx += 40) g.fillRect(gx, 66, 1, 12);
-    g.fillStyle = '#e43b44'; g.fillRect(0, 78, W, 2);
-    g.fillStyle = '#ffffff'; g.fillRect(0, 80, W, 12);
-    g.fillStyle = '#fee761'; g.fillRect(0, 92, W, 4);
-    // «реклама» на борту
+    for (var gx = bo % 40 - 40; gx < W; gx += 40) g.fillRect(gx, 32, 1, 8);
+    g.fillStyle = '#e43b44'; g.fillRect(0, 40, W, 2);
+    g.fillStyle = '#ffffff'; g.fillRect(0, 42, W, 8);
+    g.fillStyle = '#fee761'; g.fillRect(0, 50, W, 2);
     var ads = ['#0099db', '#e43b44', '#63c74d', '#feae34'];
     for (var a = -1; a < 6; a++) {
       var ax = a * 72 + ((bo % 72) + 72) % 72 - 60;
-      g.fillStyle = ads[((a % 4) + 4) % 4]; g.fillRect(ax, 82, 44, 8);
-      g.fillStyle = '#ffffff'; g.fillRect(ax + 4, 85, 20, 2); g.fillRect(ax + 28, 85, 10, 2);
+      g.fillStyle = ads[((a % 4) + 4) % 4]; g.fillRect(ax, 43, 44, 6);
+      g.fillStyle = '#ffffff'; g.fillRect(ax + 4, 45, 20, 2); g.fillRect(ax + 28, 45, 10, 2);
     }
 
     // лёд
     g.fillStyle = '#e8f2fb'; g.fillRect(0, ICE_Y, W, H - ICE_Y);
     g.fillStyle = '#d3e3f2';
-    for (var iy = ICE_Y + 6; iy < H; iy += 14) g.fillRect(0, iy, W, 1);
+    for (var iy = ICE_Y + 8; iy < H; iy += 14) g.fillRect(0, iy, W, 1);
     g.fillStyle = '#c0cbdc'; g.fillRect(0, ICE_Y, W, 2);
-    // блики от ламп
     g.fillStyle = 'rgba(255,255,255,0.7)';
-    [40, 120, 200].forEach(function (lx) { g.fillRect(lx - 12, 128, 24, 1); g.fillRect(lx - 6, 131, 12, 1); });
-    // синяя линия и линия ворот
-    g.fillStyle = '#0099db'; g.fillRect(150, ICE_Y + 2, 5, H);
-    g.fillStyle = '#e43b44'; g.fillRect(GOAL.x + 2, ICE_Y + 2, 2, H);
+    [60, 160, 260].forEach(function (lx) { g.fillRect(lx - 12, 74, 24, 1); g.fillRect(lx - 6, 77, 12, 1); });
+    // синяя линия, точки вбрасывания, линия ворот
+    g.fillStyle = '#0099db'; g.fillRect(0, 106, W, 4);
+    g.fillStyle = '#e43b44';
+    [62, 160, 258].forEach(function (dx) { g.fillRect(dx - 2, 138, 4, 4); });
+    g.fillRect(0, GOAL_Y, W, 2);
+
     // трое ворот: цвет — форма пути, выбранный путь подсвечен
     var flash = goalFlash > 0 && Math.floor(goalFlash / 4) % 2 === 0;
+    g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center';
     NETS.forEach(function (n, i) {
-      var p = PATHS[i], top = n[0], bot = n[1], hit = flash && lastZone === i, cur = p === currentPath;
-      g.fillStyle = '#9fd6f5'; g.fillRect(GOAL.x - 10, top + 2, 12, bot - top - 4);       // площадь ворот
-      g.fillStyle = cur ? p.jerseyDark : '#262b44'; g.fillRect(GOAL.x + 4, top, 18, bot - top);
-      g.fillStyle = hit ? '#fee761' : '#c0cbdc';                                            // сетка
-      for (var ny = top + 2; ny < bot; ny += 3) g.fillRect(GOAL.x + 4, ny, 18, 1);
-      for (var nx = GOAL.x + 6; nx < GOAL.x + 22; nx += 3) g.fillRect(nx, top, 1, bot - top);
-      g.fillStyle = hit ? '#fee761' : p.jersey;                                             // рама
-      g.fillRect(GOAL.x + 2, top - 2, 22, 2); g.fillRect(GOAL.x + 2, bot, 22, 2);
-      g.fillRect(GOAL.x + 22, top - 2, 2, bot - top + 4);
-      g.fillRect(GOAL.x + 2, top - 2, 2, 3); g.fillRect(GOAL.x + 2, bot - 1, 2, 3);
-      // номер пути
-      g.fillStyle = OUT; g.fillRect(GOAL.x + 27, top + 5, 12, 12);
-      g.fillStyle = cur ? '#fee761' : p.jersey; g.fillRect(GOAL.x + 28, top + 6, 10, 10);
-      g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'left';
-      g.fillStyle = OUT; g.fillText(String(i + 1), GOAL.x + 30, top + 15);
+      var p = PATHS[i], l = n[0], r = n[1], hit = flash && lastZone === i, cur = p === currentPath;
+      g.fillStyle = '#e43b44'; g.fillRect(l + 7, GOAL_Y - 9, r - l - 14, 1);            // площадь ворот
+      g.fillRect(l + 7, GOAL_Y - 9, 1, 9); g.fillRect(r - 8, GOAL_Y - 9, 1, 9);
+      g.fillStyle = '#9fd6f5'; g.fillRect(l + 8, GOAL_Y - 8, r - l - 16, 8);
+      g.fillStyle = cur ? p.jerseyDark : '#262b44'; g.fillRect(l, GOAL_Y + 2, r - l, 20);
+      g.fillStyle = hit ? '#fee761' : '#5a6988';                                         // сетка
+      for (var ny = GOAL_Y + 4; ny < GOAL_Y + 22; ny += 3) g.fillRect(l, ny, r - l, 1);
+      for (var nx = l + 2; nx < r; nx += 3) g.fillRect(nx, GOAL_Y + 2, 1, 20);
+      g.fillStyle = hit ? '#fee761' : p.jersey;                                          // рама
+      g.fillRect(l - 2, GOAL_Y - 1, 2, 25); g.fillRect(r, GOAL_Y - 1, 2, 25);
+      g.fillRect(l - 2, GOAL_Y + 22, r - l + 4, 2);
+      // название пути
+      var tw = p.short.length * 8 + 4, mx = (l + r) / 2;
+      g.fillStyle = OUT; g.fillRect(Math.round(mx - tw / 2), GOAL_Y + 7, tw, 11);
+      g.fillStyle = cur ? '#fee761' : '#ffffff'; g.fillText(p.short, mx, GOAL_Y + 16);
     });
 
     // игрок
@@ -479,17 +528,23 @@
 
     // шайба
     if (puck.live) {
-      g.fillStyle = 'rgba(38,43,68,0.25)'; g.fillRect(Math.round(puck.x), Math.round(puck.y) + 3, 5, 1);
-      g.fillStyle = OUT; g.fillRect(Math.round(puck.x), Math.round(puck.y), 5, 3);
-      g.fillStyle = '#5a6988'; g.fillRect(Math.round(puck.x) + 1, Math.round(puck.y), 3, 1);
+      g.fillStyle = OUT; g.fillRect(Math.round(puck.x), Math.round(puck.y), 5, 4);
+      g.fillStyle = '#5a6988'; g.fillRect(Math.round(puck.x) + 1, Math.round(puck.y) + 1, 3, 1);
     }
 
     // надпись
     if (bannerT > 0) {
-      g.font = '16px "Press Start 2P", monospace'; g.textAlign = 'center';
-      var bx = 160, byy = 58 + (bannerT > 50 ? (bannerT - 50) : 0);
-      g.fillStyle = OUT; [[-2, 0], [2, 0], [0, -2], [0, 2], [2, 2]].forEach(function (o) { g.fillText(banner, bx + o[0], byy + o[1]); });
-      g.fillStyle = Math.floor(bannerT / 5) % 2 ? '#fee761' : '#ffffff'; g.fillText(banner, bx, byy);
+      var by0 = 138 + (bannerT > 60 ? (bannerT - 60) : 0), col = Math.floor(bannerT / 5) % 2 ? '#fee761' : '#ffffff';
+      var shadow = [[-2, 0], [2, 0], [0, -2], [0, 2], [2, 2]];
+      g.textAlign = 'center';
+      g.font = '16px "Press Start 2P", monospace';
+      g.fillStyle = OUT; shadow.forEach(function (o) { g.fillText(banner, 160 + o[0], by0 + o[1]); });
+      g.fillStyle = col; g.fillText(banner, 160, by0);
+      if (banner2) {
+        g.font = '8px "Press Start 2P", monospace';
+        g.fillStyle = OUT; g.fillRect(160 - banner2.length * 4 - 4, by0 + 5, banner2.length * 8 + 8, 13);
+        g.fillStyle = '#ffffff'; g.fillText(banner2, 160, by0 + 15);
+      }
     }
   }
 
@@ -497,11 +552,11 @@
     if (puck.live || hero.shootT > 0) return;
     hero.dir = 1; hero.shootT = 14;
     puck.live = true;
-    puck.x = hero.x + 28; puck.y = hero.y + 27;
+    puck.x = hero.x + 25; puck.y = hero.y + 29;
     // чем дальше от ворот, тем больше разброс
-    var dist = Math.max(0, GOAL.x - puck.x);
-    var spread = (Math.random() - 0.5) * (0.25 + dist / 260);
-    puck.vx = 4.2; puck.vy = spread * 0.5;
+    var dist = Math.max(0, GOAL_Y - puck.y);
+    puck.vx = (Math.random() - 0.5) * (0.15 + dist / 160);
+    puck.vy = 4;
     SFX.shot();
   }
 
@@ -511,37 +566,37 @@
     hero.vx = 0; hero.vy = 0;
     if (left || right || up || down) {
       hero.auto = false; hero.idleT = 0; hero.target = null;
-      hero.vx = right ? 1.4 : left ? -1.4 : 0;
-      hero.vy = down ? 1.1 : up ? -1.1 : 0;
+      hero.vx = right ? 1.6 : left ? -1.6 : 0;
+      hero.vy = down ? 1.2 : up ? -1.2 : 0;
     } else if (hero.target !== null) {
-      // нажали на лёд: подъезжаем на эту высоту и бросаем
-      var dy = hero.target - hero.y;
+      // нажали на лёд: встаём напротив этой точки и бросаем
+      var dx = hero.target - hero.x;
       hero.auto = false; hero.idleT = 0;
-      if (Math.abs(dy) <= 1.5) { hero.y = hero.target; hero.target = null; shoot(); }
-      else hero.vy = dy > 0 ? 1.5 : -1.5;
+      if (Math.abs(dx) <= 2) { hero.x = hero.target; hero.target = null; shoot(); }
+      else hero.vx = dx > 0 ? 2.4 : -2.4;
     } else if (!hero.auto) { hero.idleT += dt; if (hero.idleT > 6000) hero.auto = true; }
     if (hero.auto && hero.shootT <= 0) {
       hero.vx = hero.autoDir * 0.6;
-      if (hero.x > 190) hero.autoDir = -1;
+      if (hero.x > 260) hero.autoDir = -1;
       if (hero.x < 24) hero.autoDir = 1;
     }
     if (hero.vx) hero.dir = hero.vx > 0 ? 1 : -1;
-    hero.x = Math.max(6, Math.min(220, hero.x + hero.vx));
+    hero.x = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, hero.x + hero.vx));
     hero.y = Math.max(HERO_MIN_Y, Math.min(HERO_MAX_Y, hero.y + hero.vy));
     if (hero.shootT > 0) hero.shootT--;
 
     if (puck.live) {
       puck.x += puck.vx; puck.y += puck.vy;
-      if (puck.y < ICE_Y + 4 || puck.y > H - 6) { puck.vy *= -1; }
-      if (puck.x >= GOAL.x + 2) {
+      if (puck.x < 2 || puck.x > W - 7) puck.vx *= -1;
+      if (puck.y >= GOAL_Y) {
         puck.live = false;
-        var cy = puck.y + 1, zone = -1;
-        NETS.forEach(function (n, i) { if (cy > n[0] && cy < n[1]) zone = i; });
+        var pcx = puck.x + 2.5, zone = -1;
+        NETS.forEach(function (n, i) { if (pcx > n[0] && pcx < n[1]) zone = i; });
         if (zone >= 0) {
           score++; scoreEl.textContent = ('00' + score).slice(-3);
-          lastZone = zone; goalFlash = 70; banner = 'ГОЛ! ПУТЬ ' + (zone + 1); bannerT = 80; SFX.goal();
+          lastZone = zone; goalFlash = 70; banner = 'ГОЛ!'; banner2 = PATHS[zone].name; bannerT = 90; SFX.goal();
           choosePath(PATHS[zone], true, true);
-        } else { banner = 'ШТАНГА!'; bannerT = 40; SFX.miss(); }
+        } else { banner = 'МИМО!'; banner2 = ''; bannerT = 40; SFX.miss(); }
       }
     }
     if (goalFlash > 0) goalFlash--;
@@ -577,9 +632,10 @@
   window.addEventListener('blur', function () { keys = {}; });
   cv.addEventListener('pointerdown', function (e) {
     e.preventDefault();
-    var r = cv.getBoundingClientRect(), cy = (e.clientY - r.top) / r.height * H;
-    if (cy < ICE_Y) { shoot(); return; }
-    hero.target = Math.max(HERO_MIN_Y, Math.min(HERO_MAX_Y, Math.round(cy - 28)));
+    var r = cv.getBoundingClientRect();
+    var px = (e.clientX - r.left) / r.width * W, py = (e.clientY - r.top) / r.height * H;
+    if (py < ICE_Y) { shoot(); return; }
+    hero.target = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, Math.round(px - 27)));
   });
 
   /* =====================================================================
@@ -712,11 +768,12 @@
     'Привет! Я твой проводник по The Champion\'s Edge.',
     'Это программа ментальной подготовки для хоккеистов. Один на один с тренером.',
     '12 недель — 12 уровней. С каждого уровня ты уносишь инструмент, который остаётся с тобой.',
-    'Выбери свой путь чемпиона броском: справа трое ворот, каждые — свой путь. Забей в нужные. Описание путей — ниже.'
+    'Выбери свой путь чемпиона броском: внизу трое ворот, каждые — свой путь. Забей в нужные. Описание путей — ниже.'
   ]);
 
   document.getElementById('pressStart').addEventListener('click', function () {
     if (store('ce-sound') !== '0') setSound(true);
+    if (store('ce-music') !== '0' && !musicOn) setMusic(true);
     SFX.start();
     cv.focus({ preventScroll: true }); // чтобы ПРОБЕЛ сразу бросал, а не нажимал кнопку
     document.getElementById('rink').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
