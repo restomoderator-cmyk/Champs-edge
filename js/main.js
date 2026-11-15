@@ -359,9 +359,12 @@
   }
   var sfxNoise = null;
   // Рёв трибун и сирена после гола
-  function crowdRoar() {
-    if (!soundOn || !audio) return;
+  // sustain = true: овация держится, пока её не остановят (возвращает функцию остановки);
+  // иначе короткий возглас, как после гола.
+  function crowdRoar(sustain) {
+    if (!soundOn || !audio) return null;
     var t = audio.currentTime + 0.02, out = audio.destination;
+    var len = sustain ? 12 : 2.7;                       // для овации это только потолок на случай сбоя
     if (!sfxNoise) {
       sfxNoise = audio.createBuffer(1, audio.sampleRate * 2, audio.sampleRate);
       var d = sfxNoise.getChannelData(0);
@@ -373,51 +376,74 @@
     var mix = audio.createGain(), roar = audio.createGain();
     var f1 = audio.createBiquadFilter(), f2 = audio.createBiquadFilter(), g2 = audio.createGain();
     f1.type = 'bandpass'; f1.Q.value = 4; f2.type = 'bandpass'; f2.Q.value = 6; g2.gain.value = 0.6;
-    //            «в/у»        «а»              «у-у-у»
     f1.frequency.setValueAtTime(320, t); f1.frequency.linearRampToValueAtTime(780, t + 0.3);
-    f1.frequency.setValueAtTime(780, t + 0.55); f1.frequency.linearRampToValueAtTime(340, t + 1.2);
     f2.frequency.setValueAtTime(700, t); f2.frequency.linearRampToValueAtTime(1250, t + 0.3);
-    f2.frequency.setValueAtTime(1250, t + 0.55); f2.frequency.linearRampToValueAtTime(760, t + 1.2);
+    if (!sustain) {                                     // после гола гласная закрывается в «у-у-у»
+      f1.frequency.setValueAtTime(780, t + 0.55); f1.frequency.linearRampToValueAtTime(340, t + 1.2);
+      f2.frequency.setValueAtTime(1250, t + 0.55); f2.frequency.linearRampToValueAtTime(760, t + 1.2);
+    }
     mix.connect(f1); mix.connect(f2); f1.connect(roar); f2.connect(g2); g2.connect(roar);
     roar.gain.setValueAtTime(0.0001, t);
     roar.gain.exponentialRampToValueAtTime(0.16, t + 0.3);
-    roar.gain.setValueAtTime(0.16, t + 0.9);
-    roar.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
+    if (!sustain) { roar.gain.setValueAtTime(0.16, t + 0.9); roar.gain.exponentialRampToValueAtTime(0.0001, t + 2.6); }
     roar.connect(out);
+    var sources = [];
     for (var v = 0; v < 10; v++) {                 // десять «голосов» разной высоты
       var o = audio.createOscillator(), vg = audio.createGain();
       var base = 120 + Math.random() * 150, st = t + Math.random() * 0.08;
       o.type = 'sawtooth';
       o.frequency.setValueAtTime(base * 0.9, st);
       o.frequency.linearRampToValueAtTime(base * (1.25 + Math.random() * 0.1), st + 0.35);
-      o.frequency.linearRampToValueAtTime(base * (0.8 + Math.random() * 0.08), st + 2.4);
+      if (!sustain) o.frequency.linearRampToValueAtTime(base * (0.8 + Math.random() * 0.08), st + 2.4);
       vg.gain.value = 0.12;
-      o.connect(vg); vg.connect(mix); o.start(st); o.stop(t + 2.7);
+      o.connect(vg); vg.connect(mix); o.start(st); o.stop(t + len); sources.push(o);
     }
     var src = audio.createBufferSource(), ng = audio.createGain();   // дыхание толпы
     src.buffer = sfxNoise; src.loop = true; ng.gain.value = 0.5;
-    src.connect(ng); ng.connect(mix); src.start(t); src.stop(t + 2.7);
+    src.connect(ng); ng.connect(mix); src.start(t); src.stop(t + len); sources.push(src);
     // Аплодисменты: отдельные короткие хлопки, а не сплошное шипение
-    for (var c = 0; c < 34; c++) {
-      var ct = t + 0.25 + Math.pow(Math.random(), 1.4) * 2.3;
-      var cs = audio.createBufferSource(), cb = audio.createBiquadFilter(), cg = audio.createGain();
-      cs.buffer = sfxNoise;
-      cb.type = 'bandpass'; cb.frequency.value = 900 + Math.random() * 900; cb.Q.value = 1.2;
-      cg.gain.setValueAtTime(0.012 + Math.random() * 0.012, ct);
-      cg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.035);
-      cs.connect(cb); cb.connect(cg); cg.connect(out);
-      cs.start(ct, Math.random() * 1.5, 0.05);
+    function claps(from, span, count) {
+      for (var c = 0; c < count; c++) {
+        var ct = from + Math.random() * span;
+        var cs = audio.createBufferSource(), cb = audio.createBiquadFilter(), cg = audio.createGain();
+        cs.buffer = sfxNoise;
+        cb.type = 'bandpass'; cb.frequency.value = 900 + Math.random() * 900; cb.Q.value = 1.2;
+        cg.gain.setValueAtTime(0.012 + Math.random() * 0.012, ct);
+        cg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.035);
+        cs.connect(cb); cb.connect(cg); cg.connect(out);
+        cs.start(ct, Math.random() * 1.5, 0.05);
+      }
     }
-    [116.5, 174.6].forEach(function (fr) {           // сирена
-      var o = audio.createOscillator(), og = audio.createGain();
-      o.type = 'sawtooth'; o.frequency.value = fr;
-      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.008, t + 0.05);
-      og.gain.setValueAtTime(0.008, t + 0.6); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
-      o.connect(og); og.connect(out); o.start(t); o.stop(t + 0.9);
-    });
+    if (!sustain) {
+      claps(t + 0.25, 2.3, 34);
+      [116.5, 174.6].forEach(function (fr) {           // сирена
+        var o2 = audio.createOscillator(), og = audio.createGain();
+        o2.type = 'sawtooth'; o2.frequency.value = fr;
+        og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.008, t + 0.05);
+        og.gain.setValueAtTime(0.008, t + 0.6); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+        o2.connect(og); og.connect(out); o2.start(t); o2.stop(t + 0.9);
+      });
+      return null;
+    }
+    // овация: хлопки подсыпаются, пока она идёт; остановка - плавное затихание
+    claps(t + 0.2, 0.5, 8);
+    var clapTimer = setInterval(function () { claps(audio.currentTime + 0.02, 0.5, 8); }, 500);
+    var safety = setTimeout(stop, (len - 1) * 1000);
+    function stop() {
+      if (!clapTimer) return;
+      clearInterval(clapTimer); clapTimer = null; clearTimeout(safety);
+      var now = audio.currentTime;
+      roar.gain.cancelScheduledValues(now);
+      roar.gain.setValueAtTime(Math.max(roar.gain.value, 0.0001), now);
+      roar.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+      claps(now, 0.6, 6);
+      sources.forEach(function (n) { try { n.stop(now + 0.9); } catch (err) {} });
+    }
+    return stop;
   }
   var SFX = {
-    crowd: crowdRoar,
+    crowd: function () { crowdRoar(false); },
+    ovation: function () { return crowdRoar(true); },
     blip: function () { play([[880, 0.04]], 0.03); },
     move: function () { play([[440, 0.05], [660, 0.06]]); },
     select: function () { play([[523, 0.07], [659, 0.07], [784, 0.07], [1047, 0.14]]); },
@@ -683,7 +709,7 @@
     if (exit) return;
     exit = { zone: zone, t: 0, done: done, fired: false };
     hero.target = null; hero.cruise = null; hero.auto = false; puck.live = false; keys = {};
-    cheerT = 150; SFX.crowd();                          // трибуны провожают овацией
+    exit.stopOvation = SFX.ovation();                   // трибуны провожают овацией, пока игрок не скроется
   }
   function updateExit() {
     var e = exit, z = e.zone, slide = 124 - NETS[z][0];          // на сколько сдвинуть свои ворота до центра
@@ -700,7 +726,8 @@
     else if (hero.y < 150) hero.vy = 1;                 // по пути подъезжает ближе к воротам
     if (hero.vx) hero.dir = hero.vx > 0 ? 1 : -1; else hero.dir = -1;
     hero.x += hero.vx; hero.y += hero.vy;
-    if (hero.y > H + 4 && !e.fired) { e.fired = true; e.fireT = e.t; e.done(); }
+    if (!e.fired) cheerT = 45;                          // трибуна на ногах, пока игрок на площадке
+    if (hero.y > H + 4 && !e.fired) { e.fired = true; e.fireT = e.t; if (e.stopOvation) e.stopOvation(); e.done(); }
     // площадка возвращается в исходный вид, когда страница уже уехала к описанию пути
     if (e.fired && e.t - e.fireT > 100) {
       exit = null; netOff = [0, 0, 0]; netAlpha = [1, 1, 1];
