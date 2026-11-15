@@ -555,3 +555,31 @@ ul.stage__help--touch b { font-weight: 400; color: var(--yellow); }
   .paths__nav button:disabled { background: var(--slate); color: var(--steel); box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--slate); cursor: default; }
   .pathinfo { margin-top: 22px; }
 }
+
+/* ---------- Описание уровня: окно поверх карты на телефоне ---------- */
+.sheet__bar, .sheet__back { display: none; }
+.guide--under { visibility: hidden; }
+@media (max-width: 760px) {
+  #levelPanel {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0; min-height: 0;
+    max-height: 76svh; overflow-y: auto; overscroll-behavior: contain;
+    padding: 0 18px calc(22px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 calc(var(--px) * -1) 0 0 var(--white), 0 calc(var(--px) * -2) 0 0 var(--ink);
+    transform: translateY(105%); visibility: hidden;
+    transition: transform .22s steps(6), visibility 0s .22s;
+  }
+  #levelPanel.is-open { transform: none; visibility: visible; transition: transform .22s steps(6); }
+  .sheet__back { display: block; position: fixed; inset: 0; z-index: 39; background: rgba(12, 10, 20, .72); }
+  .sheet__bar {
+    display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 1;
+    margin: 0 -18px 16px; padding: 12px 18px; background: var(--ink);
+    font-family: var(--head); font-size: 10px; color: var(--mist); border-bottom: var(--px) solid var(--slate);
+  }
+  .sheet__bar button {
+    font-family: var(--head); font-size: 13px; line-height: 1; color: var(--ink); background: var(--yellow);
+    border: 0; width: 44px; height: 38px; cursor: pointer;
+  }
+  .sheet__bar button:disabled { background: var(--slate); color: var(--steel); }
+  .sheet__bar .sheet__close { margin-left: auto; background: var(--red); color: var(--white); }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) { #levelPanel, #levelPanel.is-open { transition: none; } }

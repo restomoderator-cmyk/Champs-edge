@@ -573,7 +573,7 @@
     drawFace(); drawGuide(); guideCta.href = cta.href;
     if (byUser) {
       store('ce-path', p.id);
-      say([p.hello], { label: 'К ОПИСАНИЮ ПУТИ ▼', target: pathPanel });
+      say([p.hello], { label: 'ИЗУЧИТЬ ПУТЬ ▼', target: pathPanel, exit: true });
       if (!quiet) {
         // выбрали карточкой: показываем раскрывшееся описание
         SFX.select(); guideTuck();
@@ -636,7 +636,11 @@
   }
   dialogGo.addEventListener('click', function (e) {
     e.stopPropagation(); SFX.move();
-    dialogAction.target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    var target = dialogAction.target;
+    function go() { target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }
+    // после выбора пути игрок сначала уезжает за свои ворота, «вниз по странице», и только потом листаем
+    if (dialogAction.exit && currentPath && !reduced && onScreen(cv)) startExit(PATHS.indexOf(currentPath), go);
+    else go();
   });
   dialogGo.addEventListener('keydown', function (e) { e.stopPropagation(); });
   dialog.addEventListener('click', advance);
@@ -672,6 +676,35 @@
   // Трое ворот - по одним на каждый путь чемпиона: [левая штанга, правая штанга]
   var NETS = [[26, 98], [124, 196], [222, 294]];
   var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 166;
+  // Уход с площадки: чужие ворота гаснут, свои встают в центр, игрок закатывается за них
+  var exit = null, netOff = [0, 0, 0], netAlpha = [1, 1, 1];
+  function startExit(zone, done) {
+    if (exit) return;
+    exit = { zone: zone, t: 0, done: done, fired: false };
+    hero.target = null; hero.cruise = null; hero.auto = false; puck.live = false; keys = {};
+  }
+  function updateExit() {
+    var e = exit, z = e.zone, slide = 124 - NETS[z][0];          // на сколько сдвинуть свои ворота до центра
+    e.t++;
+    var k = Math.min(1, e.t / 45), ease = k * k * (3 - 2 * k);
+    for (var i = 0; i < 3; i++) {
+      if (i === z) netOff[i] = slide * ease; else netAlpha[i] = 1 - Math.min(1, e.t / 30);
+    }
+    // игрок: сначала встаёт над центром ворот, потом едет вниз, за них и за край площадки
+    var dx = 148 - hero.x;
+    hero.vx = Math.abs(dx) > 1.5 ? (dx > 0 ? 1.8 : -1.8) : 0;
+    hero.vy = 0;
+    if (!hero.vx) { hero.x = 148; if (e.t > 30) hero.vy = 1.7; }
+    else if (hero.y < 150) hero.vy = 1;
+    if (hero.vx) hero.dir = hero.vx > 0 ? 1 : -1;
+    hero.x += hero.vx; hero.y += hero.vy;
+    if (hero.y > H + 4 && !e.fired) { e.fired = true; e.fireT = e.t; e.done(); }
+    // площадка возвращается в исходный вид, когда страница уже уехала к описанию пути
+    if (e.fired && e.t - e.fireT > 100) {
+      exit = null; netOff = [0, 0, 0]; netAlpha = [1, 1, 1];
+      hero.x = 60; hero.y = 66; hero.dir = 1; hero.auto = true; hero.autoDir = 1;
+    }
+  }
 
   // Трибуны - заранее сгенерированные зрители
   var crowd = [], CROWD_COLS = ['#3a4466', '#5a6988', '#9e2835', '#124e89', '#3e8948', '#733e39', '#262b44', '#68386c'];
@@ -737,8 +770,13 @@
     // трое ворот: цвет - форма пути, выбранный путь подсвечен
     var flash = goalFlash > 0 && Math.floor(goalFlash / 4) % 2 === 0;
     g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center';
+    var heroBehind = exit && hero.y + 30 > GOAL_Y;       // игрок за воротами: рисуем его раньше них
+    if (heroBehind) drawHero(t);
     NETS.forEach(function (n, i) {
-      var p = PATHS[i], l = n[0], r = n[1], hit = flash && lastZone === i, cur = p === currentPath;
+      if (netAlpha[i] <= 0) return;
+      g.globalAlpha = netAlpha[i];
+      var off = Math.round(netOff[i]);
+      var p = PATHS[i], l = n[0] + off, r = n[1] + off, hit = flash && lastZone === i, cur = p === currentPath;
       g.fillStyle = '#e43b44'; g.fillRect(l + 7, GOAL_Y - 9, r - l - 14, 1);            // площадь ворот
       g.fillRect(l + 7, GOAL_Y - 9, 1, 9); g.fillRect(r - 8, GOAL_Y - 9, 1, 9);
       g.fillStyle = '#9fd6f5'; g.fillRect(l + 8, GOAL_Y - 8, r - l - 16, 8);
@@ -753,16 +791,10 @@
       var tw = p.short.length * 8 + 4, mx = (l + r) / 2;
       g.fillStyle = OUT; g.fillRect(Math.round(mx - tw / 2), GOAL_Y + 7, tw, 11);
       g.fillStyle = cur ? '#fee761' : '#ffffff'; g.fillText(p.short, mx, GOAL_Y + 16);
+      g.globalAlpha = 1;
     });
 
-    // игрок
-    var hy = Math.round(hero.y), moving = hero.vx !== 0 || hero.vy !== 0;
-    var frame = moving ? Math.floor(t / 140) % 2 : Math.floor(t / 500) % 2;
-    g.fillStyle = 'rgba(38,43,68,0.25)'; g.fillRect(Math.round(hero.x) - 1, hy + 32, 22, 3);
-    g.save();
-    if (hero.dir < 0) { g.translate(Math.round(hero.x) * 2 + 18, 0); g.scale(-1, 1); }
-    drawPlayer(g, Math.round(hero.x), hy, look(), frame, hero.shootT > 0);
-    g.restore();
+    if (!heroBehind) drawHero(t);
 
     // шайба
     if (puck.live) {
@@ -786,7 +818,18 @@
     }
   }
 
+  function drawHero(t) {
+    var hy = Math.round(hero.y), moving = hero.vx !== 0 || hero.vy !== 0;
+    var frame = moving ? Math.floor(t / 140) % 2 : Math.floor(t / 500) % 2;
+    g.fillStyle = 'rgba(38,43,68,0.25)'; g.fillRect(Math.round(hero.x) - 1, hy + 32, 22, 3);
+    g.save();
+    if (hero.dir < 0) { g.translate(Math.round(hero.x) * 2 + 18, 0); g.scale(-1, 1); }
+    drawPlayer(g, Math.round(hero.x), hy, look(), frame, hero.shootT > 0);
+    g.restore();
+  }
+
   function shoot() {
+    if (exit) return;
     if (puck.live || hero.shootT > 0) return;
     hero.dir = 1; hero.shootT = 14;
     puck.live = true;
@@ -799,6 +842,7 @@
   }
 
   function update(dt) {
+    if (exit) { updateExit(); if (goalFlash > 0) goalFlash--; if (bannerT > 0) bannerT--; if (cheerT > 0) cheerT--; return; }
     var left = keys.ArrowLeft || keys.a, right = keys.ArrowRight || keys.d;
     var up = keys.ArrowUp || keys.w, down = keys.ArrowDown || keys.s;
     hero.vx = 0; hero.vy = 0;
@@ -872,7 +916,7 @@
     // Пробел оставляем кнопке только если на неё пришли с клавиатуры (Tab)
     if (k === ' ' && e.target !== cv && e.target.matches && e.target.matches('button:focus-visible, a:focus-visible, [role="button"]:focus-visible, input, textarea, select')) return;
     if (k === ' ') { e.preventDefault(); shoot(); return; }
-    if (MOVE_KEYS.indexOf(k) >= 0) { keys[k] = true; if (k.length > 1) e.preventDefault(); }
+    if (MOVE_KEYS.indexOf(k) >= 0 && !exit) { keys[k] = true; if (k.length > 1) e.preventDefault(); }
   });
   window.addEventListener('keyup', function (e) {
     var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
@@ -890,6 +934,7 @@
   }
   var lastTap = { t: 0, x: 0, y: 0 };
   cv.addEventListener('pointerdown', function (e) {
+    if (exit) return;
     var pt = scenePoint(e);
     if (e.pointerType === 'mouse') {
       // мышь: нажал на лёд - игрок встаёт напротив и бросает
@@ -943,7 +988,6 @@
     phaseIdx = i; nodes = [];
     [].forEach.call(phaseTabs.children, function (t, k) { t.setAttribute('aria-selected', String(k === i)); });
     phaseInfo.innerHTML = '<span class="phase__when">' + ph.when + '</span>' + esc(ph.task);
-    section.appendChild(levelPanel);              // вынимаем панель, прежде чем перерисовать уровни
     worldsEl.innerHTML = '';
     ph.worlds.forEach(function (w) {
       var el = document.createElement('div'); el.className = 'world';
@@ -966,34 +1010,50 @@
     if (byUser) SFX.move();
   }
 
-  // На телефоне описание уровня раскрывается под рядом, в котором стоит нажатый уровень
-  var section = document.getElementById('map'), mapNote = section.querySelector('.map__note');
-  function placeLevelPanel() {
-    var n = nodes[levelIdx];
-    if (narrow.matches && n) {
-      var k = n.row.indexOf(n.el);
-      n.row[Math.min(k - k % 2 + 1, n.row.length - 1)].insertAdjacentElement('afterend', levelPanel);
-    } else section.insertBefore(levelPanel, mapNote);
+  // На телефоне описание уровня открывается окном поверх карты: сама карта при этом не сдвигается.
+  // На широком экране описание стоит под картой.
+  var section = document.getElementById('map');
+  var sheetBack = document.getElementById('sheetBack');
+  function sheet(open) {
+    levelPanel.classList.toggle('is-open', open);
+    sheetBack.hidden = !open;
+    guideEl.classList.toggle('guide--under', open);
   }
+  sheetBack.addEventListener('click', function () { sheet(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') sheet(false); });
+  levelPanel.addEventListener('click', function (e) {
+    var act = e.target.getAttribute && e.target.getAttribute('data-sheet');
+    if (act === 'close') { SFX.move(); sheet(false); }
+    if (act === 'prev') openLevel(levelIdx - 1, true);
+    if (act === 'next') openLevel(levelIdx + 1, true);
+  });
+  function placeLevelPanel() { if (!narrow.matches) sheet(false); }
+
   function openLevel(idx, byUser) {
     var lv = nodes[idx].lv;
-    levelIdx = idx; placeLevelPanel();
-    if (byUser) guideTuck();
-    if (byUser) setTimeout(function () { reveal(levelPanel); }, 0);
+    levelIdx = idx;
     nodes.forEach(function (n, i) { n.el.setAttribute('aria-pressed', String(i === idx)); });
+    var bar = '<div class="sheet__bar">' +
+      '<button type="button" data-sheet="prev"' + (idx === 0 ? ' disabled' : '') + ' aria-label="Предыдущий уровень">◄</button>' +
+      '<span>' + (idx + 1) + ' / ' + nodes.length + '</span>' +
+      '<button type="button" data-sheet="next"' + (idx === nodes.length - 1 ? ' disabled' : '') + ' aria-label="Следующий уровень">►</button>' +
+      '<button type="button" data-sheet="close" class="sheet__close" aria-label="Закрыть">✕</button></div>';
     if (lv.locked) {
-      levelPanel.innerHTML = '<div class="level__top"><span class="level__tag">' + lv.num + '</span><h3 class="level__title">' + (lv.title || '???') + ' · ЗАКРЫТО</h3></div>' +
+      levelPanel.innerHTML = bar + '<div class="level__top"><span class="level__tag">' + lv.num + '</span><h3 class="level__title">' + (lv.title || '???') + ' · ЗАКРЫТО</h3></div>' +
         '<p>Этот уровень пока закрыт. Он откроется в процессе игры.</p>';
       if (byUser) SFX.locked();
-      return;
+    } else {
+      var html = bar + '<div class="level__top"><span class="level__tag' + (lv.boss ? ' level__tag--boss' : '') + '">' + (lv.boss ? 'ВОРОТА · ' : '') + lv.num + '</span>' +
+        '<h3 class="level__title">' + lv.title + '</h3></div>' +
+        '<p class="level__q">«' + esc(lv.q) + '»</p><p>' + esc(lv.text) + '</p><div class="level__cols">';
+      if (lv.sessions) html += '<div><h4>СЕССИИ НЕДЕЛИ</h4>' + list(lv.sessions) + '</div>';
+      html += '<div><h4>ТРОФЕИ УРОВНЯ</h4>' + list(lv.loot) + '</div></div>';
+      levelPanel.innerHTML = html;
+      if (byUser) SFX.select();
     }
-    var html = '<div class="level__top"><span class="level__tag' + (lv.boss ? ' level__tag--boss' : '') + '">' + (lv.boss ? 'ВОРОТА · ' : '') + lv.num + '</span>' +
-      '<h3 class="level__title">' + lv.title + '</h3></div>' +
-      '<p class="level__q">«' + esc(lv.q) + '»</p><p>' + esc(lv.text) + '</p><div class="level__cols">';
-    if (lv.sessions) html += '<div><h4>СЕССИИ НЕДЕЛИ</h4>' + list(lv.sessions) + '</div>';
-    html += '<div><h4>ТРОФЕИ УРОВНЯ</h4>' + list(lv.loot) + '</div></div>';
-    levelPanel.innerHTML = html;
-    if (byUser) SFX.select();
+    if (!byUser) return;
+    if (narrow.matches) { levelPanel.scrollTop = 0; sheet(true); }
+    else setTimeout(function () { reveal(levelPanel); }, 0);
   }
 
   /* =====================================================================
