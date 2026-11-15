@@ -533,3 +533,25 @@ ul.stage__help--touch b { font-weight: 400; color: var(--yellow); }
   .hud__nav.is-open { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
   .hud__nav a, .hud__nav a[href="#rink"] { padding: 10px 4px; }
 }
+
+/* ---------- Выбор пути: карусель на телефоне ---------- */
+.pathinfo { margin-top: 28px; min-height: 0; }
+.paths__nav { display: none; }
+@media (max-width: 760px) {
+  .paths {
+    display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+    margin: 0 -16px; padding: 10px 13% 18px; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .paths::-webkit-scrollbar { display: none; }
+  .paths > .path { flex: 0 0 100%; scroll-snap-align: center; margin: var(--px) 0; }
+  .paths__nav {
+    display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 2px;
+    font-family: var(--head); font-size: 11px; color: var(--mist);
+  }
+  .paths__nav button {
+    font-family: var(--head); font-size: 14px; line-height: 1; color: var(--ink); background: var(--yellow);
+    border: 0; width: 44px; height: 40px; cursor: pointer; box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--white);
+  }
+  .paths__nav button:disabled { background: var(--slate); color: var(--steel); box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--slate); cursor: default; }
+  .pathinfo { margin-top: 22px; }
+}

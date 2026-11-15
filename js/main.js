@@ -522,12 +522,31 @@
     return ctaBase;
   }
 
-  // На телефоне описание раскрывается сразу под выбранной карточкой, на широком экране - под всеми тремя
-  function placePathPanel() {
-    var sel = pathCards.filter(function (pc) { return pc.path === currentPath; })[0];
-    if (narrow.matches && sel) sel.el.insertAdjacentElement('afterend', pathPanel);
-    else pathsEl.appendChild(pathPanel);
+  // На телефоне карточки путей - карусель: листается свайпом или стрелками,
+  // путь выбирается нажатием на карточку, описание раскрывается под каруселью.
+  var pathsPrev = document.getElementById('pathsPrev'), pathsNext = document.getElementById('pathsNext');
+  var pathsCount = document.getElementById('pathsCount');
+  function carouselIndex() {
+    var mid = pathsEl.scrollLeft + pathsEl.clientWidth / 2, best = 0, bd = 1e9;
+    pathCards.forEach(function (pc, i) {
+      var d = Math.abs(pc.el.offsetLeft + pc.el.offsetWidth / 2 - mid);
+      if (d < bd) { bd = d; best = i; }
+    });
+    return best;
   }
+  function carouselGo(i, instant) {
+    var el = pathCards[Math.max(0, Math.min(pathCards.length - 1, i))].el;
+    pathsEl.scrollTo({ left: el.offsetLeft - (pathsEl.clientWidth - el.offsetWidth) / 2, behavior: instant || reduced ? 'auto' : 'smooth' });
+  }
+  function carouselSync() {
+    var i = carouselIndex();
+    pathsCount.textContent = (i + 1) + ' / ' + pathCards.length;
+    pathsPrev.disabled = i === 0; pathsNext.disabled = i === pathCards.length - 1;
+  }
+  pathsPrev.addEventListener('click', function () { SFX.move(); carouselGo(carouselIndex() - 1); });
+  pathsNext.addEventListener('click', function () { SFX.move(); carouselGo(carouselIndex() + 1); });
+  pathsEl.addEventListener('scroll', function () { requestAnimationFrame(carouselSync); }, { passive: true });
+  window.addEventListener('resize', carouselSync);
 
   function choosePath(p, byUser, quiet) {
     currentPath = p;
@@ -549,7 +568,8 @@
     } else {
       pathPanel.innerHTML = '<p class="pathinfo__empty">Путь ещё не выбран. Нажми на карточку или забей в одни из ворот на площадке. Здесь появится, на что делаем упор на твоём этапе.</p>';
     }
-    placePathPanel();
+    // карусель показывает выбранный путь (например, после гола на площадке)
+    if (p && narrow.matches) carouselGo(PATHS.indexOf(p), !byUser);
     drawFace(); drawGuide(); guideCta.href = cta.href;
     if (byUser) {
       store('ce-path', p.id);
@@ -561,7 +581,7 @@
       }
     }
   }
-  narrow.addEventListener('change', function () { placePathPanel(); placeLevelPanel(); });
+  narrow.addEventListener('change', function () { placeLevelPanel(); carouselSync(); });
 
   /* =====================================================================
      ДИАЛОГ
@@ -1009,7 +1029,7 @@
      ===================================================================== */
 
   var GUIDE = [
-    { id: 'path', text: 'Здесь три пути чемпиона. Нажми на карточку: под ней появится, на что делаем упор именно на твоём этапе.' },
+    { id: 'path', text: 'Здесь три пути чемпиона. Нажми на карточку: ниже появится, на что делаем упор именно на твоём этапе.' },
     { id: 'about', text: 'Коротко о формате: один на один с тренером, 12 месяцев, старт в любой точке сезона.' },
     { id: 'map', text: 'Это карта программы. Переключай фазы и нажимай на уровни: внутри тема, сессии и трофеи. Замки откроются в процессе игры.' },
     { id: 'domains', text: 'Девять доменов. Это ветки навыков, которые программа прокачивает за год.' },
@@ -1088,6 +1108,7 @@
   var saved = store('ce-path');
   choosePath(PATHS.filter(function (p) { return p.id === saved; })[0] || null, false);
   openPhase(0, false);
+  carouselSync();
 
   say([
     'Привет! Я твой проводник по Champion\'s Edge.',

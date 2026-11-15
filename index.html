@@ -72,9 +72,13 @@
 <section class="section" id="path">
   <h2 class="h2"><span>01</span> ВЫБЕРИ ПУТЬ ЧЕМПИОНА</h2>
   <p class="lead">Три пути для трёх этапов карьеры. Выбери свой броском на площадке или карточкой здесь: проводник и запись на программу подстроятся под него.</p>
-  <div class="grid grid--3 paths" id="paths" role="radiogroup" aria-label="Путь чемпиона">
-    <div class="panel level pathinfo" id="pathPanel" aria-live="polite"></div>
+  <div class="grid grid--3 paths" id="paths" role="radiogroup" aria-label="Путь чемпиона"></div>
+  <div class="paths__nav" aria-label="Листать пути">
+    <button type="button" id="pathsPrev" aria-label="Предыдущий путь">◄</button>
+    <span id="pathsCount" aria-live="polite">1 / 3</span>
+    <button type="button" id="pathsNext" aria-label="Следующий путь">►</button>
   </div>
+  <div class="panel level pathinfo" id="pathPanel" aria-live="polite"></div>
 </section>
 
 <!-- О программе -->
