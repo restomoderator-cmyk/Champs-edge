@@ -86,6 +86,33 @@
      ===================================================================== */
 
   var OUT = '#181425';
+
+  /* 8-битный режим: ?style=8bit в адресе. Вся графика приводится к короткой
+     палитре в духе консолей 80-х, без полутонов и прозрачности. */
+  var BIT8 = /[?&]style=8bit\b/.test(location.search);
+  if (BIT8) document.documentElement.classList.add('bit8');
+  var PAL8 = [[0, 0, 0], [252, 252, 252], [188, 188, 188], [124, 124, 124], [216, 40, 0], [136, 20, 0],
+    [252, 160, 68], [248, 184, 0], [0, 168, 0], [0, 88, 248], [60, 188, 252], [0, 0, 188], [252, 188, 176], [172, 124, 0],
+    [88, 216, 84], [252, 224, 56], [164, 228, 252]];
+  var palCache = {};
+  function quantize(ctx, w, h) {
+    if (!BIT8) return;
+    var img = ctx.getImageData(0, 0, w, h), d = img.data;
+    for (var i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 128) { d[i + 3] = 0; continue; }
+      var key = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2], best = palCache[key];
+      if (best === undefined) {
+        var bd = 1e9;
+        for (var j = 0; j < PAL8.length; j++) {
+          var p = PAL8[j], dist = (d[i] - p[0]) * (d[i] - p[0]) + (d[i + 1] - p[1]) * (d[i + 1] - p[1]) + (d[i + 2] - p[2]) * (d[i + 2] - p[2]);
+          if (dist < bd) { bd = dist; best = j; }
+        }
+        palCache[key] = best;
+      }
+      d[i] = PAL8[best][0]; d[i + 1] = PAL8[best][1]; d[i + 2] = PAL8[best][2]; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
   function ring(cx, cy, r) { return function (x, y) { return Math.hypot(x - cx, y - cy) <= r; }; }
 
   var ICONS = {
@@ -158,6 +185,7 @@
         c.fillStyle = OUT; c.fillRect(x + 2, y + 2, 1, 1);
       }
     }
+    quantize(c, 16, 16);
   }
 
   /* =====================================================================
@@ -326,6 +354,7 @@
     faceCtx.clearRect(0, 0, 16, 16);
     faceCtx.fillStyle = '#262b44'; faceCtx.fillRect(0, 0, 16, 16);
     drawPlayer(faceCtx, 0, 3, currentPath, 0, false);
+    quantize(faceCtx, 16, 16);
   }
 
   function typeLine() {
@@ -381,8 +410,8 @@
     var par = (hero.x - 120) * 0.08;
 
     // свод арены
-    g.fillStyle = '#0c0a14'; g.fillRect(0, 0, W, 12);
-    g.fillStyle = '#181425'; g.fillRect(0, 12, W, 60);
+    g.fillStyle = BIT8 ? '#000000' : '#0c0a14'; g.fillRect(0, 0, W, 12);
+    g.fillStyle = BIT8 ? '#000000' : '#181425'; g.fillRect(0, 12, W, 60);
     // зрители
     crowd.forEach(function (s) {
       var x = Math.round(s.x - par), up = Math.sin(t / 300 + s.p * 40) > 0.92 ? 1 : 0;
@@ -398,14 +427,14 @@
     // прожекторы
     g.fillStyle = '#fee761';
     [40, 120, 200].forEach(function (lx) { g.fillRect(lx - 4, 4, 8, 3); });
-    g.fillStyle = 'rgba(254,231,97,0.05)';
+    g.fillStyle = BIT8 ? 'rgba(0,0,0,0)' : 'rgba(254,231,97,0.05)';
     [40, 120, 200].forEach(function (lx) {
       g.beginPath(); g.moveTo(lx - 4, 7); g.lineTo(lx + 4, 7); g.lineTo(lx + 34, ICE_Y); g.lineTo(lx - 34, ICE_Y); g.fill();
     });
 
     // стекло и борт
     var bo = Math.round(-par * 2);
-    g.fillStyle = 'rgba(192,203,220,0.18)'; g.fillRect(0, 66, W, 12);
+    g.fillStyle = BIT8 ? '#000000' : 'rgba(192,203,220,0.18)'; g.fillRect(0, 66, W, 12);
     g.fillStyle = '#8b9bb4';
     for (var gx = bo % 40 - 40; gx < W; gx += 40) g.fillRect(gx, 66, 1, 12);
     g.fillStyle = '#e43b44'; g.fillRect(0, 78, W, 2);
@@ -520,6 +549,7 @@
     acc += Math.min(100, t - last); last = t;
     while (acc >= 16.6) { update(16.6); acc -= 16.6; }
     drawScene(t);
+    quantize(g, W, H);
   }
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(function (es) { sceneVisible = es[0].isIntersecting; }).observe(cv);
@@ -608,6 +638,7 @@
   pathCards.forEach(function (pc) {
     var c = pc.el.querySelector('canvas'); c.width = 32; c.height = 40;
     drawPlayer(pc.ctx, 1, 4, pc.path, 0, false);
+    quantize(pc.ctx, 32, 40);
   });
 
   var saved = store('ce-path');
