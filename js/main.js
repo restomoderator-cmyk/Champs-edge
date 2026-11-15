@@ -296,6 +296,10 @@
     src.start(t); src.stop(t + dur + 0.02);
   }
   function mSchedule() {
+    // телефон мог приостановить звук страницы (блокировка экрана, звонок, другое приложение)
+    if (audio.state !== 'running') { audioStalled = true; audio.resume().catch(function () {}); return; }
+    // таймер проспал (вкладка была в фоне): продолжаем с текущего момента, а не догоняем пропущенное залпом
+    if (mNext < audio.currentTime - 0.1) mNext = audio.currentTime + 0.06;
     while (mNext < audio.currentTime + 0.35) {
       var st = mStep % 128, i = st % 16, bar = Math.floor(st / 16), ch = M_CHORDS[bar % 4];
       // бас: ровные восьмые с октавным скачком - он и даёт напор
@@ -311,6 +315,14 @@
       if (ld) mNote(hz(ld[0]), mNext, ld[1] * M_STEP * 0.95, 'square', 0.16);
       mNext += M_STEP; mStep++;
     }
+  }
+  // Возвращает звук к жизни: вызывается, когда страница снова видна, и на любом действии человека
+  var audioStalled = false;
+  function reviveAudio() {
+    if (!audio || (!musicOn && !soundOn)) return;
+    if (audio.state !== 'running') audio.resume().catch(function () {});
+    if (musicOn && !document.hidden && !musicTimer) mRun(true);
+    audioStalled = false;
   }
   function mRun(run) {
     clearInterval(musicTimer); musicTimer = null;
@@ -339,7 +351,16 @@
   ['pointerup', 'keydown', 'click'].forEach(function (ev) { document.addEventListener(ev, unlockAudio, true); });
   soundBtn.setAttribute('aria-pressed', String(store('ce-sound') !== '0'));
   musicBtn.setAttribute('aria-pressed', String(store('ce-music') !== '0'));
-  document.addEventListener('visibilitychange', function () { if (musicOn) mRun(!document.hidden); });
+  document.addEventListener('visibilitychange', function () {
+    if (!musicOn) return;
+    if (document.hidden) mRun(false); else reviveAudio();
+  });
+  window.addEventListener('pageshow', reviveAudio);
+  window.addEventListener('focus', reviveAudio);
+  // если телефон заглушил звук, первое же касание или клавиша возвращают его
+  ['pointerdown', 'touchend', 'keydown'].forEach(function (ev) {
+    document.addEventListener(ev, function () { if (audio && audio.state !== 'running') reviveAudio(); }, true);
+  });
 
   // notes: [частота, длительность, тип?] подряд
   function play(notes, vol) {
