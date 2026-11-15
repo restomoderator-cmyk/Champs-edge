@@ -281,7 +281,34 @@
       t += n[1] * 0.85;
     });
   }
+  var sfxNoise = null;
+  // Рёв трибун и сирена после гола
+  function crowdRoar() {
+    if (!soundOn || !audio) return;
+    var t = audio.currentTime + 0.02;
+    if (!sfxNoise) {
+      sfxNoise = audio.createBuffer(1, audio.sampleRate, audio.sampleRate);
+      var d = sfxNoise.getChannelData(0);
+      for (var n = 0; n < d.length; n++) d[n] = Math.random() * 2 - 1;
+    }
+    var src = audio.createBufferSource(), f = audio.createBiquadFilter(), gn = audio.createGain();
+    src.buffer = sfxNoise; src.loop = true;
+    f.type = 'bandpass'; f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(1300, t + 0.5);
+    f.frequency.linearRampToValueAtTime(800, t + 2.2); f.Q.value = 0.7;
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.22, t + 0.25);
+    gn.gain.setValueAtTime(0.22, t + 0.9); gn.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+    src.connect(f); f.connect(gn); gn.connect(audio.destination);
+    src.start(t); src.stop(t + 2.5);
+    [116.5, 174.6].forEach(function (fr) {           // сирена
+      var o = audio.createOscillator(), og = audio.createGain();
+      o.type = 'sawtooth'; o.frequency.value = fr;
+      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.045, t + 0.05);
+      og.gain.setValueAtTime(0.045, t + 0.7); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
+      o.connect(og); og.connect(audio.destination); o.start(t); o.stop(t + 1);
+    });
+  }
   var SFX = {
+    crowd: crowdRoar,
     blip: function () { play([[880, 0.04]], 0.03); },
     move: function () { play([[440, 0.05], [660, 0.06]]); },
     select: function () { play([[523, 0.07], [659, 0.07], [784, 0.07], [1047, 0.14]]); },
@@ -452,7 +479,7 @@
   var keys = {}, score = 0;
   var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null, follow: null };
   var puck = { x: 0, y: 0, vx: 0, vy: 0, live: false };
-  var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1;
+  var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1, cheerT = 0;
   // Трое ворот — по одним на каждый путь чемпиона: [левая штанга, правая штанга]
   var NETS = [[26, 98], [124, 196], [222, 294]];
   var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 126;
@@ -473,12 +500,16 @@
     g.fillStyle = '#181425'; g.fillRect(0, 6, W, 28);
     crowd.forEach(function (s) {
       var x = Math.round(s.x - par), up = Math.sin(t / 300 + s.p * 40) > 0.92 ? 1 : 0;
-      g.fillStyle = s.c; g.fillRect(x, s.y - up, 3, 4);
+      // после гола трибуна вскакивает и машет руками
+      var jump = cheerT > 0 && Math.sin(t / 70 + s.p * 9) > -0.2;
+      if (jump) up = 2;
+      g.fillStyle = s.c; g.fillRect(x, s.y - up, 3, 4 + up);
       g.fillStyle = '#f2c9a0'; g.fillRect(x + 1, s.y - 1 - up, 1, 1);
+      if (jump) { g.fillRect(x, s.y - 2 - up, 1, 2); g.fillRect(x + 2, s.y - 2 - up, 1, 2); }
     });
     // вспышки камер
-    for (var f = 0; f < 3; f++) {
-      var k = Math.floor(t / 180 + f * 37);
+    for (var f = 0, fn = cheerT > 0 ? 14 : 3; f < fn; f++) {
+      var k = Math.floor(t / (cheerT > 0 ? 90 : 180) + f * 37);
       var fx = (k * 73 + f * 51) % W, fy = 9 + (k * 29) % 20;
       if ((k + f) % 4 === 0) { g.fillStyle = '#ffffff'; g.fillRect(fx, fy, 2, 2); g.fillRect(fx - 1, fy, 4, 1); g.fillRect(fx, fy - 1, 1, 4); }
     }
@@ -617,12 +648,13 @@
         NETS.forEach(function (n, i) { if (pcx > n[0] && pcx < n[1]) zone = i; });
         if (zone >= 0) {
           score++; scoreEl.textContent = ('00' + score).slice(-3);
-          lastZone = zone; goalFlash = 70; banner = 'ГОЛ!'; banner2 = PATHS[zone].name; bannerT = 90; SFX.goal();
+          lastZone = zone; goalFlash = 70; banner = 'ГОЛ!'; banner2 = PATHS[zone].name; bannerT = 90; cheerT = 130; SFX.goal(); SFX.crowd();
           choosePath(PATHS[zone], true, true);
         } else { banner = 'МИМО!'; banner2 = ''; bannerT = 40; SFX.miss(); }
       }
     }
     if (goalFlash > 0) goalFlash--;
+    if (cheerT > 0) cheerT--;
     if (bannerT > 0) bannerT--;
   }
 
@@ -644,7 +676,8 @@
     var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     k = RU_KEYS[k] || k;
     if (!onScreen(cv)) return;
-    if (/^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(e.target.tagName) && k === ' ') return;
+    // Пробел оставляем кнопке только если на неё пришли с клавиатуры (Tab)
+    if (k === ' ' && e.target !== cv && e.target.matches && e.target.matches('button:focus-visible, a:focus-visible, [role="button"]:focus-visible, input, textarea, select')) return;
     if (k === ' ') { e.preventDefault(); shoot(); return; }
     if (MOVE_KEYS.indexOf(k) >= 0) { keys[k] = true; if (k.length > 1) e.preventDefault(); }
   });
@@ -653,6 +686,11 @@
     keys[RU_KEYS[k] || k] = false;
   });
   window.addEventListener('blur', function () { keys = {}; });
+  // После клика мышью или тапа снимаем фокус с кнопки, чтобы пробел не нажимал её повторно
+  document.addEventListener('click', function (e) {
+    var a = document.activeElement;
+    if (e.detail > 0 && a && a !== cv && a !== document.body && !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) a.blur();
+  });
   function scenePoint(e) {
     var r = cv.getBoundingClientRect();
     return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
