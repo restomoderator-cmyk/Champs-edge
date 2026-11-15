@@ -304,9 +304,7 @@ p:last-child { margin-bottom: 0; }
   .dialog__text { font-size: 22px; }
   .panel { padding: 18px; }
 }
-@media (max-width: 420px) {
-  .masters { grid-template-columns: 1fr; }
-}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .title__stars, .title__stars::after, .btn--start, .cta__blink, .dialog__next, .node[aria-pressed="true"] .node__tile { animation: none; }
@@ -623,4 +621,48 @@ body::before {
   /* сужается только сама площадка; реплика и подсказка остаются во всю ширину, чтобы текст не переносился лишний раз */
   .stage { max-width: none; }
   .stage__screen { max-width: calc(var(--rink-h) * 4 / 3); margin-left: auto; margin-right: auto; }
+}
+
+/* ---------- Мелкие подписи: читаемый контраст ---------- */
+:root { --dim: #9aa7c0; }
+.path__num, .path__pick, .phase__num, .node__num, .world__sub, .map__note, .footer, .level__note,
+.pathinfo__meta dt, .pathinfo__empty, .guide__close, .node--locked, .hud__sound { color: var(--dim); }
+.hud__sound { border-color: var(--dim); }
+.hud__sound[aria-pressed="true"] { color: var(--green); border-color: var(--green); }
+.path[aria-checked="true"] .path__pick, .node[aria-pressed="true"] { color: var(--yellow); }
+.phase[aria-selected="true"] .phase__num { color: var(--red-dark); }
+.title__hint { color: var(--mist); }
+.map__note::before, .map__note::after { color: var(--steel); }
+
+/* ---------- Область нажатия ---------- */
+.cta__path a { display: inline-block; padding: 12px 8px; margin: -12px 0 -12px 4px; }
+@media (max-width: 1180px) {
+  .hud__burger, .hud__sound { min-height: 40px; padding-left: 10px; padding-right: 10px; }
+  .hud__logo { min-height: 40px; display: inline-flex; align-items: center; padding: 0 10px; }
+}
+
+/* ---------- Телефон: компактные сетки, страница короче ---------- */
+@media (max-width: 760px) {
+  /* домены и инвентарь: плитки в две колонки, значок над текстом */
+  #domainList, #inventory { grid-template-columns: 1fr 1fr; gap: 14px 10px; }
+  #domainList .item, #inventory .item { grid-template-columns: 1fr; gap: 10px; padding: 14px 12px; align-content: start; }
+  #domainList .item canvas, #inventory .item canvas { width: 40px; height: 40px; }
+  #domainList .item b, #inventory .item b { font-size: 9px; line-height: 1.6; hyphens: auto; overflow-wrap: break-word; }
+  #domainList .item span, #inventory .item span { font-size: 18px; line-height: 1.2; }
+  /* параметры: подпись над значением, две колонки */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  .stats div { display: block; padding: 8px 0 10px; }
+  .stats div:nth-last-child(-n+2) { border-bottom: 0; }
+  .stats dt { font-size: 17px; }
+  .stats dd { max-width: none; text-align: left; margin-top: 4px; }
+  /* лор: три цифры в ряд, авторы в две колонки */
+  .lore__stats { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .lore__stats div { padding: 12px 4px 10px; }
+  .lore__stats dd { font-size: 24px; }
+  .lore__stats dt { font-size: 7px; line-height: 1.8; }
+  .masters { grid-template-columns: 1fr 1fr; }
+  .masters li { padding: 10px 10px 12px; }
+  .masters b { font-size: 8px; hyphens: auto; overflow-wrap: break-word; }
+  .masters span { font-size: 17px; line-height: 1.2; display: block; }
+  .section { padding-top: 48px; }
 }
