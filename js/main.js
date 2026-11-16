@@ -1048,8 +1048,10 @@
     var rel = (x - l) / w, i = Math.floor(rel);
     return Math.abs(rel - Math.round(rel)) * w < 1.5 && Math.round(rel) % 3 !== 0 ? -1 : Math.min(2, i);   // на линии между зонами - аут
   }
-  // Куда прилетит подача, если игрок стоит в точке hero.x: прямо перед ним, с поправкой на перспективу
-  function aimX() { return 160 + (hero.x + 11 - 160) * ctHW(T_LAND) / CT.hwNear * 0.94; }
+  // Куда прилетит подача, если игрок стоит в точке hero.x. Подача идёт по диагонали, как в теннисе:
+  // справа подают в левую зону, слева в правую.
+  var AIM_K = ctHW(T_LAND) / CT.hwNear * 1.25;
+  function aimX() { return 160 - (hero.x + 11 - 160) * AIM_K; }
 
   function poly(col, pts) {
     g.fillStyle = col; g.beginPath(); g.moveTo(pts[0], pts[1]);
@@ -1090,6 +1092,17 @@
     g.fillStyle = 'rgba(192,203,220,0.35)'; for (var nx = Math.round(160 - nh) + 2; nx < 160 + nh; nx += 4) g.fillRect(nx, T_NET - 8, 1, 8);
     g.fillStyle = '#ffffff'; g.fillRect(Math.round(160 - nh), T_NET - 10, Math.round(nh * 2), 1);
     g.fillStyle = '#c0cbdc'; g.fillRect(Math.round(160 - nh) - 2, T_NET - 12, 3, 13); g.fillRect(Math.round(160 + nh) - 1, T_NET - 12, 3, 13);
+    // путь выбран: от своей зоны к игроку и дальше вниз раскатывается дорожка цвета пути
+    if (exit) {
+      var ez = exit.zone, grow = Math.min(1, exit.t / 24), yb = T_NET + (H - T_NET) * grow, hc = hero.x + 11;
+      var xl = zoneX(ez, T_NET), xr = zoneX(ez + 1, T_NET), bl = xl + (hc - 20 - xl) * grow, br = xr + (hc + 20 - xr) * grow;
+      g.globalAlpha = 0.85; poly(PATHS[ez].jersey, [xl, T_NET, xr, T_NET, br, yb, bl, yb]); g.globalAlpha = 1;
+      g.fillStyle = '#fee761';
+      for (var ay = T_NET + 10 + (exit.t * 1.5) % 22; ay < yb - 6; ay += 22) {       // стрелки бегут вниз
+        var ac = Math.round((xl + xr) / 2 + (hc - (xl + xr) / 2) * (ay - T_NET) / (H - T_NET));
+        g.fillRect(ac - 4, ay, 9, 2); g.fillRect(ac - 2, ay + 2, 5, 2); g.fillRect(ac, ay + 4, 1, 2);
+      }
+    }
     // прицел: куда уйдёт подача с текущего места
     if (!ball && !exit) { var ax = Math.round(aimX()); g.fillStyle = '#ffffff'; g.fillRect(ax - 3, T_LAND, 7, 1); g.fillRect(ax, T_LAND - 3, 1, 7); }
   }
@@ -1125,9 +1138,10 @@
   }
   function drawTennisHero(t) {
     var moving = hero.vx !== 0, frame = moving ? Math.floor(t / 110) % 2 : Math.floor(t / 420) % 2;
-    var hx = Math.round(hero.x), hy = Math.round(hero.y);
-    g.fillStyle = 'rgba(24,20,37,0.3)'; g.fillRect(hx, hy + 32, 20, 3);
-    drawTennisBack(g, hx, hy, look(), frame, hero.shootT > 0);
+    var hx = Math.round(hero.x), hy = Math.round(hero.y - (hero.hop || 0));
+    g.fillStyle = 'rgba(24,20,37,0.3)'; g.fillRect(hx, Math.round(hero.y) + 32, 20, 3);
+    if (exit && exit.t > 40) drawTennisPlayer(g, hx, hy, look(), frame, false);      // развернулся и бежит
+    else drawTennisBack(g, hx, hy, look(), frame, hero.shootT > 0);
     if (!ball) return;
     // мяч: тень на корте и сам мяч на высоте
     var b = ball, s = b.size;
@@ -1151,10 +1165,12 @@
       // путь выбран: чужие зоны гаснут, игрок разворачивается и убегает вниз, к описанию пути
       var e = exit; e.t++;
       for (var i = 0; i < 3; i++) if (i !== e.zone) netAlpha[i] = 1 - Math.min(1, e.t / 30);
-      hero.vx = 1; if (e.t > 18) hero.y += 2.2;
+      // сначала радуется на месте, потом по цветной дорожке своего пути бежит на нас, вниз, к описанию пути
+      hero.vx = 1; hero.hop = e.t <= 40 ? Math.abs(Math.sin(e.t / 20 * Math.PI)) * 9 : 0;
+      if (e.t > 40) hero.y += 1;
       if (!e.fired) cheerT = 45;
       if (hero.y > H + 4 && !e.fired) { e.fired = true; e.fireT = e.t; if (e.stopOvation) e.stopOvation(); e.done(); }
-      if (e.fired && e.t - e.fireT > 100) { exit = null; netAlpha = [1, 1, 1]; hero.y = T_HERO_Y; hero.vx = 0; }
+      if (e.fired && e.t - e.fireT > 100) { exit = null; netAlpha = [1, 1, 1]; hero.y = T_HERO_Y; hero.vx = 0; hero.hop = 0; }
       return;
     }
     // движение только вдоль задней линии, без инерции
@@ -1208,7 +1224,7 @@
     var pt = scenePoint(e);
     if (e.pointerType === 'mouse') e.preventDefault();
     if (pt.y < T_NET) {
-      var px = 160 + (Math.max(160 - ctHW(T_LAND) + 6, Math.min(160 + ctHW(T_LAND) - 6, pt.x)) - 160) / (ctHW(T_LAND) / CT.hwNear * 0.94);
+      var px = 160 - (Math.max(160 - ctHW(T_LAND) + 6, Math.min(160 + ctHW(T_LAND) - 6, pt.x)) - 160) / AIM_K;     // встаёт по диагонали от зоны
       hero.target = { x: Math.max(12, Math.min(286, Math.round(px - 11))), serve: true };
       return;
     }
