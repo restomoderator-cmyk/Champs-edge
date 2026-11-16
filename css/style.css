@@ -670,3 +670,12 @@ body::before {
 /* закрытые предметы инвентаря */
 .item--locked { background: var(--ink); box-shadow: 0 0 0 var(--px) var(--slate); }
 .item--locked b, .item--locked span { color: var(--dim); }
+
+/* ---------- Источники: свёрнутый список ---------- */
+.masters--collapsed li:nth-child(n+7) { display: none; }
+.masters__more { text-align: center; margin: 18px 0 0; }
+.masters__more button {
+  font-family: var(--head); font-size: 10px; line-height: 1.4; color: var(--ink); background: var(--yellow);
+  border: 0; padding: 12px 16px 11px; min-height: 40px; cursor: pointer; box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--white);
+}
+.masters__more button:hover { background: var(--white); }

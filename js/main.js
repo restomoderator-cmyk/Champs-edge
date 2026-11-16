@@ -1138,6 +1138,19 @@
     invEl.appendChild(d);
   });
 
+  // Список источников свёрнут: видны первые шесть, остальные по кнопке
+  (function () {
+    var listEl = document.getElementById('masters'), btn = document.getElementById('mastersToggle');
+    var total = listEl.children.length;
+    btn.addEventListener('click', function () {
+      var open = listEl.classList.toggle('masters--collapsed') === false;
+      btn.setAttribute('aria-expanded', String(open));
+      btn.textContent = open ? '▲ СВЕРНУТЬ' : '▼ ПОКАЗАТЬ ВСЕХ · ' + total;
+      SFX.move();
+      if (!open) reveal(listEl);
+    });
+  })();
+
   /* =====================================================================
      ПРОВОДНИК: идёт за читателем по странице и подсказывает, что делать
      ===================================================================== */
