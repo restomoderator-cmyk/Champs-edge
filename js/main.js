@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  var TR = window.CE_TRACK;        // аналитика и параметры адреса, см. js/track.js
+
   /* =====================================================================
      ЯЗЫК: русский или английский
      ===================================================================== */
@@ -51,7 +53,7 @@
     btn.addEventListener('click', function () {
       store('ce-lang', other);
       if (store('ce-lang') === other && !/[?&]lang=/.test(location.search)) location.reload();
-      else location.search = '?lang=' + other;        // хранилище недоступно: передаём язык в адресе
+      else location.href = TR.urlWith('lang', other);  // язык в адресе; остальные параметры и hash сохраняются
     });
   })();
 
@@ -712,7 +714,10 @@
   });
 
   var role = ROLES[0];
-  function signupMsg(p) { return role.msg + (TENNIS ? T(' Версия: теннис.') : '') + (p ? role.msgPath + p.name.toLowerCase() + '.' : ''); }
+  function signupMsg(p) {
+    return role.msg + (TENNIS ? T(' Версия: теннис.') : '') + (p ? role.msgPath + p.name.toLowerCase() + '.' : '') +
+      (TR.r ? '\n' + T('код: ') + TR.r : '');       // код персональной ссылки, без имени человека
+  }
   function signupHref(p) {
     // роль и выбранный путь подставляются в текст сообщения
     return ctaBase + '?text=' + encodeURIComponent(signupMsg(p));
@@ -771,6 +776,7 @@
     drawFace(); drawGuide(); guideCta.href = cta.href;
     if (byUser) {
       store('ce-path', p.id);
+      TR.goal('path_selected', { path: p.id });
       say([role.id === 'player' ? p.hello : p.helloOther], { label: T('ИЗУЧИТЬ ПУТЬ ▼'), target: pathPanel, exit: true });
       if (!quiet) {
         // выбрали карточкой: показываем раскрывшееся описание
@@ -1311,6 +1317,7 @@
     var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     k = RU_KEYS[k] || k;
     if (!onScreen(cv)) return;
+    if (e.target.matches && e.target.matches('input, textarea, select')) return;      // человек печатает в анкете
     // Пробел оставляем кнопке только если на неё пришли с клавиатуры (Tab)
     if (k === ' ' && e.target !== cv && e.target.matches && e.target.matches('button:focus-visible, a:focus-visible, [role="button"]:focus-visible, input, textarea, select')) return;
     if (k === ' ') { e.preventDefault(); shoot(); return; }
@@ -1583,7 +1590,9 @@
     drawPlayer(pc.ctx, 1, 4, pc.path, 0, false);
   });
 
-  var saved = store('ce-path');
+  // путь из адреса (?path=) важнее сохранённого: выбирается сразу и без реплики проводника
+  if (TR.path) { store('ce-path', TR.path); TR.goal('path_selected', { path: TR.path }); }
+  var saved = TR.path || store('ce-path');
   choosePath(PATHS.filter(function (p) { return p.id === saved; })[0] || null, false);
   openPhase(0, false);
   carouselSync();
@@ -1637,12 +1646,14 @@
     intro();
     if (byUser) {
       store('ce-role', r.id);
+      TR.goal('role_selected', { role: r.id });
       SFX.select();
       cv.focus({ preventScroll: true });
       document.getElementById('rink').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
     }
   }
-  var savedRole = store('ce-role');
+  if (TR.role) { store('ce-role', TR.role); TR.goal('role_selected', { role: TR.role }); }     // роль из адреса (?role=)
+  var savedRole = TR.role || store('ce-role');
   setRole(ROLES.filter(function (r) { return r.id === savedRole; })[0] || ROLES[0], false);
 
   // Заставка: кнопка START есть у каждой игры. Свой вид спорта открывает сайт дальше,
@@ -1657,7 +1668,7 @@
         store('ce-sport', sport);
         try { sessionStorage.setItem('ce-go', '1'); } catch (e) {}
         if (store('ce-sport') === sport && !/[?&]sport=/.test(location.search)) location.reload();
-        else location.search = '?sport=' + sport;       // хранилище недоступно: передаём выбор в адресе
+        else location.href = TR.urlWith('sport', sport).replace(/#.*$/, '');   // выбор в адресе, остальные параметры на месте
         return;
       }
       SFX.start();
@@ -1675,6 +1686,134 @@
   // звук на ссылках и кнопках
   document.querySelectorAll('.hud__nav a, .hud__logo').forEach(function (a) { a.addEventListener('click', SFX.move); });
   cta.addEventListener('click', SFX.select);
+
+  /* =====================================================================
+     ЦЕЛИ МЕТРИКИ: клики по контактам и доскролл до ключевых разделов
+     ===================================================================== */
+  function who() { var o = { role: role.id }; if (currentPath) o.path = currentPath.id; return o; }
+  // Ловим на всём документе: кнопка в описании пути пересобирается, а цель должна уйти до перехода
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href]');
+    if (!a) return;
+    var href = a.getAttribute('href');
+    if (href.indexOf('https://t.me/call_pascal') === 0) TR.goal('cta_telegram', who());
+    else if (href.indexOf('mailto:' + MAIL) === 0) TR.goal('cta_email', who());
+  }, true);
+  if (window.IntersectionObserver) (function () {
+    var timers = {}, steps = [];
+    for (var i = 0; i <= 20; i++) steps.push(i / 20);
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        var id = en.target.id;
+        // раздел занимает заметную часть экрана (или виден на 40%) и задержался на нём
+        var seen = en.isIntersecting && (en.intersectionRatio >= 0.4 || en.intersectionRect.height >= window.innerHeight * 0.4);
+        clearTimeout(timers[id]);
+        if (seen) timers[id] = setTimeout(function () { TR.goalOnce('section_' + id); }, 700);
+      });
+    }, { threshold: steps });
+    ['role', 'path', 'about', 'science', 'how', 'start'].forEach(function (id) { io.observe(document.getElementById(id)); });
+  })();
+
+  /* =====================================================================
+     COOKIE И АНАЛИТИКА: уведомление и выбор посетителя
+     ===================================================================== */
+  (function () {
+    var box = document.getElementById('consent'), legal = document.getElementById('legal');
+    function decide(yes) { TR.setConsent(yes); box.hidden = true; SFX.move(); }
+    document.getElementById('consentYes').addEventListener('click', function () { decide(true); });
+    document.getElementById('consentNo').addEventListener('click', function () { decide(false); });
+    document.getElementById('consentChange').addEventListener('click', function () { box.hidden = false; });
+    if (!TR.consent()) box.hidden = false;
+    // ссылки на полный текст раскрывают его
+    document.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('a[data-legal]')) legal.open = true;
+    });
+    if (location.hash === '#privacy') legal.open = true;
+  })();
+
+  /* =====================================================================
+     АНКЕТА НА СОЗВОН
+     ===================================================================== */
+  // Публичный адрес сервера заявок (API Gateway в Yandex Cloud, см. server/form-handler/README.md).
+  // Пока адрес не задан, кнопка анкеты скрыта: посетители пишут в Telegram или на почту.
+  // Для проверки вёрстки анкету можно открыть адресом с ?form=test: заявка никуда не уйдёт, покажется запасной путь.
+  var FORM_ENDPOINT = '';
+  (function () {
+    var openBtn = document.getElementById('formOpen'), form = document.getElementById('callForm');
+    var sendBtn = document.getElementById('formSend'), msg = document.getElementById('formMsg');
+    var fallback = document.getElementById('formFallback'), done = document.getElementById('formDone');
+    if (!FORM_ENDPOINT && !/[?&]form=test(&|$)/.test(location.search)) return;
+    openBtn.hidden = false;
+    var openedAt = 0, leadId = '', busy = false;
+    function newId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+    }
+    function note(text, withFallback) {
+      msg.textContent = text; msg.hidden = !text;
+      fallback.hidden = !withFallback;
+      if (withFallback) {                                   // те же ссылки, что у кнопок выше: с ролью, путём и кодом
+        document.getElementById('formTg').href = cta.href;
+        document.getElementById('formMail').href = ctaMail.href;
+      }
+    }
+    openBtn.addEventListener('click', function () {
+      var show = form.hidden;
+      form.hidden = !show; openBtn.setAttribute('aria-expanded', String(show));
+      SFX.move();
+      if (!show) return;
+      openedAt = Date.now(); leadId = leadId || newId();
+      // роль уже выбрана на сайте или пришла в адресе: подставляем её
+      if (!form.role.value && (TR.role || store('ce-role'))) form.role.value = role.id;
+      TR.goal('form_open', who());
+      form.elements.name.focus({ preventScroll: true });
+      reveal(form);
+    });
+    function failed() { busy = false; sendBtn.disabled = false; sendBtn.textContent = T('ОТПРАВИТЬ АНКЕТУ'); note(T('Не получилось отправить форму. Напишите нам в Telegram или на почту, текст обращения уже подготовлен.'), true); }
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (busy) return;
+      var f = form.elements, bad = null;
+      ['name', 'role', 'change', 'contact'].forEach(function (k) {
+        var empty = !f[k].value.trim();
+        f[k].classList.toggle('is-bad', empty);
+        if (empty && !bad) bad = f[k];
+      });
+      if (bad) { note(T('Заполните поля, отмеченные звёздочкой.')); bad.focus(); return; }
+      if (!f.consent.checked) { note(T('Без согласия на обработку персональных данных мы не можем принять анкету.')); f.consent.focus(); return; }
+      var elapsed = Date.now() - openedAt;
+      if (elapsed < 3000) { note(T('Секунду. Попробуйте отправить ещё раз.')); return; }
+      if (f.website.value) { failed(); return; }            // ловушка для роботов: человек это поле не видит
+      if (!FORM_ENDPOINT) { failed(); return; }             // сервер ещё не подключён: успех не изображаем
+      busy = true; sendBtn.disabled = true; sendBtn.textContent = T('ОТПРАВЛЯЕМ...'); note('');
+      var body = {
+        id: leadId, name: f.name.value.trim(), role: f.role.value, club: f.club.value.trim(), league: f.league.value.trim(),
+        change: f.change.value.trim(), contact: f.contact.value.trim(), consent: true, website: '', elapsed: elapsed,
+        r: TR.r || '', utm: TR.utm, site_role: store('ce-role') || TR.role || '', site_path: currentPath ? currentPath.id : '',
+        lang: LANG, sport: SPORT, url: location.href.slice(0, 500)
+      };
+      var ctl = window.AbortController ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 20000);
+      fetch(FORM_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
+        .then(function (res) { return res.json().then(function (j) { return { ok: res.ok, j: j }; }); })
+        .then(function (r) {
+          clearTimeout(timer);
+          var ch = r.j && r.j.channels || {};
+          // успех только когда сервер подтвердил доставку хотя бы в один канал
+          if (!r.ok || !r.j || !r.j.ok || !(ch.telegram || ch.mail)) { failed(); return; }
+          TR.goal('form_submit_ok', { telegram: !!ch.telegram, mail: !!ch.mail });
+          form.hidden = true; openBtn.hidden = true; done.hidden = false; SFX.select();
+          reveal(done);
+        })
+        .catch(function () { clearTimeout(timer); failed(); });
+    });
+  })();
+
+  // Ссылка с якорем (#start и т.п.): разделы дорисовывает скрипт, поэтому после сборки страницы
+  // ещё раз встаём на нужный раздел
+  if (/^#[a-z]+$/.test(location.hash) && document.getElementById(location.hash.slice(1))) setTimeout(function () {
+    document.getElementById(location.hash.slice(1)).scrollIntoView({ behavior: 'auto' });
+  }, 80);
 
   guideSync();
   requestAnimationFrame(loop);

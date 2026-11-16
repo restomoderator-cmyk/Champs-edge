@@ -800,3 +800,56 @@ body::before {
     0 calc(var(--px) * -1) 0 0 var(--ink), 0 var(--px) 0 0 var(--ink), calc(var(--px) * -1) 0 0 0 var(--ink), var(--px) 0 0 0 var(--ink),
     inset 0 calc(var(--px) * -1) 0 0 #c26a1a, inset 0 var(--px) 0 0 var(--yellow), 0 calc(var(--px) * 3) 0 0 #0c0a14; }
 .title__starts .btn--start[aria-pressed="false"]:hover { background: var(--yellow); }
+
+/* ---------- Анкета на созвон, уведомление о cookie, текст согласия ---------- */
+.callform__open { margin-top: 26px; }
+.callform { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; max-width: 34em; margin: 22px auto 0; text-align: left; }
+.callform[hidden], .callform__msg[hidden], .callform__fallback[hidden], .callform__done[hidden] { display: none; }
+.callform > p, .callform > button, .callform__agree, .callform__f--wide { grid-column: 1 / -1; }
+.callform p { max-width: none; margin: 0; }
+.callform__lead { color: var(--mist) !important; }
+.callform__f { display: grid; gap: 6px; min-width: 0; }
+.callform__f span { font-family: var(--head); font-size: 9px; line-height: 1.6; color: var(--cyan); }
+.callform__f small { font-family: var(--body); font-size: 18px; color: var(--dim); }
+.callform input[type="text"], .callform select, .callform textarea {
+  width: 100%; min-width: 0; box-sizing: border-box; font-family: var(--body); font-size: 22px; line-height: 1.2;
+  color: var(--white); background: var(--ink); border: var(--px) solid var(--slate); border-radius: 0; padding: 8px 10px;
+}
+.callform textarea { resize: vertical; min-height: 96px; }
+.callform input:focus, .callform select:focus, .callform textarea:focus { outline: none; border-color: var(--yellow); }
+.callform .is-bad { border-color: #e43b44; }
+.callform__hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.callform__agree { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; color: var(--white); cursor: pointer; }
+.callform__agree input { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--green); }
+.callform__more a, .consent a { font-family: var(--head); font-size: 9px; color: var(--cyan); }
+.callform > button { justify-self: center; margin-top: 4px; }
+.callform > button:disabled { opacity: .6; cursor: default; }
+.callform__msg { color: var(--yellow) !important; text-align: center; }
+.callform__fallback { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+.callform__done { font-family: var(--head); font-size: 12px; line-height: 2; color: var(--green) !important; margin-top: 30px; }
+
+.section--legal { padding-top: 0; }
+.legal { padding: 18px 24px; }
+.legal summary { font-family: var(--head); font-size: 10px; line-height: 2; color: var(--dim); cursor: pointer; }
+.legal summary:hover { color: var(--white); }
+.legal h3 { font-family: var(--head); font-weight: 400; font-size: 11px; line-height: 1.8; color: var(--yellow); margin: 22px 0 10px; }
+.legal p { max-width: 44em; }
+.legal__draft { color: var(--dim); }
+
+.consent {
+  position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  max-width: 760px; margin: 0 auto; padding: 16px 18px; background: var(--navy); color: var(--white);
+  box-shadow: 0 0 0 var(--px) var(--ink), 0 0 0 calc(var(--px) * 2) var(--cyan);
+}
+.consent[hidden] { display: none; }
+.consent p { margin: 0 0 12px; font-size: 20px; line-height: 1.25; }
+.consent__row { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: center; }
+.consent .btn--small { font-size: 10px; padding: 12px 14px; }
+.consent__yes { background: var(--green); }
+@media (max-width: 560px) {
+  .callform { grid-template-columns: 1fr; }
+  .consent { left: 6px; right: 6px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); padding: 10px 12px; }
+  .consent p { font-size: 16px; line-height: 1.2; margin-bottom: 8px; }
+  .consent__row { gap: 8px 10px; }
+  .consent .btn--small { font-size: 8px; padding: 10px 9px; }
+}

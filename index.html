@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Яндекс Метрика 114286443 и параметры адреса. Счётчик запускается только после согласия посетителя. -->
+<script src="js/track.js"></script>
 <title>Champion's Edge: индивидуальное развитие профессиональных атлетов</title>
 <meta name="description" content="Индивидуальная программа развития для профессиональных хоккеистов и атлетов. Методика выросла из изучения чемпионов и тренеров в 6 видах спорта. Онлайн.">
 <meta name="theme-color" content="#181425">
@@ -48,6 +50,9 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<!-- Yandex.Metrika counter (noscript) -->
+<noscript><div><img src="https://mc.yandex.ru/watch/114286443" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
 
 <!-- Верхняя панель -->
 <header class="hud">
@@ -115,7 +120,7 @@
   <p>Методика выросла из многолетнего изучения того, как устроены чемпионы, чемпионские команды и тренеры в шести видах спорта: хоккей, футбол, теннис, баскетбол, бокс и ММА. В основе девять принципов. Первый из них: быть чемпионом значит выбрать образ жизни и способ мышления, а титулы лишь подтверждают это.</p>
 
   <h2 class="h2">Как записаться</h2>
-  <p>Напишите в Telegram: <a href="https://t.me/call_pascal">t.me/call_pascal</a> или на почту <a href="mailto:edgechamps@gmail.com">edgechamps@gmail.com</a>. Наш канал в Telegram: <a href="https://t.me/ballplease">@ballplease</a>. Дальше бесплатный созвон на 15-20 минут, вводная встреча около трёх часов с первой сессией и старт. Мы не публикуем имён ни игроков, ни тренера. Рекомендации от игроков и тренеров по запросу.</p>
+  <p>Напишите в Telegram: <a href="https://t.me/call_pascal">t.me/call_pascal</a> или на почту <a href="mailto:edgechamps@gmail.com">edgechamps@gmail.com</a>. Наш канал в Telegram: <a href="https://t.me/ballplease">@ballplease</a>. При включённом JavaScript на сайте есть короткая анкета на созвон. Дальше бесплатный созвон на 15-20 минут, вводная встреча около трёх часов с первой сессией и старт. Мы не публикуем имён ни игроков, ни тренера. Рекомендации от игроков и тренеров по запросу.</p>
 </section>
 </noscript>
 
@@ -295,6 +300,36 @@
     <p class="cta__mail">ИЛИ НА ПОЧТУ: <a id="ctaMail" href="mailto:edgechamps@gmail.com">edgechamps@gmail.com</a>
       <button type="button" id="mailCopy" aria-label="Скопировать адрес почты">КОПИРОВАТЬ</button></p>
     <p class="cta__channel">НАШ КАНАЛ В TELEGRAM: <a href="https://t.me/ballplease" target="_blank" rel="noopener">@ballplease</a></p>
+
+    <!-- Анкета на созвон. Кнопка видна, только когда задан адрес сервера (FORM_ENDPOINT в js/main.js). -->
+    <p class="callform__open"><button type="button" class="btn btn--small" id="formOpen" aria-expanded="false" aria-controls="callForm" hidden>ИЛИ ЗАПОЛНИТЬ АНКЕТУ НА СОЗВОН</button></p>
+    <form class="callform" id="callForm" hidden novalidate>
+      <p class="callform__lead">Берём ограниченное число атлетов в сезон. Анкета нужна, чтобы понять задачу и договориться о коротком разговоре. Место в программе она не обещает.</p>
+      <label class="callform__f"><span>ИМЯ *</span><input type="text" name="name" maxlength="80" autocomplete="name" required></label>
+      <label class="callform__f"><span>РОЛЬ *</span>
+        <select name="role" required>
+          <option value="">ВЫБЕРИТЕ</option>
+          <option value="player">ИГРОК</option>
+          <option value="agent">АГЕНТ</option>
+          <option value="coach">ТРЕНЕР</option>
+          <option value="club">КЛУБ</option>
+          <option value="family">СЕМЬЯ</option>
+        </select></label>
+      <label class="callform__f"><span>КЛУБ</span><input type="text" name="club" maxlength="120" autocomplete="organization"></label>
+      <label class="callform__f"><span>ЛИГА</span><input type="text" name="league" maxlength="120"></label>
+      <label class="callform__f callform__f--wide"><span>ЧТО ХОТИТЕ ИЗМЕНИТЬ *</span><textarea name="change" rows="4" maxlength="2000" required></textarea></label>
+      <label class="callform__f callform__f--wide"><span>КОНТАКТ *</span><input type="text" name="contact" maxlength="160" required><small>Телефон, Telegram или почта: как вам удобно.</small></label>
+      <label class="callform__hp" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+      <label class="callform__agree"><input type="checkbox" name="consent" required><span>Мне есть 18 лет. Согласен на обработку персональных данных, чтобы со мной связались по этой анкете.</span></label>
+      <p class="callform__more"><a href="#privacy" data-legal>ПОЛНЫЙ ТЕКСТ СОГЛАСИЯ ▼</a></p>
+      <button type="submit" class="btn btn--cta btn--small" id="formSend">ОТПРАВИТЬ АНКЕТУ</button>
+      <p class="callform__msg" id="formMsg" role="alert" hidden></p>
+      <p class="callform__fallback" id="formFallback" hidden>
+        <a class="btn btn--small" id="formTg" href="https://t.me/call_pascal" target="_blank" rel="noopener">НАПИСАТЬ В TELEGRAM</a>
+        <a class="btn btn--small" id="formMail" href="mailto:edgechamps@gmail.com">НАПИСАТЬ НА ПОЧТУ</a>
+      </p>
+    </form>
+    <p class="callform__done" id="formDone" role="status" hidden>Заявку получили. Напишем вам.</p>
   </div>
 </section>
 
@@ -315,9 +350,42 @@
 
 <div class="sheet__back" id="sheetBack" hidden></div>
 
+<!-- Cookie и персональные данные.
+     ЧЕРНОВИК юридических формулировок: до публикации сверить с юристом.
+     Оператор остаётся плейсхолдером, пока его не укажет владелец сайта. -->
+<section class="section section--legal" id="privacy">
+  <details class="panel legal" id="legal">
+    <summary>COOKIE И ПЕРСОНАЛЬНЫЕ ДАННЫЕ</summary>
+    <h3>COOKIE И АНАЛИТИКА</h3>
+    <p>Сайт использует cookie и локальное хранилище браузера. Необходимые записи работают всегда: они помнят язык, роль, путь, настройки звука и код персональной ссылки, если вы пришли по такой ссылке.</p>
+    <p>С вашего согласия подключается Яндекс Метрика (счётчик 114286443) с Вебвизором. Она собирает сведения о посещении: какие разделы вы открывали, клики и прокрутку, запись действий на странице, тип устройства и источник перехода. Это нужно, чтобы понимать, как сайтом пользуются, улучшать его и показывать наши объявления тем, кто уже был на сайте.</p>
+    <p>Запись начинается только после кнопки «Принять». Если выбрать «Только необходимые», Метрика и Вебвизор не подключаются.</p>
+    <p><button type="button" class="btn btn--small" id="consentChange">ИЗМЕНИТЬ ВЫБОР</button></p>
+    <h3>СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ</h3>
+    <p>Отправляя анкету, вы даёте согласие на обработку персональных данных оператору: [ОПЕРАТОР: ФИО и статус укажет Арам].</p>
+    <p>Какие данные: имя, роль, клуб, лига, описание запроса и контакт, который вы указали.</p>
+    <p>Зачем: чтобы ответить на обращение и договориться о созвоне.</p>
+    <p>Куда передаём: заявка сначала записывается в базу данных на территории России. Затем её копия доставляется в Telegram (аккаунт @call_pascal) и на почту edgechamps@gmail.com. Доставка в Telegram и Gmail может означать трансграничную передачу данных.</p>
+    <p>Срок хранения: до обработки обращения и в сроки, установленные законом, если иное не потребуется для исполнения договорённости.</p>
+    <p>Ваши права: запросить доступ к своим данным, их уточнение или удаление, а также отозвать согласие. Для этого напишите на edgechamps@gmail.com.</p>
+    <p>Анкета предназначена для лиц от 18 лет. Мы не публикуем имён. Ни игроков, ни тренера.</p>
+    <p class="legal__draft">Черновик формулировок. Будет сверен с юристом до публикации.</p>
+  </details>
+</section>
+
+<!-- Уведомление о cookie и аналитике: показывается, пока посетитель не сделал выбор -->
+<div class="consent" id="consent" role="region" aria-label="Cookie и аналитика" hidden>
+  <p>Мы используем cookie. С вашего согласия подключим Яндекс Метрику и Вебвизор, чтобы улучшать сайт и настраивать объявления. Запись начнётся после кнопки «Принять».</p>
+  <div class="consent__row">
+    <button type="button" class="btn btn--small consent__yes" id="consentYes">ПРИНЯТЬ</button>
+    <button type="button" class="btn btn--small" id="consentNo">ТОЛЬКО НЕОБХОДИМЫЕ</button>
+    <a href="#privacy" data-legal>ПОДРОБНЕЕ</a>
+  </div>
+</div>
+
 <footer class="footer">
   <p>CHAMPION'S EDGE · ГРАНИ ЧЕМПИОНОВ</p>
-  <p><a href="https://t.me/call_pascal" target="_blank" rel="noopener">НАПИСАТЬ В TELEGRAM</a> · <a href="https://t.me/ballplease" target="_blank" rel="noopener">КАНАЛ @ballplease</a> · <a href="mailto:edgechamps@gmail.com">edgechamps@gmail.com</a></p>
+  <p><a href="https://t.me/call_pascal" target="_blank" rel="noopener">НАПИСАТЬ В TELEGRAM</a> · <a href="https://t.me/ballplease" target="_blank" rel="noopener">КАНАЛ @ballplease</a> · <a href="mailto:edgechamps@gmail.com">edgechamps@gmail.com</a> · <a href="#privacy" data-legal>COOKIE И ДАННЫЕ</a></p>
   <p class="footer__small">© 2026 · Все права защищены</p>
 </footer>
 

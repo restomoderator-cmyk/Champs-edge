@@ -1,0 +1,12 @@
+{
+  "name": "ce-form-handler",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Приём анкеты на созвон: запись в Object Storage (ru-central1), затем Telegram и почта",
+  "main": "index.js",
+  "scripts": { "test": "node --test" },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.600.0",
+    "nodemailer": "^6.9.14"
+  }
+}
