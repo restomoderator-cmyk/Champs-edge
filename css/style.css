@@ -695,3 +695,8 @@ body::before {
   #inventory.is-collapsed .item:nth-child(n+7) { display: none; }
   .inventory__more { display: block; }
 }
+
+/* лиги, с игроками которых есть опыт работы */
+.leagues { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 4px; }
+.leagues span { font-family: var(--head); font-size: 9px; line-height: 1.6; color: var(--dim); }
+.leagues b { font-family: var(--head); font-weight: 400; font-size: 11px; color: var(--ink); background: var(--yellow); padding: 7px 9px 6px; }
