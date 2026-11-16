@@ -761,3 +761,14 @@ body::before {
 .hud__lang { font: inherit; color: var(--ink); background: var(--cyan); border: 0; padding: 7px 8px 6px; cursor: pointer; align-self: center; }
 .hud__lang:hover { background: var(--white); }
 @media (max-width: 1180px) { .hud__lang { align-self: flex-start; margin: 12px 4px 4px; padding: 10px 14px; } }
+
+/* язык стоит в шапке рядом с музыкой и звуком */
+.hud__lang, .hud__lang:hover { align-self: center; margin: 0 -8px 0 0; padding: 8px; min-height: 0; border: 2px solid var(--cyan); background: var(--cyan); color: var(--ink); }
+.hud__lang:hover { background: var(--white); border-color: var(--white); }
+@media (max-width: 1180px) { .hud__lang { min-height: 40px; padding: 0 10px; margin: 0 -2px 0 0; align-self: center; } }
+@media (max-width: 760px) { .hud__lang { font-size: 8px; } }
+@media (max-width: 400px) {
+  .hud { gap: 6px; padding-left: 8px; padding-right: 8px; }
+  .hud__burger, .hud__sound, .hud__lang { padding-left: 6px; padding-right: 6px; }
+  .hud__logo { padding: 0 7px; }
+}
