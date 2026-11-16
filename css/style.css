@@ -756,3 +756,8 @@ body::before {
   .role { padding: 12px 8px 10px; }
   .role i { margin-top: 8px; }
 }
+
+/* ---------- Переключатель языка ---------- */
+.hud__lang { font: inherit; color: var(--ink); background: var(--cyan); border: 0; padding: 7px 8px 6px; cursor: pointer; align-self: center; }
+.hud__lang:hover { background: var(--white); }
+@media (max-width: 1180px) { .hud__lang { align-self: flex-start; margin: 12px 4px 4px; padding: 10px 14px; } }
