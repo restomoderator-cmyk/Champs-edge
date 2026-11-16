@@ -679,3 +679,14 @@ body::before {
   border: 0; padding: 12px 16px 11px; min-height: 40px; cursor: pointer; box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--white);
 }
 .masters__more button:hover { background: var(--white); }
+
+/* ---------- Почта как второй способ связи ---------- */
+.cta__mail { font-family: var(--head); font-size: 10px; line-height: 2.4; color: var(--mist) !important; margin-top: 26px; }
+.cta__mail a { font-family: var(--body); font-size: 24px; color: var(--cyan); margin: 0 8px; user-select: all; overflow-wrap: anywhere; }
+.cta__mail button {
+  font-family: var(--head); font-size: 9px; color: var(--ink); background: var(--mist); border: 0;
+  padding: 10px 10px 9px; min-height: 36px; cursor: pointer; vertical-align: middle;
+}
+.cta__mail button:hover { background: var(--white); }
+.footer a { color: var(--dim); }
+.footer a:hover { color: var(--white); }

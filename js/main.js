@@ -551,6 +551,21 @@
   var pathCards = [];
   var pathPanel = document.getElementById('pathPanel');
   var guideCta = document.getElementById('guideCta');
+  var MAIL = 'edgechamps@gmail.com', ctaMail = document.getElementById('ctaMail'), mailCopy = document.getElementById('mailCopy');
+  // Почтовые ссылки открываются не у всех, поэтому адрес виден текстом и копируется кнопкой
+  mailCopy.addEventListener('click', function () {
+    function done(ok) {
+      mailCopy.textContent = ok ? 'СКОПИРОВАНО' : 'ВЫДЕЛЕНО';
+      setTimeout(function () { mailCopy.textContent = 'КОПИРОВАТЬ'; }, 1800);
+    }
+    function select() {
+      var r = document.createRange(); r.selectNodeContents(ctaMail);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); done(false);
+    }
+    SFX.move();
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(MAIL).then(function () { done(true); }, select);
+    else select();
+  });
 
   PATHS.forEach(function (p) {
     var b = document.createElement('button');
@@ -609,6 +624,9 @@
       pc.el.querySelector('.path__pick').textContent = on ? '★ ВЫБРАН' : 'ВЫБРАТЬ';
     });
     cta.href = signupHref(p);
+    // то же сообщение уходит и в письмо
+    ctaMail.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Champion\'s Edge: запись') +
+      '&body=' + encodeURIComponent('Здравствуйте! Хочу записаться на Champion\'s Edge.' + (p ? ' Мой путь: ' + p.name.toLowerCase() + '.' : ''));
     ctaPathEl.textContent = p ? p.name : 'НЕ ВЫБРАН';
     ctaPick.hidden = !!p;
     if (p) {
