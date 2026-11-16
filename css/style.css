@@ -666,3 +666,7 @@ body::before {
   .masters span { font-size: 17px; line-height: 1.2; display: block; }
   .section { padding-top: 48px; }
 }
+
+/* закрытые предметы инвентаря */
+.item--locked { background: var(--ink); box-shadow: 0 0 0 var(--px) var(--slate); }
+.item--locked b, .item--locked span { color: var(--dim); }
