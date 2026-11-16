@@ -618,7 +618,7 @@ body::before {
 @media (max-width: 760px) {
   /* сужается только сама площадка; реплика и подсказка остаются во всю ширину, чтобы текст не переносился лишний раз */
   .stage { max-width: none; }
-  .stage__screen { max-width: calc(var(--rink-h) * 4 / 3); margin-left: auto; margin-right: auto; }
+  .stage__screen { max-width: calc(var(--rink-h) * var(--rink-ar, 1.3333)); margin-left: auto; margin-right: auto; }
 }
 
 /* ---------- Мелкие подписи: читаемый контраст ---------- */

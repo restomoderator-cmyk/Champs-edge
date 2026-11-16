@@ -900,7 +900,10 @@
 
   var cv = document.getElementById('scene'), g = cv.getContext('2d');
   // Вид сверху-сбоку: трибуны и борт вверху, трое ворот внизу, бросок - вниз.
-  var W = 320, H = 240, ICE_Y = 52, GOAL_Y = 212;
+  // На телефоне площадка выше (320×320 вместо 320×240): занимает больше экрана, игроку просторнее.
+  var TALL = narrow.matches ? 80 : 0;
+  var W = 320, H = 240 + TALL, ICE_Y = 52, GOAL_Y = 212 + TALL;
+  if (TALL) { cv.height = H; cv.parentNode.style.setProperty('--rink-ar', String(W / H)); document.querySelector('.stage').style.setProperty('--rink-ar', String(W / H)); }
   var scoreEl = document.getElementById('score');
   var keys = {}, score = 0;
   var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null, cruise: null };
@@ -908,7 +911,7 @@
   var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1, cheerT = 0;
   // Трое ворот - по одним на каждый путь чемпиона: [левая штанга, правая штанга]
   var NETS = [[26, 98], [124, 196], [222, 294]];
-  var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 166;
+  var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 166 + TALL;
   // Уход с площадки: чужие ворота гаснут, свои встают в центр, игрок закатывается за них
   var exit = null, netOff = [0, 0, 0], netAlpha = [1, 1, 1];
   function startExit(zone, done) {
@@ -1061,10 +1064,10 @@
      линии, корт уходит вдаль, за сеткой три зоны. Игрок ходит только вдоль
      линии и останавливается, когда отпустили клавишу. Подача: подброс и удар.
      --------------------------------------------------------------------- */
-  var CT = { near: 212, far: 72, hwNear: 136, hwFar: 100, q: 0.75 };
+  var CT = { near: 212 + TALL, far: 72, hwNear: 136, hwFar: 100, q: 0.75 };
   function ctY(d) { var k = d / (d + (1 - d) * CT.q); return CT.near - (CT.near - CT.far) * k; }       // глубина 0..1 → y
   function ctHW(y) { return CT.hwNear - (CT.hwNear - CT.hwFar) * (CT.near - y) / (CT.near - CT.far); }  // полуширина корта на высоте y
-  var T_NET = Math.round(ctY(0.5)), T_LAND = Math.round(ctY(0.76)), T_HERO_Y = 189;      // игрок стоит за задней линией: подаёт из-за корта
+  var T_NET = Math.round(ctY(0.5)), T_LAND = Math.round(ctY(0.76)), T_HERO_Y = 189 + TALL;      // игрок стоит за задней линией: подаёт из-за корта
   var ball = null;
   if (TENNIS) { hero.x = 149; hero.y = T_HERO_Y; hero.auto = false; }
 
@@ -1225,8 +1228,9 @@
       if (left || right) { hero.target = null; hero.vx = right ? 2.2 : -2.2; }
       else if (hero.target) {
         var dx = hero.target.x - hero.x;
-        if (Math.abs(dx) <= 2.6) { hero.x = hero.target.x; var go = hero.target.serve; hero.target = null; if (go) serve(); }
-        else hero.vx = dx > 0 ? 2.6 : -2.6;
+        var sp = hero.target.fast ? 6 : 2.6;       // за пальцем игрок успевает, к зоне идёт обычным шагом
+        if (Math.abs(dx) <= sp) { hero.x = hero.target.x; var go = hero.target.serve; hero.target = null; if (go) serve(); }
+        else hero.vx = dx > 0 ? sp : -sp;
       }
     }
     hero.x = Math.max(12, Math.min(286, hero.x + hero.vx));
@@ -1264,6 +1268,14 @@
   }
 
   // Мышь и палец на корте: нажатие на зону - встать напротив и подать, на свою половину - перейти туда
+  var tDrag = false;
+  function tennisDrag(e) {
+    if (!tDrag || exit || (ball && ball.phase === 'toss')) return;
+    var pt = scenePoint(e);
+    hero.target = { x: Math.max(12, Math.min(286, Math.round(pt.x - 11))), serve: false, fast: true };
+  }
+  cv.addEventListener('pointermove', function (e) { if (TENNIS) tennisDrag(e); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { cv.addEventListener(ev, function () { tDrag = false; }); });
   function tennisPointer(e) {
     if (exit) return;
     var pt = scenePoint(e);
@@ -1277,6 +1289,7 @@
     if (now - lastTap.t < 320 && Math.abs(pt.x - lastTap.x) < 40) { lastTap.t = 0; serve(); return; }   // двойное нажатие - подача
     lastTap = { t: now, x: pt.x, y: pt.y };
     hero.target = { x: Math.max(12, Math.min(286, Math.round(pt.x - 11))), serve: false };
+    tDrag = true;                      // дальше игрок идёт за пальцем, пока его не отпустили
   }
 
   function drawHero(t) {

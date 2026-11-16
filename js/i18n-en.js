@@ -541,5 +541,7 @@ window.CE_EN = {
  "ПРИНЯТЬ": "ACCEPT",
  "ТОЛЬКО НЕОБХОДИМЫЕ": "ESSENTIAL ONLY",
  "ПОДРОБНЕЕ": "DETAILS",
- "Мы используем cookie. С вашего согласия подключим Яндекс Метрику и Вебвизор, чтобы улучшать сайт и настраивать объявления. Запись начнётся после кнопки «Принять».": "We use cookies. With your consent we will turn on Yandex Metrica and Webvisor to improve the site and tune our ads. Recording starts after you press \"Accept\"."
+ "Мы используем cookie. С вашего согласия подключим Яндекс Метрику и Вебвизор, чтобы улучшать сайт и настраивать объявления. Запись начнётся после кнопки «Принять».": "We use cookies. With your consent we will turn on Yandex Metrica and Webvisor to improve the site and tune our ads. Recording starts after you press \"Accept\".",
+ "Веди пальцем влево-вправо:": "Slide your finger left or right:",
+ "игрок идёт за пальцем.": "the player follows it."
 };
