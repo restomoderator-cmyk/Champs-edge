@@ -772,3 +772,7 @@ body::before {
   .hud__burger, .hud__sound, .hud__lang { padding-left: 6px; padding-right: 6px; }
   .hud__logo { padding: 0 7px; }
 }
+
+/* текстовая версия для посетителей без JavaScript */
+.nojs p { max-width: 46em; }
+.nojs .h2 { margin-top: 34px; }

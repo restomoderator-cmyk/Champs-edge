@@ -15,6 +15,11 @@
   // Перевод строки. Всё, чего нет в словаре, остаётся по-русски.
   function T(s) { return DICT && Object.prototype.hasOwnProperty.call(DICT, s) ? DICT[s] : s; }
   document.documentElement.lang = LANG;
+  if (LANG === 'en') {
+    document.title = "Champion's Edge: individual development for professional athletes";
+    var md = document.querySelector('meta[name="description"]');
+    if (md) md.setAttribute('content', 'An individual development program for professional hockey players and athletes. Built on years of studying champions and coaches across 6 sports. Online.');
+  }
   // Тексты, которые стоят прямо в разметке, и подписи для экранных читалок
   if (DICT) (function () {
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), node, list = [];
