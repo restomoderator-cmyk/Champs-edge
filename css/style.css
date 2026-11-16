@@ -688,3 +688,10 @@ body::before {
 .cta__mail button:hover { background: var(--white); }
 .footer a { color: var(--dim); }
 .footer a:hover { color: var(--white); }
+
+/* инвентарь на телефоне: первые шесть предметов, остальные по кнопке */
+.inventory__more { display: none; }
+@media (max-width: 760px) {
+  #inventory.is-collapsed .item:nth-child(n+7) { display: none; }
+  .inventory__more { display: block; }
+}

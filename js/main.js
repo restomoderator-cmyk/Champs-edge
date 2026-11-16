@@ -88,7 +88,7 @@
         { name: 'МЕСЯЦ 2 · «ГЛУБЖЕ»', sub: 'от инструментов к состоянию', levels: [
           { num: 'НЕДЕЛЯ 5', icon: 'wave', title: 'СОСТОЯНИЕ ПОТОКА', q: 'Как войти в зону?',
             text: 'Наука пиковой игры. Поток в смене: когда игра «замедляется». Разбираем твой лучший матч сезона и то, что ему предшествовало.',
-            sessions: ['Анатомия потока', 'Осознанная практика встречает поток'],
+            sessions: ['Анатомия потока', 'Осознанная практика встречает поток', 'Интеграция недели'],
             loot: ['Карта триггеров потока'] },
           { num: 'НЕДЕЛЯ 6', icon: 'flame', title: 'ИНСТИНКТ УБИЙЦЫ', q: 'Кто берёт шайбу в последней минуте?',
             text: 'Соревновательное мышление и разум воина. Действие без колебания. Злость, которая забивает, и злость, которая едет на две минуты.',
@@ -1156,18 +1156,22 @@
     invEl.appendChild(d);
   });
 
-  // Список источников свёрнут: видны первые шесть, остальные по кнопке
-  (function () {
-    var listEl = document.getElementById('masters'), btn = document.getElementById('mastersToggle');
+  // Длинные списки свёрнуты: видны первые шесть, остальные по кнопке.
+  // Источники свёрнуты везде, инвентарь только на телефоне (кнопка там и видна).
+  function collapsible(listId, btnId, cls, word) {
+    var listEl = document.getElementById(listId), btn = document.getElementById(btnId);
     var total = listEl.children.length;
+    btn.textContent = '▼ ПОКАЗАТЬ ' + word + ' · ' + total;
     btn.addEventListener('click', function () {
-      var open = listEl.classList.toggle('masters--collapsed') === false;
+      var open = listEl.classList.toggle(cls) === false;
       btn.setAttribute('aria-expanded', String(open));
-      btn.textContent = open ? '▲ СВЕРНУТЬ' : '▼ ПОКАЗАТЬ ВСЕХ · ' + total;
+      btn.textContent = open ? '▲ СВЕРНУТЬ' : '▼ ПОКАЗАТЬ ' + word + ' · ' + total;
       SFX.move();
       if (!open) reveal(listEl);
     });
-  })();
+  }
+  collapsible('masters', 'mastersToggle', 'masters--collapsed', 'ВСЕХ');
+  collapsible('inventory', 'inventoryToggle', 'is-collapsed', 'ВСЕ');
 
   /* =====================================================================
      ПРОВОДНИК: идёт за читателем по странице и подсказывает, что делать
