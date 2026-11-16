@@ -776,3 +776,7 @@ body::before {
 /* текстовая версия для посетителей без JavaScript */
 .nojs p { max-width: 46em; }
 .nojs .h2 { margin-top: 34px; }
+
+/* канал в Telegram */
+.cta__channel { font-family: var(--head); font-size: 10px; line-height: 2.4; color: var(--mist) !important; margin-top: 10px; }
+.cta__channel a { font-family: var(--body); font-size: 24px; color: var(--cyan); margin-left: 8px; }
