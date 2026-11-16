@@ -853,3 +853,21 @@ body::before {
   .consent__row { gap: 8px 10px; }
   .consent .btn--small { font-size: 8px; padding: 10px 9px; }
 }
+
+/* ---------- Цвет пути вытекает из площадки и вливается в описание пути ---------- */
+.pour {
+  position: absolute; z-index: 15; height: 0; pointer-events: none;
+  background: var(--path-col);
+  box-shadow: inset calc(var(--px) * 2) 0 0 var(--path-dark), inset calc(var(--px) * -2) 0 0 var(--path-dark),
+    calc(var(--px) * -1) 0 0 var(--ink), var(--px) 0 0 var(--ink);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 14px, rgba(254, 231, 97, .9) 14px 18px, transparent 18px 32px);
+  background-size: 8px 32px; background-repeat: repeat-y; background-position: center 0;
+  animation: pourflow .4s steps(4) infinite;
+}
+.pour.is-out { animation: pourflow .4s steps(4) infinite, pourout .7s steps(5) forwards; }
+@keyframes pourflow { to { background-position: center 32px; } }
+@keyframes pourout { to { opacity: 0; } }
+.pathinfo.has-path { background-image: linear-gradient(var(--path-col), var(--path-col)); background-size: 100% calc(var(--px) * 2); background-repeat: no-repeat; }
+.pathinfo.is-poured { animation: poured 1.1s steps(7) 1; }
+@keyframes poured { 0% { background-color: var(--path-col); } 100% { background-color: var(--navy); } }
+@media (prefers-reduced-motion: reduce) { .pour, .pathinfo.is-poured { animation: none; } }

@@ -759,6 +759,8 @@
     cta.href = signupHref(p);
     // то же сообщение уходит и в письмо
     ctaMail.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Champion\'s Edge') + '&body=' + encodeURIComponent(signupMsg(p));
+    if (p) { pathPanel.style.setProperty('--path-col', p.jersey); pathPanel.style.setProperty('--path-dark', p.jerseyDark); }
+    pathPanel.classList.toggle('has-path', !!p);
     ctaPathEl.textContent = p ? p.name : T('НЕ ВЫБРАН');
     ctaPick.hidden = !!p;
     if (p) {
@@ -844,10 +846,36 @@
     var target = dialogAction.target;
     function go() { target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }
     // после выбора пути игрок сначала уезжает за свои ворота, «вниз по странице», и только потом листаем
-    if (dialogAction.exit && currentPath && !reduced && onScreen(cv)) startExit(PATHS.indexOf(currentPath), go);
+    if (dialogAction.exit && currentPath && !reduced && onScreen(cv)) startExit(PATHS.indexOf(currentPath), function () { pour(target); go(); });
     else go();
   });
   dialogGo.addEventListener('keydown', function (e) { e.stopPropagation(); });
+
+  // Цвет выбранного пути «вытекает» из площадки вниз по странице, туда, куда ушёл игрок,
+  // и вливается в описание пути: игра и сайт читаются как одно целое.
+  function pour(target) {
+    var cr = cv.getBoundingClientRect(), tr = target.getBoundingClientRect(), sy = window.pageYOffset, sx = window.pageXOffset;
+    var top = cr.bottom + sy, end = tr.top + sy + 6, k = cr.width / W;
+    if (end - top < 20) return;
+    var el = document.createElement('div');
+    el.className = 'pour'; el.setAttribute('aria-hidden', 'true');
+    el.style.setProperty('--path-col', currentPath.jersey); el.style.setProperty('--path-dark', currentPath.jerseyDark);
+    el.style.width = Math.round(40 * k) + 'px';
+    el.style.left = Math.round(cr.left + sx + (hero.x + 11 - 20) * k) + 'px';
+    el.style.top = Math.round(top) + 'px';
+    document.body.appendChild(el);
+    var t0 = performance.now(), dur = 1400;
+    (function grow(now) {
+      // голова потока идёт вместе с прокруткой и всё время видна на экране
+      var len = end - top, h = Math.max(len * Math.min(1, (now - t0) / dur), window.pageYOffset + window.innerHeight * 0.6 - top);
+      var f = Math.min(1, h / len);
+      el.style.height = Math.round(len * f / 8) * 8 + 'px';                  // растёт ступеньками по 8 пикселей
+      if (f < 1 && now - t0 < 3000) { requestAnimationFrame(grow); return; }
+      target.classList.remove('is-poured'); void target.offsetWidth; target.classList.add('is-poured');
+      el.classList.add('is-out');
+      setTimeout(function () { el.remove(); }, 700);
+    })(t0);
+  }
   dialog.addEventListener('click', advance);
   dialog.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); advance(); }
