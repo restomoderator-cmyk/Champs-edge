@@ -493,5 +493,11 @@ window.CE_EN = {
  "▶ ХОККЕЙ": "▶ HOCKEY",
  "▶ ТЕННИС": "▶ TENNIS",
  "ВЫБЕРИ ИГРУ И НАЖМИ START": "CHOOSE YOUR GAME AND PRESS START",
- " Версия: теннис.": " Version: tennis."
+ " Версия: теннис.": " Version: tennis.",
+ "Подай в зону и выберешь путь · СТРЕЛКИ ВЛЕВО-ВПРАВО: встать напротив зоны · ПРОБЕЛ: подача · или просто нажми на зону": "Serve into a zone to choose a path · LEFT-RIGHT ARROWS: line up with a zone · SPACE: serve · or just click a zone",
+ "Тап по своей половине:": "Tap your side:",
+ "перейти туда.": "move there.",
+ "подача с места.": "serve from where you stand.",
+ "игрок встанет напротив и подаст. Так выбирается путь.": "the player lines up and serves. That is how you choose a path.",
+ "Пиксельный теннисный корт: игрок у задней линии подаёт в три зоны за сеткой, каждая выбирает путь чемпиона": "A pixel tennis court: the player at the baseline serves into three zones beyond the net, each choosing a champion's path"
 };

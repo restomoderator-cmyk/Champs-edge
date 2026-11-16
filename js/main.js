@@ -873,17 +873,14 @@
   var puck = { x: 0, y: 0, vx: 0, vy: 0, live: false };
   var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1, cheerT = 0;
   // Трое ворот - по одним на каждый путь чемпиона: [левая штанга, правая штанга]
-  // В теннисе это три зоны за сеткой: [левый край, правый край]
-  var NETS = TENNIS ? [[36, 104], [126, 194], [216, 284]] : [[26, 98], [124, 196], [222, 294]];
-  var NET_Y = 140, ZONE_TOP = 152, ZONE_BOT = 224, LAND_Y = 188;     // теннис: сетка, зоны, точка приземления мяча
-  var TARGET_Y = TENNIS ? ZONE_TOP : GOAL_Y - 12;                    // ниже этой линии тап считается выбором цели
-  var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = TENNIS ? 96 : 166;
+  var NETS = [[26, 98], [124, 196], [222, 294]];
+  var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 166;
   // Уход с площадки: чужие ворота гаснут, свои встают в центр, игрок закатывается за них
   var exit = null, netOff = [0, 0, 0], netAlpha = [1, 1, 1];
   function startExit(zone, done) {
     if (exit) return;
     exit = { zone: zone, t: 0, done: done, fired: false };
-    hero.target = null; hero.cruise = null; hero.auto = false; puck.live = false; keys = {};
+    hero.target = null; hero.cruise = null; hero.auto = false; puck.live = false; ball = null; keys = {};
     exit.stopOvation = SFX.ovation();                   // трибуны провожают овацией, пока игрок не скроется
   }
   function updateExit() {
@@ -894,16 +891,11 @@
       if (i === z) netOff[i] = slide * ease; else netAlpha[i] = 1 - Math.min(1, e.t / 30);
     }
     // игрок объезжает свои ворота справа и уезжает за нижний край площадки
-    // (в теннисе игрок бежит к сетке напротив своей зоны и перепрыгивает её)
-    var sideX = TENNIS ? 148 : 210, dx = sideX - hero.x;
+    var sideX = 210, dx = sideX - hero.x;
     hero.vx = Math.abs(dx) > 1.5 ? (dx > 0 ? 2 : -2) : 0;
     hero.vy = 0;
     if (!hero.vx) { hero.x = sideX; if (e.t > 30) hero.vy = 1.8; }
-    else if (hero.y < (TENNIS ? 92 : 150)) hero.vy = 1;                 // по пути подъезжает ближе
-    if (TENNIS) {
-      var feet = hero.y + 33;
-      hero.jump = feet > NET_Y - 16 && feet < NET_Y + 20 ? 13 * Math.sin(Math.PI * (feet - (NET_Y - 16)) / 36) : 0;
-    }
+    else if (hero.y < 150) hero.vy = 1;                 // по пути подъезжает ближе к воротам
     if (hero.vx) hero.dir = hero.vx > 0 ? 1 : -1; else hero.dir = -1;
     hero.x += hero.vx; hero.y += hero.vy;
     if (!e.fired) cheerT = 45;                          // трибуна на ногах, пока игрок на площадке
@@ -911,7 +903,7 @@
     // площадка возвращается в исходный вид, когда страница уже уехала к описанию пути
     if (e.fired && e.t - e.fireT > 100) {
       exit = null; netOff = [0, 0, 0]; netAlpha = [1, 1, 1];
-      hero.x = 60; hero.y = 66; hero.dir = 1; hero.auto = true; hero.autoDir = 1; hero.jump = 0;
+      hero.x = 60; hero.y = 66; hero.dir = 1; hero.auto = true; hero.autoDir = 1;
     }
   }
 
@@ -970,13 +962,7 @@
     drawHero(t);
 
     // шайба
-    if (puck.live && TENNIS) {
-      // мяч летит дугой: тень на корте, сам мяч выше
-      var bx = Math.round(puck.x), byy = Math.round(puck.y), arc = Math.round(Math.sin(Math.PI * puck.k) * 30);
-      g.fillStyle = 'rgba(24,20,37,0.3)'; g.fillRect(bx, byy + 1, 4, 2);
-      g.fillStyle = OUT; g.fillRect(bx - 1, byy - arc - 3, 6, 6);
-      g.fillStyle = '#c6f432'; g.fillRect(bx, byy - arc - 2, 4, 4);
-    } else if (puck.live) {
+    if (puck.live) {
       g.fillStyle = OUT; g.fillRect(Math.round(puck.x), Math.round(puck.y), 5, 4);
       g.fillStyle = '#5a6988'; g.fillRect(Math.round(puck.x) + 1, Math.round(puck.y) + 1, 3, 1);
     }
@@ -1036,40 +1022,199 @@
     });
   }
 
-  // Теннисный корт: игрок на ближней половине, за сеткой три зоны, по одной на путь
+  /* ---------------------------------------------------------------------
+     ТЕННИС. Вид как в теннисных играх: игрок спиной к нам у ближней задней
+     линии, корт уходит вдаль, за сеткой три зоны. Игрок ходит только вдоль
+     линии и останавливается, когда отпустили клавишу. Подача: подброс и удар.
+     --------------------------------------------------------------------- */
+  var CT = { near: 224, far: 72, hwNear: 140, hwFar: 100, q: 0.75 };
+  function ctY(d) { var k = d / (d + (1 - d) * CT.q); return CT.near - (CT.near - CT.far) * k; }       // глубина 0..1 → y
+  function ctHW(y) { return CT.hwNear - (CT.hwNear - CT.hwFar) * (CT.near - y) / (CT.near - CT.far); }  // полуширина корта на высоте y
+  var T_NET = Math.round(ctY(0.5)), T_LAND = Math.round(ctY(0.76)), T_HERO_Y = 187;
+  var ball = null;
+  if (TENNIS) { hero.x = 149; hero.y = T_HERO_Y; hero.auto = false; }
+
+  // Край зоны i (0..3) на высоте y
+  function zoneX(i, y) { var hw = ctHW(y); return 160 - hw + 2 * hw * i / 3; }
+  function zoneAt(x) {
+    var hw = ctHW(T_LAND), l = 160 - hw, w = 2 * hw / 3;
+    if (x < l + 2 || x > 160 + hw - 2) return -1;
+    var rel = (x - l) / w, i = Math.floor(rel);
+    return Math.abs(rel - Math.round(rel)) * w < 1.5 && Math.round(rel) % 3 !== 0 ? -1 : Math.min(2, i);   // на линии между зонами - аут
+  }
+  // Куда прилетит подача, если игрок стоит в точке hero.x: прямо перед ним, с поправкой на перспективу
+  function aimX() { return 160 + (hero.x + 11 - 160) * ctHW(T_LAND) / CT.hwNear * 0.94; }
+
+  function poly(col, pts) {
+    g.fillStyle = col; g.beginPath(); g.moveTo(pts[0], pts[1]);
+    for (var k = 2; k < pts.length; k += 2) g.lineTo(pts[k], pts[k + 1]);
+    g.closePath(); g.fill();
+  }
+  function slant(col, x0, y0, x1, y1) {                     // наклонная линия по пикселям, без сглаживания
+    g.fillStyle = col;
+    for (var y = y0; y <= y1; y++) g.fillRect(Math.round(x0 + (x1 - x0) * (y - y0) / (y1 - y0)), y, 1, 1);
+  }
+
   function drawCourt(flash) {
+    var N = CT.near, F = CT.far;
     g.fillStyle = '#3e8948'; g.fillRect(0, ICE_Y, W, H - ICE_Y);                  // покрытие вокруг корта
     g.fillStyle = '#265c42'; g.fillRect(0, ICE_Y, W, 2);
-    g.fillStyle = '#0099db'; g.fillRect(18, 60, 284, 172);                         // корт
-    g.fillStyle = '#ffffff';
-    g.fillRect(18, 60, 284, 1); g.fillRect(18, 231, 284, 1); g.fillRect(18, 60, 1, 172); g.fillRect(301, 60, 1, 172);
-    g.fillRect(30, 60, 1, 172); g.fillRect(289, 60, 1, 172);                       // одиночные линии
-    g.fillRect(30, 98, 260, 1); g.fillRect(160, 98, 1, NET_Y - 98);                // линия подачи и центральная
-    // три зоны: цвет - форма пути, выбранный путь залит
-    NETS.forEach(function (n, i) {
-      if (netAlpha[i] <= 0) return;
+    poly('#0099db', [160 - CT.hwFar, F, 160 + CT.hwFar, F, 160 + CT.hwNear, N, 160 - CT.hwNear, N]);
+    // три зоны на дальней половине: цвет - форма пути
+    for (var i = 0; i < 3; i++) {
+      if (netAlpha[i] <= 0) continue;
+      var p = PATHS[i], hit = flash && lastZone === i, cur = p === currentPath;
       g.globalAlpha = netAlpha[i];
-      var off = Math.round(netOff[i]);
-      var p = PATHS[i], l = n[0] + off, r = n[1] + off, hit = flash && lastZone === i, cur = p === currentPath;
-      g.fillStyle = hit ? '#fee761' : cur ? p.jerseyDark : '#124e89'; g.fillRect(l, ZONE_TOP, r - l, ZONE_BOT - ZONE_TOP);
-      g.fillStyle = hit ? '#ffffff' : p.jersey;                                    // рамка зоны
-      g.fillRect(l, ZONE_TOP, r - l, 2); g.fillRect(l, ZONE_BOT - 2, r - l, 2);
-      g.fillRect(l, ZONE_TOP, 2, ZONE_BOT - ZONE_TOP); g.fillRect(r - 2, ZONE_TOP, 2, ZONE_BOT - ZONE_TOP);
-      var tw = p.short.length * 8 + 4, mx = (l + r) / 2, ty = Math.round((ZONE_TOP + ZONE_BOT) / 2);
-      g.fillStyle = OUT; g.fillRect(Math.round(mx - tw / 2), ty - 6, tw, 11);
-      g.fillStyle = cur ? '#fee761' : '#ffffff'; g.fillText(p.short, mx, ty + 3);
-      g.globalAlpha = 1;
+      poly(hit ? '#fee761' : cur ? p.jersey : p.jerseyDark, [zoneX(i, F), F, zoneX(i + 1, F), F, zoneX(i + 1, T_NET), T_NET, zoneX(i, T_NET), T_NET]);
+      var mx = (zoneX(i, 100) + zoneX(i + 1, 100)) / 2, tw = p.short.length * 8 + 4;
+      g.fillStyle = OUT; g.fillRect(Math.round(mx - tw / 2), 93, tw, 11);
+      g.fillStyle = cur ? '#fee761' : '#ffffff'; g.fillText(p.short, Math.round(mx), 102);
+    }
+    g.globalAlpha = 1;
+    // разметка
+    g.fillStyle = '#ffffff';
+    g.fillRect(160 - CT.hwFar, F, CT.hwFar * 2, 1); g.fillRect(160 - CT.hwNear, N, CT.hwNear * 2 + 1, 1);
+    slant('#ffffff', 160 - CT.hwFar, F, 160 - CT.hwNear, N); slant('#ffffff', 160 + CT.hwFar, F, 160 + CT.hwNear, N);
+    slant('#ffffff', zoneX(1, F), F, zoneX(1, T_NET), T_NET); slant('#ffffff', zoneX(2, F), F, zoneX(2, T_NET), T_NET);
+    var sy = Math.round(ctY(0.25));                                               // ближняя линия подачи и центральная
+    g.fillStyle = '#ffffff'; g.fillRect(Math.round(160 - ctHW(sy)), sy, Math.round(ctHW(sy) * 2), 1); g.fillRect(160, T_NET, 1, sy - T_NET);
+    // сетка: полоса с тросом сверху и стойками
+    var nh = ctHW(T_NET) + 7;
+    g.fillStyle = 'rgba(24,20,37,0.55)'; g.fillRect(Math.round(160 - nh), T_NET - 9, Math.round(nh * 2), 9);
+    g.fillStyle = 'rgba(192,203,220,0.35)'; for (var nx = Math.round(160 - nh) + 2; nx < 160 + nh; nx += 4) g.fillRect(nx, T_NET - 8, 1, 8);
+    g.fillStyle = '#ffffff'; g.fillRect(Math.round(160 - nh), T_NET - 10, Math.round(nh * 2), 1);
+    g.fillStyle = '#c0cbdc'; g.fillRect(Math.round(160 - nh) - 2, T_NET - 12, 3, 13); g.fillRect(Math.round(160 + nh) - 1, T_NET - 12, 3, 13);
+    // прицел: куда уйдёт подача с текущего места
+    if (!ball && !exit) { var ax = Math.round(aimX()); g.fillStyle = '#ffffff'; g.fillRect(ax - 3, T_LAND, 7, 1); g.fillRect(ax, T_LAND - 3, 1, 7); }
+  }
+
+  // Теннисист со спины (22×33). swing - кадр удара.
+  function drawTennisBack(c, x, y, path, frame, swing) {
+    function R(col, rx, ry, w, h) { c.fillStyle = col; c.fillRect(x + rx, y + ry, w, h); }
+    var K = OUT, SK = '#f2c9a0', by = frame === 1 ? 1 : 0;
+    // ракетка: в замахе над плечом, после удара впереди слева
+    if (!swing) {
+      R('#b86f50', 18, 6 + by, 2, 7);
+      R(K, 15, -8 + by, 9, 14); R('#fee761', 16, -7 + by, 7, 12);
+      R(K, 16, -3 + by, 7, 1); R(K, 16, 1 + by, 7, 1); R(K, 19, -7 + by, 1, 12);
+    } else {
+      R('#b86f50', 5, 3 + by, 7, 2);
+      R(K, -6, -8 + by, 12, 12); R('#fee761', -5, -7 + by, 10, 10);
+      R(K, -5, -3 + by, 10, 1); R(K, 0, -7 + by, 1, 10);
+    }
+    // ноги: широкая стойка, на втором кадре переступает
+    var legs = frame === 0 ? [[3, 0], [12, 0]] : [[5, 0], [10, -1]];
+    legs.forEach(function (l) {
+      var lx = l[0], ly = 24 + l[1];
+      R(K, lx - 1, ly, 6, 6); R(SK, lx, ly, 4, 4); R('#ffffff', lx, ly + 4, 4, 1);
+      R(K, lx - 1, ly + 5, 6, 4); R('#ffffff', lx, ly + 6, 4, 2);
     });
-    // сетка
-    g.fillStyle = 'rgba(24,20,37,0.25)'; g.fillRect(12, NET_Y + 3, 296, 2);
-    g.fillStyle = OUT; g.fillRect(12, NET_Y - 1, 296, 4);
-    g.fillStyle = '#ffffff'; g.fillRect(12, NET_Y - 2, 296, 1);
-    g.fillStyle = '#5a6988'; for (var nx = 14; nx < 308; nx += 4) g.fillRect(nx, NET_Y, 1, 2);
-    g.fillStyle = '#c0cbdc'; g.fillRect(10, NET_Y - 5, 3, 10); g.fillRect(307, NET_Y - 5, 3, 10);
+    R(K, 3, 19 + by, 13, 7); R('#262b44', 4, 19 + by, 11, 6);                      // шорты
+    R(K, 2, 9 + by, 15, 11); R('#ffffff', 3, 10 + by, 13, 9); R('#c0cbdc', 3, 10 + by, 2, 9);   // спина
+    R(path.jersey, 3, 14 + by, 13, 2);
+    R(K, 0, 10 + by, 3, 9); R(SK, 1, 14 + by, 2, 4); R('#ffffff', 1, 11 + by, 2, 3);           // левая рука
+    R(K, 16, 9 + by, 4, 6); R(SK, 17, 10 + by, 2, 4);                                          // правая рука с ракеткой
+    R(K, 4, 0 + by, 11, 10); R('#733e39', 5, 1 + by, 9, 8); R(path.jersey, 5, 3 + by, 9, 2);   // затылок с повязкой
+    R(SK, 5, 8 + by, 9, 1);
+  }
+  function drawTennisHero(t) {
+    var moving = hero.vx !== 0, frame = moving ? Math.floor(t / 110) % 2 : Math.floor(t / 420) % 2;
+    var hx = Math.round(hero.x), hy = Math.round(hero.y);
+    g.fillStyle = 'rgba(24,20,37,0.3)'; g.fillRect(hx, hy + 32, 20, 3);
+    drawTennisBack(g, hx, hy, look(), frame, hero.shootT > 0);
+    if (!ball) return;
+    // мяч: тень на корте и сам мяч на высоте
+    var b = ball, s = b.size;
+    g.fillStyle = 'rgba(24,20,37,0.3)'; g.fillRect(Math.round(b.gx), Math.round(b.gy), s, Math.max(1, s - 2));
+    g.fillStyle = OUT; g.fillRect(Math.round(b.gx) - 1, Math.round(b.gy - b.h) - s - 1, s + 2, s + 2);
+    g.fillStyle = '#c6f432'; g.fillRect(Math.round(b.gx), Math.round(b.gy - b.h) - s, s, s);
+  }
+
+  function serve() {
+    if (ball || exit) return;
+    hero.target = null; hero.vx = 0;
+    ball = { phase: 'toss', t: 0, gx: hero.x + 17, gy: hero.y + 33, h: 22, size: 4 };
+  }
+
+  function updateTennis(dt) {
+    if (goalFlash > 0) goalFlash--;
+    if (cheerT > 0) cheerT--;
+    if (bannerT > 0) bannerT--;
+    if (hero.shootT > 0) hero.shootT--;
+    if (exit) {
+      // путь выбран: чужие зоны гаснут, игрок разворачивается и убегает вниз, к описанию пути
+      var e = exit; e.t++;
+      for (var i = 0; i < 3; i++) if (i !== e.zone) netAlpha[i] = 1 - Math.min(1, e.t / 30);
+      hero.vx = 1; if (e.t > 18) hero.y += 2.2;
+      if (!e.fired) cheerT = 45;
+      if (hero.y > H + 4 && !e.fired) { e.fired = true; e.fireT = e.t; if (e.stopOvation) e.stopOvation(); e.done(); }
+      if (e.fired && e.t - e.fireT > 100) { exit = null; netAlpha = [1, 1, 1]; hero.y = T_HERO_Y; hero.vx = 0; }
+      return;
+    }
+    // движение только вдоль задней линии, без инерции
+    var left = keys.ArrowLeft || keys.a, right = keys.ArrowRight || keys.d;
+    hero.vx = 0;
+    if (!ball || ball.phase !== 'toss') {
+      if (left || right) { hero.target = null; hero.vx = right ? 2.2 : -2.2; }
+      else if (hero.target) {
+        var dx = hero.target.x - hero.x;
+        if (Math.abs(dx) <= 2.6) { hero.x = hero.target.x; var go = hero.target.serve; hero.target = null; if (go) serve(); }
+        else hero.vx = dx > 0 ? 2.6 : -2.6;
+      }
+    }
+    hero.x = Math.max(12, Math.min(286, hero.x + hero.vx));
+
+    if (!ball) return;
+    var b = ball; b.t++;
+    if (b.phase === 'toss') {
+      // подброс: мяч взлетает над игроком и чуть опускается к точке удара
+      var k = b.t / 20; b.h = 22 + 34 * Math.sin(Math.PI * Math.min(1, k) * 0.78);
+      b.gx = hero.x + 17; b.gy = hero.y + 33;
+      if (b.t >= 20) {
+        hero.shootT = 12; SFX.shot();
+        b.phase = 'fly'; b.t = 0; b.x0 = b.gx; b.y0 = b.gy; b.h0 = b.h;
+        b.x1 = aimX() + (Math.random() - 0.5) * 7; b.y1 = T_LAND;
+      }
+    } else if (b.phase === 'fly') {
+      var f = Math.min(1, b.t / 26);
+      b.gx = b.x0 + (b.x1 - b.x0) * f; b.gy = b.y0 + (b.y1 - b.y0) * f;
+      b.h = b.h0 * (1 - f) + 30 * Math.sin(Math.PI * f) * (1 - f * 0.5);
+      b.size = f > 0.8 ? 2 : f > 0.45 ? 3 : 4;                                   // мяч уменьшается, улетая вдаль
+      if (f >= 1) {
+        var zone = zoneAt(b.x1);
+        b.phase = 'bounce'; b.t = 0; b.h = 0;
+        if (zone >= 0) {
+          score++; scoreEl.textContent = ('00' + score).slice(-3);
+          lastZone = zone; goalFlash = 70; banner = T('ГОЛ!'); banner2 = PATHS[zone].name; bannerT = 90; cheerT = 130; SFX.goal(); SFX.crowd();
+          choosePath(PATHS[zone], true, true);
+        } else { banner = T('МИМО!'); banner2 = ''; bannerT = 40; SFX.miss(); }
+      }
+    } else {
+      // отскок в сторону трибун
+      b.gy -= 1.1; b.h = 12 * Math.sin(Math.PI * Math.min(1, b.t / 16));
+      if (b.t >= 16) ball = null;
+    }
+  }
+
+  // Мышь и палец на корте: нажатие на зону - встать напротив и подать, на свою половину - перейти туда
+  function tennisPointer(e) {
+    if (exit) return;
+    var pt = scenePoint(e);
+    if (e.pointerType === 'mouse') e.preventDefault();
+    if (pt.y < T_NET) {
+      var px = 160 + (Math.max(160 - ctHW(T_LAND) + 6, Math.min(160 + ctHW(T_LAND) - 6, pt.x)) - 160) / (ctHW(T_LAND) / CT.hwNear * 0.94);
+      hero.target = { x: Math.max(12, Math.min(286, Math.round(px - 11))), serve: true };
+      return;
+    }
+    var now = e.timeStamp;
+    if (now - lastTap.t < 320 && Math.abs(pt.x - lastTap.x) < 40) { lastTap.t = 0; serve(); return; }   // двойное нажатие - подача
+    lastTap = { t: now, x: pt.x, y: pt.y };
+    hero.target = { x: Math.max(12, Math.min(286, Math.round(pt.x - 11))), serve: false };
   }
 
   function drawHero(t) {
-    var hy = Math.round(hero.y - (hero.jump || 0)), moving = hero.vx !== 0 || hero.vy !== 0;
+    if (TENNIS) { drawTennisHero(t); return; }
+    var hy = Math.round(hero.y), moving = hero.vx !== 0 || hero.vy !== 0;
     var frame = moving ? Math.floor(t / 140) % 2 : Math.floor(t / 500) % 2;
     g.fillStyle = 'rgba(38,43,68,0.25)'; g.fillRect(Math.round(hero.x) - 1, Math.round(hero.y) + 32, 22, 3);
     g.save();
@@ -1081,16 +1226,7 @@
   function shoot() {
     if (exit) return;
     if (puck.live || hero.shootT > 0) return;
-    if (TENNIS) {
-      // подача: мяч летит дугой через сетку; чем дальше от неё, тем больше разброс
-      hero.dir = 1; hero.shootT = 16;
-      puck.live = true; puck.k = 0; puck.dur = 34;
-      puck.x0 = puck.x = hero.x + 24; puck.y0 = puck.y = hero.y + 12;
-      puck.x1 = Math.max(22, Math.min(296, puck.x0 + (Math.random() - 0.5) * (6 + (LAND_Y - puck.y0) / 8)));
-      puck.y1 = LAND_Y;
-      SFX.shot();
-      return;
-    }
+    if (TENNIS) { serve(); return; }
     hero.dir = 1; hero.shootT = 14;
     puck.live = true;
     puck.x = hero.x + 25; puck.y = hero.y + 29;
@@ -1102,6 +1238,7 @@
   }
 
   function update(dt) {
+    if (TENNIS) { updateTennis(dt); return; }
     if (exit) { updateExit(); if (goalFlash > 0) goalFlash--; if (bannerT > 0) bannerT--; if (cheerT > 0) cheerT--; return; }
     var left = keys.ArrowLeft || keys.a, right = keys.ArrowRight || keys.d;
     var up = keys.ArrowUp || keys.w, down = keys.ArrowDown || keys.s;
@@ -1138,15 +1275,9 @@
 
     if (puck.live) {
       var arrived = false, pcx = 0, zone = -1;
-      if (TENNIS) {
-        puck.k = Math.min(1, puck.k + 1 / puck.dur);
-        puck.x = puck.x0 + (puck.x1 - puck.x0) * puck.k; puck.y = puck.y0 + (puck.y1 - puck.y0) * puck.k;
-        if (puck.k >= 1) { arrived = true; pcx = puck.x1 + 2; }
-      } else {
-        puck.x += puck.vx; puck.y += puck.vy;
-        if (puck.x < 2 || puck.x > W - 7) puck.vx *= -1;
-        if (puck.y >= GOAL_Y) { arrived = true; pcx = puck.x + 2.5; }
-      }
+      puck.x += puck.vx; puck.y += puck.vy;
+      if (puck.x < 2 || puck.x > W - 7) puck.vx *= -1;
+      if (puck.y >= GOAL_Y) { arrived = true; pcx = puck.x + 2.5; }
       if (arrived) {
         puck.live = false;
         NETS.forEach(function (n, i) { if (pcx > n[0] && pcx < n[1]) zone = i; });
@@ -1183,6 +1314,7 @@
     // Пробел оставляем кнопке только если на неё пришли с клавиатуры (Tab)
     if (k === ' ' && e.target !== cv && e.target.matches && e.target.matches('button:focus-visible, a:focus-visible, [role="button"]:focus-visible, input, textarea, select')) return;
     if (k === ' ') { e.preventDefault(); shoot(); return; }
+    if (TENNIS && /^(ArrowUp|ArrowDown|w|s)$/.test(k)) return;      // в теннисе вверх-вниз не заняты игрой: страница листается
     if (MOVE_KEYS.indexOf(k) >= 0 && !exit) { keys[k] = true; if (k.length > 1) e.preventDefault(); }
   });
   window.addEventListener('keyup', function (e) {
@@ -1201,6 +1333,7 @@
   }
   var lastTap = { t: 0, x: 0, y: 0 };
   cv.addEventListener('pointerdown', function (e) {
+    if (TENNIS) { tennisPointer(e); return; }
     if (exit) return;
     var pt = scenePoint(e);
     if (e.pointerType === 'mouse') {
@@ -1212,7 +1345,7 @@
       return;
     }
     // палец по воротам: игрок встаёт напротив и бросает
-    if (pt.y >= TARGET_Y) {
+    if (pt.y >= GOAL_Y - 12) {
       lastTap.t = 0; hero.cruise = null;
       hero.target = Math.max(HERO_MIN_X, Math.min(HERO_MAX_X, Math.round(pt.x - 27)));
       return;
