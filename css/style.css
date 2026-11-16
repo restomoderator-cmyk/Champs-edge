@@ -780,3 +780,23 @@ body::before {
 /* канал в Telegram */
 .cta__channel { font-family: var(--head); font-size: 10px; line-height: 2.4; color: var(--mist) !important; margin-top: 10px; }
 .cta__channel a { font-family: var(--body); font-size: 24px; color: var(--cyan); margin-left: 8px; }
+
+/* ---------- Заставка: выбор игры ---------- */
+.title__starts { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 26px; }
+.title__starts .btn--start { display: flex; align-items: center; gap: 12px; padding: 10px 20px 10px 14px; animation: none; }
+.title__starts canvas { width: 48px; height: 60px; }
+.title__starts .btn--start[aria-pressed="false"] { background: var(--mist); box-shadow:
+    0 calc(var(--px) * -1) 0 0 var(--ink), 0 var(--px) 0 0 var(--ink), calc(var(--px) * -1) 0 0 0 var(--ink), var(--px) 0 0 0 var(--ink),
+    inset 0 calc(var(--px) * -1) 0 0 var(--steel), inset 0 var(--px) 0 0 var(--white), 0 calc(var(--px) * 3) 0 0 #0c0a14; }
+.title__starts .btn--start[aria-pressed="false"]:hover { background: var(--white); }
+.title__pick { font-family: var(--head); font-size: 10px; color: var(--yellow); margin: 22px 0 0; animation: blink 1.1s steps(1) infinite; }
+.title__hint { margin-top: 22px; }
+/* у тенниса пока нет строки про лиги */
+[data-sport="tennis"] .leagues { display: none; }
+@media (max-width: 760px) { .title__starts .btn--start { font-size: 12px; padding: 8px 14px 8px 10px; } .title__starts canvas { width: 40px; height: 50px; } }
+@media (prefers-reduced-motion: reduce) { .title__pick { animation: none; } }
+/* обе кнопки игры выглядят одинаково активными */
+.title__starts .btn--start[aria-pressed="false"] { background: var(--gold); box-shadow:
+    0 calc(var(--px) * -1) 0 0 var(--ink), 0 var(--px) 0 0 var(--ink), calc(var(--px) * -1) 0 0 0 var(--ink), var(--px) 0 0 0 var(--ink),
+    inset 0 calc(var(--px) * -1) 0 0 #c26a1a, inset 0 var(--px) 0 0 var(--yellow), 0 calc(var(--px) * 3) 0 0 #0c0a14; }
+.title__starts .btn--start[aria-pressed="false"]:hover { background: var(--yellow); }
