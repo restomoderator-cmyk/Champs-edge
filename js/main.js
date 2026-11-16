@@ -1033,10 +1033,10 @@
      линии, корт уходит вдаль, за сеткой три зоны. Игрок ходит только вдоль
      линии и останавливается, когда отпустили клавишу. Подача: подброс и удар.
      --------------------------------------------------------------------- */
-  var CT = { near: 224, far: 72, hwNear: 140, hwFar: 100, q: 0.75 };
+  var CT = { near: 212, far: 72, hwNear: 136, hwFar: 100, q: 0.75 };
   function ctY(d) { var k = d / (d + (1 - d) * CT.q); return CT.near - (CT.near - CT.far) * k; }       // глубина 0..1 → y
   function ctHW(y) { return CT.hwNear - (CT.hwNear - CT.hwFar) * (CT.near - y) / (CT.near - CT.far); }  // полуширина корта на высоте y
-  var T_NET = Math.round(ctY(0.5)), T_LAND = Math.round(ctY(0.76)), T_HERO_Y = 187;
+  var T_NET = Math.round(ctY(0.5)), T_LAND = Math.round(ctY(0.76)), T_HERO_Y = 189;      // игрок стоит за задней линией: подаёт из-за корта
   var ball = null;
   if (TENNIS) { hero.x = 149; hero.y = T_HERO_Y; hero.auto = false; }
 
@@ -1097,6 +1097,9 @@
       var ez = exit.zone, grow = Math.min(1, exit.t / 24), yb = T_NET + (H - T_NET) * grow, hc = hero.x + 11;
       var xl = zoneX(ez, T_NET), xr = zoneX(ez + 1, T_NET), bl = xl + (hc - 20 - xl) * grow, br = xr + (hc + 20 - xr) * grow;
       g.globalAlpha = 0.85; poly(PATHS[ez].jersey, [xl, T_NET, xr, T_NET, br, yb, bl, yb]); g.globalAlpha = 1;
+      // затем цвет пути заливает всю ближнюю половину корта
+      var wide = Math.max(0, Math.min(1, (exit.t - 24) / 20));
+      if (wide) { g.globalAlpha = 0.7 * wide; poly(PATHS[ez].jersey, [160 - ctHW(T_NET), T_NET, 160 + ctHW(T_NET), T_NET, 160 + CT.hwNear, CT.near, 160 - CT.hwNear, CT.near]); g.globalAlpha = 1; }
       g.fillStyle = '#fee761';
       for (var ay = T_NET + 10 + (exit.t * 1.5) % 22; ay < yb - 6; ay += 22) {       // стрелки бегут вниз
         var ac = Math.round((xl + xr) / 2 + (hc - (xl + xr) / 2) * (ay - T_NET) / (H - T_NET));
@@ -1142,6 +1145,20 @@
     g.fillStyle = 'rgba(24,20,37,0.3)'; g.fillRect(hx, Math.round(hero.y) + 32, 20, 3);
     if (exit && exit.t > 40) drawTennisPlayer(g, hx, hy, look(), frame, false);      // развернулся и бежит
     else drawTennisBack(g, hx, hy, look(), frame, hero.shootT > 0);
+    if (exit) {
+      // праздник: вспышки фотокамер на трибунах и конфетти цвета пути
+      var et = exit.t, cols = [look().jersey, '#fee761', '#ffffff'];
+      for (var f = 0; f < 5; f++) {
+        var fk = Math.floor(et / 4) * 7 + f * 31;
+        g.fillStyle = '#ffffff'; g.fillRect((fk * 73) % W, 4 + (fk * 29) % (ICE_Y - 30), 3, 3);
+      }
+      for (var c = 0; c < 80; c++) {
+        var cy = et * (1.6 + (c % 5) * 0.5) - (c * 13) % 110;
+        if (cy < 0 || cy > H) continue;
+        g.fillStyle = cols[c % 3];
+        g.fillRect(Math.round((c * 53) % W + Math.sin((et + c * 7) / 9) * 4), Math.round(cy), c % 2 ? 3 : 2, 2);
+      }
+    }
     if (!ball) return;
     // мяч: тень на корте и сам мяч на высоте
     var b = ball, s = b.size;
