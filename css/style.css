@@ -700,3 +700,22 @@ body::before {
 .leagues { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 4px; }
 .leagues span { font-family: var(--head); font-size: 9px; line-height: 1.6; color: var(--dim); }
 .leagues b { font-family: var(--head); font-weight: 400; font-size: 11px; color: var(--ink); background: var(--yellow); padding: 7px 9px 6px; }
+
+/* ---------- Как начать ---------- */
+.steps { list-style: none; counter-reset: step; margin: 0 0 24px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.steps li { counter-increment: step; position: relative; background: var(--navy); padding: 54px 20px 22px; margin: var(--px);
+  box-shadow: 0 0 0 var(--px) var(--white), 0 calc(var(--px) * 3) 0 0 #0c0a14; }
+.steps li::before { content: counter(step); position: absolute; left: 20px; top: -14px; width: 44px; height: 44px;
+  font-family: var(--head); font-size: 18px; line-height: 46px; text-align: center; color: var(--ink); background: var(--yellow); box-shadow: 4px 4px 0 var(--red-dark); }
+.steps li:not(:last-child)::after { content: "►"; position: absolute; right: -22px; top: 50%; font-size: 14px; color: var(--yellow); z-index: 1; }
+.steps b { display: block; font-family: var(--head); font-weight: 400; font-size: 12px; line-height: 1.5; color: var(--white); margin-bottom: 10px; }
+.steps span { display: block; font-size: 22px; line-height: 1.3; }
+.secret { background: var(--ink); box-shadow: 0 0 0 var(--px) var(--yellow); display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; }
+.secret p { margin: 0; color: var(--white); flex: 1 1 20em; }
+.secret .secret__tag { flex: none; font-family: var(--head); font-size: 10px; color: var(--ink); background: var(--yellow); padding: 7px 9px 6px; }
+@media (max-width: 760px) {
+  .steps { grid-template-columns: 1fr; gap: 30px; }
+  .steps li { padding: 44px 16px 18px; }
+  .steps li:not(:last-child)::after { content: "▼"; right: auto; left: 50%; top: auto; bottom: -26px; }
+  .steps span { font-size: 20px; }
+}
