@@ -34,6 +34,7 @@
       about: 'Впереди вся карьера, и привычки ещё не затвердели. Сейчас проще всего поставить голову правильно: потом это будет работать на тебя годами, а переучиваться всегда дороже.',
       focus: ['Понять, кто ты как игрок, раньше, чем это решат за тебя', 'Научиться учиться: ошибка - это материал, а не приговор', 'Собрать первые рабочие инструменты до того, как вырастут ставки'],
       jersey: '#63c74d', jerseyDark: '#3e8948', trim: '#ffffff', beard: null, letter: null,
+      helloOther: 'Путь таланта. Для игрока в начале карьеры: закладываем надёжный фундамент на годы вперёд.',
       hello: 'Ты выбрал путь таланта. Карьера только начинается, самое время заложить надёжный фундамент на всю карьеру.'
     },
     {
@@ -44,6 +45,7 @@
       about: 'Мастерство и физика у тебя уже есть. Как и у твоих соперников. На этом уровне разницу делает голова: кто надёжнее играет, когда всё решается.',
       focus: ['Решающие моменты: играть их так же, как обычные', 'Стабильность: лучшая игра не раз в месяц, а из матча в матч', 'Состояние потока по запросу, а не по везению'],
       jersey: '#e43b44', jerseyDark: '#9e2835', trim: '#ffffff', beard: null, letter: 'C',
+      helloOther: 'Путь героя. Для игрока, который уже хорош и должен стать лучшим.',
       hello: 'Ты выбрал путь героя, а славу героям приносят испытания. Пора становиться лучшим.'
     },
     {
@@ -54,9 +56,46 @@
       about: 'У тебя есть то, чего нет у молодых: опыт. Задача в том, чтобы он работал на тебя, пока тело требует всё больше внимания, а роль в команде меняется.',
       focus: ['Восстановление как часть профессии: сон, дыхание, длинный сезон', 'Адаптация тренировок и роли для максимального продления карьеры', 'Опыт вместо запаса сил: играть умнее, а не больше'],
       jersey: '#3b55b8', jerseyDark: '#1b2a6b', trim: '#feae34', beard: '#8b9bb4', letter: 'A',
+      helloOther: 'Путь легенды. Для игрока 32+, который хочет продлить карьеру.',
       hello: 'Ты выбрал путь легенды. У тебя уже есть всё, о чём ты мечтал. Продлим эту сказку, насколько это возможно.'
     }
   ];
+
+  // Роли. Сайт написан для игрока; агент, клуб и тренер видят те же разделы,
+  // но обращение, кнопки и текст сообщения меняются под них.
+  var ROLES = [
+    { id: 'player', name: 'ИГРОК', desc: 'Хочу пройти программу сам.',
+      hi: 'Привет! Я твой проводник по Champion\'s Edge.',
+      aim: 'Выбери свой путь чемпиона броском: внизу трое ворот, у каждых свой путь. Забей в нужные.',
+      pathLead: 'Три пути для трёх этапов карьеры. Выбери свой броском на площадке или карточкой здесь: проводник и запись на программу подстроятся под него.',
+      ready: 'ГОТОВ?', pathLabel: 'ТВОЙ ПУТЬ:', button: 'ЗАПИСАТЬСЯ', panelButton: 'ЗАПИСАТЬСЯ НА ЭТОТ ПУТЬ',
+      ctaText: 'Напиши нам. Расскажем, как всё устроено, и создадим вместе твой путь под твоё амплуа и цели.',
+      msg: 'Здравствуйте! Хочу записаться на Champion\'s Edge.', msgPath: ' Мой путь: ',
+      steps: [['НАПИШИ', 'В Telegram или на почту. Одного сообщения достаточно.'],
+        ['ЗНАКОМСТВО', 'Бесплатный созвон на 15–20 минут. Понимаем, подходим ли мы друг другу.'],
+        ['ВВОДНАЯ ВСТРЕЧА', 'Около трёх часов. Разбираем твою ситуацию и проводим первую сессию. Если идёшь в программу, первая сессия бесплатно.'],
+        ['СТАРТ', 'Собираем твой путь под амплуа и цели и начинаем. В любой точке сезона.']] },
+    { id: 'agent', name: 'АГЕНТ', desc: 'Ищу программу для своих игроков.', who: 'вашего игрока',
+      button: 'ОБСУДИТЬ ИГРОКА', ctaText: 'Напишите нам. Расскажем, как всё устроено, и обсудим программу для вашего игрока.',
+      msg: 'Здравствуйте! Я агент. Хочу обсудить Champion\'s Edge для своего игрока.' },
+    { id: 'club', name: 'КЛУБ', desc: 'Хотим усилить игроков команды.', who: 'ваших игроков',
+      button: 'ОБСУДИТЬ ИГРОКОВ', ctaText: 'Напишите нам. Расскажем, как всё устроено, и обсудим программу для игроков вашей команды.',
+      msg: 'Здравствуйте! Я представляю клуб. Хочу обсудить Champion\'s Edge для игроков команды.' },
+    { id: 'coach', name: 'ТРЕНЕР', desc: 'Работаю с игроком и хочу действовать вместе.', who: 'вашего игрока',
+      button: 'ОБСУДИТЬ РАБОТУ', ctaText: 'Напишите нам. Расскажем, как всё устроено, и обсудим, как выстроить работу с вашим игроком вместе.',
+      msg: 'Здравствуйте! Я тренер. Хочу обсудить Champion\'s Edge для игрока, с которым работаю.' }
+  ];
+  // общее для всех ролей, кроме игрока
+  ROLES.slice(1).forEach(function (r) {
+    r.hi = 'Здравствуйте! Я проводник по Champion\'s Edge.';
+    r.aim = 'Сайт написан для игрока. Посмотрите программу его глазами и выберите путь ' + r.who + ' броском по воротам.';
+    r.pathLead = 'Три пути для трёх этапов карьеры. Выберите путь ' + r.who + ' броском на площадке или карточкой здесь.';
+    r.ready = 'ГОТОВЫ?'; r.pathLabel = 'ПУТЬ ИГРОКА:'; r.panelButton = r.button; r.msgPath = ' Путь: ';
+    r.steps = [['НАПИШИТЕ', 'В Telegram или на почту. Одного сообщения достаточно.'],
+      ['ЗНАКОМСТВО', 'Бесплатный созвон на 15–20 минут. Обсуждаем игрока и задачу.'],
+      ['ВВОДНАЯ ВСТРЕЧА', 'Около трёх часов с игроком: разбор его ситуации и первая сессия. Если игрок идёт в программу, первая сессия бесплатно.'],
+      ['СТАРТ', 'Собираем путь игрока под его амплуа и цели и начинаем. В любой точке сезона.']];
+  });
 
   // Программа: 12 месяцев, 4 фазы, 45 недель. Фаза 1 расписана по неделям
   // (недели 1-6 открыты, 7-12 под замком), фазы 2-4 показаны по месяцам под замком:
@@ -582,12 +621,11 @@
     pathCards.push({ path: p, el: b, ctx: b.querySelector('canvas').getContext('2d') });
   });
 
+  var role = ROLES[0];
+  function signupMsg(p) { return role.msg + (p ? role.msgPath + p.name.toLowerCase() + '.' : ''); }
   function signupHref(p) {
-    // Выбранный путь подставляется в текст сообщения (работает для ссылок t.me и mailto)
-    var msg = 'Здравствуйте! Хочу записаться на Champion\'s Edge.' + (p ? ' Мой путь: ' + p.name.toLowerCase() + '.' : '');
-    if (/^https:\/\/t\.me\//.test(ctaBase)) return ctaBase + '?text=' + encodeURIComponent(msg);
-    if (/^mailto:/.test(ctaBase)) return ctaBase + '?subject=' + encodeURIComponent('Champion\'s Edge') + '&body=' + encodeURIComponent(msg);
-    return ctaBase;
+    // роль и выбранный путь подставляются в текст сообщения
+    return ctaBase + '?text=' + encodeURIComponent(signupMsg(p));
   }
 
   // На телефоне карточки путей - карусель: листается свайпом или стрелками,
@@ -625,8 +663,7 @@
     });
     cta.href = signupHref(p);
     // то же сообщение уходит и в письмо
-    ctaMail.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Champion\'s Edge: запись') +
-      '&body=' + encodeURIComponent('Здравствуйте! Хочу записаться на Champion\'s Edge.' + (p ? ' Мой путь: ' + p.name.toLowerCase() + '.' : ''));
+    ctaMail.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Champion\'s Edge') + '&body=' + encodeURIComponent(signupMsg(p));
     ctaPathEl.textContent = p ? p.name : 'НЕ ВЫБРАН';
     ctaPick.hidden = !!p;
     if (p) {
@@ -635,7 +672,7 @@
         '<p>' + p.about + '</p><div class="level__cols"><div><h4>НА ЧТО ДЕЛАЕМ УПОР</h4><ul>' +
         p.focus.map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul></div>' +
         '<div><h4>ЧТО ОБЩЕЕ У ВСЕХ ПУТЕЙ</h4><ul><li>Формат один на один с тренером</li><li>Та же программа: 4 фазы, 9 доменов</li><li>Примеры и задания из твоей карьеры и твоего этапа</li></ul></div></div>' +
-        '<p class="pathinfo__cta"><a class="btn btn--cta btn--small" href="' + cta.href + '" target="_blank" rel="noopener">▶ ЗАПИСАТЬСЯ НА ЭТОТ ПУТЬ</a></p>';
+        '<p class="pathinfo__cta"><a class="btn btn--cta btn--small" href="' + cta.href + '" target="_blank" rel="noopener">▶ ' + role.panelButton + '</a></p>';
     } else {
       pathPanel.innerHTML = '<p class="pathinfo__empty">Путь ещё не выбран. Нажми на карточку или забей в одни из ворот на площадке. Здесь появится, на что делаем упор на твоём этапе.</p>';
     }
@@ -644,7 +681,7 @@
     drawFace(); drawGuide(); guideCta.href = cta.href;
     if (byUser) {
       store('ce-path', p.id);
-      say([p.hello], { label: 'ИЗУЧИТЬ ПУТЬ ▼', target: pathPanel, exit: true });
+      say([role.id === 'player' ? p.hello : p.helloOther], { label: 'ИЗУЧИТЬ ПУТЬ ▼', target: pathPanel, exit: true });
       if (!quiet) {
         // выбрали карточкой: показываем раскрывшееся описание
         SFX.select(); guideTuck();
@@ -1260,18 +1297,67 @@
   openPhase(0, false);
   carouselSync();
 
-  say([
-    'Привет! Я твой проводник по Champion\'s Edge.',
-    'Это программа индивидуального развития профессиональных атлетов. Один на один с тренером.',
-    'Программа идёт 12 месяцев: 4 фазы, 45 недель. Начать можно в любой точке сезона.',
-    'Выбери свой путь чемпиона броском: внизу трое ворот, у каждых свой путь. Забей в нужные.'
-  ], { label: 'ИЛИ ВЫБРАТЬ КАРТОЧКОЙ ▼', target: document.getElementById('path') });
+  /* =====================================================================
+     ВЫБОР РОЛИ
+     ===================================================================== */
+
+  // Пиксельные фигуры ролей (48×60). Игрок рисуется тем же спрайтом, что на площадке.
+  var ROLE_ART = {
+    agent: function (R) { R(OUT,15,5,16,16);R('#733e39',16,6,14,5);R('#f2c9a0',16,10,14,10);R(OUT,19,13,2,2);R(OUT,25,13,2,2);R(OUT,10,21,26,20);R('#262b44',11,22,24,18);R('#fff',20,22,6,9);R('#e43b44',22,23,2,10);R(OUT,13,41,20,13);R('#262b44',14,41,8,12);R('#262b44',24,41,8,12);R(OUT,12,53,11,4);R(OUT,23,53,11,4);R(OUT,34,34,13,12);R('#b86f50',35,36,11,9);R(OUT,38,32,5,3);R('#feae34',39,39,3,2); },
+    club: function (R) { R(OUT,8,6,32,4);R(OUT,8,6,4,30);R(OUT,36,6,4,30);R('#0099db',12,10,12,26);R('#124e89',24,10,12,26);for(var i=0;i<10;i++){R(OUT,8+i*2,36+i*2,4,2);R(OUT,36-i*2,36+i*2,4,2);R('#0099db',12+i*2,36+i*2,12-i*2,2);R('#124e89',24,36+i*2,12-i*2,2);}R('#fee761',16,16,16,3);R('#fee761',22,12,4,20);R('#fff',14,24,20,3); },
+    coach: function (R) { R(OUT,14,4,18,7);R('#e43b44',15,5,16,5);R(OUT,28,9,9,3);R('#f2c9a0',16,11,14,9);R(OUT,19,13,2,2);R(OUT,25,13,2,2);R(OUT,10,20,26,21);R('#3e8948',11,21,24,19);R('#fff',11,21,3,19);R('#c0cbdc',22,21,2,8);R('#feae34',21,29,4,3);R(OUT,13,41,20,13);R('#262b44',14,41,8,12);R('#262b44',24,41,8,12);R(OUT,12,53,11,4);R(OUT,23,53,11,4);R(OUT,33,26,14,18);R('#fff',34,27,12,16);R('#5a6988',36,30,8,1);R('#5a6988',36,33,8,1);R('#5a6988',36,36,5,1); }
+  };
+  var rolesEl = document.getElementById('roles'), roleCards = [];
+  ROLES.forEach(function (r) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'panel role'; b.setAttribute('role', 'radio');
+    b.innerHTML = '<canvas width="48" height="60" aria-hidden="true"></canvas><b>' + r.name + '</b><span>' + r.desc + '</span><i></i>';
+    var c = b.querySelector('canvas').getContext('2d');
+    if (ROLE_ART[r.id]) ROLE_ART[r.id](function (col, x, y, w, h) { c.fillStyle = col; c.fillRect(x, y, w, h); });
+    else { c.canvas.width = 32; c.canvas.height = 40; drawPlayer(c, 1, 4, PATHS[1], 0, false); }   // игрок крупнее: свой холст
+    b.addEventListener('click', function () { setRole(r, true); });
+    rolesEl.appendChild(b); roleCards.push({ role: r, el: b });
+  });
+
+  function intro() {
+    say([role.hi,
+      'Это программа индивидуального развития профессиональных атлетов. Один на один с тренером.',
+      'Программа идёт 12 месяцев: 4 фазы, 45 недель. Начать можно в любой точке сезона.',
+      role.aim
+    ], { label: 'ИЛИ ВЫБРАТЬ КАРТОЧКОЙ ▼', target: document.getElementById('path') });
+  }
+  function setRole(r, byUser) {
+    role = r;
+    document.documentElement.setAttribute('data-role', r.id);
+    roleCards.forEach(function (rc) {
+      var on = rc.role === r;
+      rc.el.setAttribute('aria-checked', String(on));
+      rc.el.querySelector('i').textContent = on ? '★ ВЫБРАНО' : 'ВЫБРАТЬ';
+    });
+    document.getElementById('navRole').textContent = 'РОЛЬ: ' + r.name;
+    document.getElementById('pathLead').textContent = r.pathLead;
+    document.getElementById('ctaReady').textContent = r.ready;
+    document.getElementById('ctaPathLabel').textContent = r.pathLabel;
+    document.getElementById('ctaText').textContent = r.ctaText;
+    cta.textContent = '▶ ' + r.button;
+    guideCta.textContent = r.button + ' ▶';
+    document.getElementById('steps').innerHTML = r.steps.map(function (st) { return '<li><b>' + st[0] + '</b><span>' + st[1] + '</span></li>'; }).join('');
+    choosePath(currentPath, false);                 // пересобирает ссылки и кнопку в описании пути
+    intro();
+    if (byUser) {
+      store('ce-role', r.id);
+      SFX.select();
+      cv.focus({ preventScroll: true });
+      document.getElementById('rink').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+    }
+  }
+  var savedRole = store('ce-role');
+  setRole(ROLES.filter(function (r) { return r.id === savedRole; })[0] || ROLES[0], false);
 
   document.getElementById('pressStart').addEventListener('click', function () {
     unlockAudio();
     SFX.start();
-    cv.focus({ preventScroll: true }); // чтобы ПРОБЕЛ сразу бросал, а не нажимал кнопку
-    document.getElementById('rink').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+    document.getElementById('role').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
   });
 
   // звук на ссылках и кнопках

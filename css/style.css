@@ -719,3 +719,40 @@ body::before {
   .steps li:not(:last-child)::after { content: "▼"; right: auto; left: 50%; top: auto; bottom: -26px; }
   .steps span { font-size: 20px; }
 }
+
+/* ---------- Выбор роли ---------- */
+.section--role { text-align: center; padding-top: 44px; padding-bottom: 8px; }
+.role__title { font-family: var(--head); font-weight: 400; font-size: clamp(22px, 5vw, 34px); color: var(--yellow); text-shadow: 4px 4px 0 var(--red-dark); margin: 0 0 12px; }
+.role__lead { margin: 0 auto 26px; }
+.roles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.role { display: block; border: 0; cursor: pointer; text-align: center; padding: 20px 12px 18px; font-family: var(--body); font-size: 21px; line-height: 1.25; color: var(--mist); }
+.role canvas { width: 96px; height: 120px; display: block; margin: 0 auto 12px; }
+.role b { display: block; font-family: var(--head); font-weight: 400; font-size: 13px; color: var(--white); margin-bottom: 8px; }
+.role span { display: block; }
+.role i { display: block; font-style: normal; margin-top: 12px; font-family: var(--head); font-size: 9px; color: var(--dim); }
+.role:hover { background: var(--slate); }
+.role[aria-checked="true"] { background: #1b2a6b; box-shadow:
+  0 calc(var(--px) * -1) 0 0 var(--yellow), 0 var(--px) 0 0 var(--yellow), calc(var(--px) * -1) 0 0 0 var(--yellow), var(--px) 0 0 0 var(--yellow),
+  0 calc(var(--px) * 2) 0 0 #0c0a14; }
+.role[aria-checked="true"] b, .role[aria-checked="true"] i { color: var(--yellow); }
+#navRole { color: var(--yellow); }
+.steps { grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.steps span { font-size: 21px; }
+@media (max-width: 1000px) { .steps { grid-template-columns: 1fr 1fr; gap: 30px 18px; } .steps li:not(:last-child)::after { display: none; } }
+@media (max-width: 760px) {
+  .section--role { padding-top: 28px; }
+  .roles { grid-template-columns: 1fr 1fr; gap: 14px 10px; }
+  .role { padding: 14px 8px 12px; font-size: 18px; }
+  .role canvas { width: 64px; height: 80px; margin-bottom: 8px; }
+  .role b { font-size: 11px; }
+  .steps { grid-template-columns: 1fr; }
+  .steps li:not(:last-child)::after { display: block; }
+}
+@media (max-width: 760px) {
+  .section--role { padding-top: 18px; }
+  .role__title { margin-bottom: 8px; }
+  .role__lead { margin-bottom: 16px; font-size: 19px; }
+  .role canvas { width: 56px; height: 70px; margin-bottom: 6px; }
+  .role { padding: 12px 8px 10px; }
+  .role i { margin-top: 8px; }
+}

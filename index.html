@@ -6,17 +6,19 @@
 <title>Champion's Edge</title>
 <meta name="description" content="Champion's Edge (Грани Чемпионов): индивидуальное развитие профессиональных атлетов. 12 месяцев один на один с тренером: 4 фазы, 9 доменов, 45 недель. Из любой точки мира.">
 <meta name="theme-color" content="#181425">
-<!-- Превью ссылки в мессенджерах и соцсетях. После публикации сайта замените пути к картинке на полный адрес (https://ваш-домен/img/preview.png). -->
+<!-- Превью ссылки в мессенджерах и соцсетях -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:site_name" content="Champion's Edge">
 <meta property="og:title" content="Champion's Edge · Грани Чемпионов">
 <meta property="og:description" content="Индивидуальное развитие профессиональных атлетов. 12 месяцев один на один с тренером: 4 фазы, 9 доменов, 45 недель. Из любой точки мира.">
-<meta property="og:image" content="img/preview.png">
+<meta property="og:url" content="https://edgechamps.com/">
+<meta property="og:image" content="https://edgechamps.com/img/preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="img/preview.png">
+<meta name="twitter:image" content="https://edgechamps.com/img/preview.png">
+<link rel="canonical" href="https://edgechamps.com/">
 <link rel="icon" type="image/png" href="img/favicon.png">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <link rel="preload" href="fonts/press-start-2p-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -29,6 +31,7 @@
   <a class="hud__logo" href="#top">CE</a>
   <button class="hud__burger" id="navToggle" type="button" aria-expanded="false" aria-controls="nav">МЕНЮ</button>
   <nav class="hud__nav" id="nav" aria-label="Разделы">
+    <a href="#role" id="navRole">РОЛЬ: ИГРОК</a>
     <a href="#rink">ПЛОЩАДКА</a>
     <a href="#path">ПУТЬ</a>
     <a href="#about">ПРОГРАММА</a>
@@ -61,6 +64,13 @@
   </div>
 </section>
 
+<!-- Выбор роли: сайт говорит с игроком, агентом, клубом или тренером -->
+<section class="section section--role" id="role">
+  <h2 class="role__title">КТО ТЫ?</h2>
+  <p class="lead role__lead">Выбери роль. Сайт расскажет о программе с твоей стороны.</p>
+  <div class="roles" id="roles" role="radiogroup" aria-label="Роль"></div>
+</section>
+
 <!-- Сцена с персонажем -->
 <section class="stage" id="rink">
   <div class="stage__screen">
@@ -83,7 +93,7 @@
 <!-- Выбор пути -->
 <section class="section" id="path">
   <h2 class="h2"><span>01</span> ВЫБЕРИ ПУТЬ ЧЕМПИОНА</h2>
-  <p class="lead">Три пути для трёх этапов карьеры. Выбери свой броском на площадке или карточкой здесь: проводник и запись на программу подстроятся под него.</p>
+  <p class="lead" id="pathLead"></p>
   <div class="grid grid--3 paths" id="paths" role="radiogroup" aria-label="Путь чемпиона"></div>
   <div class="paths__nav" aria-label="Листать пути">
     <button type="button" id="pathsPrev" aria-label="Предыдущий путь">◄</button>
@@ -211,11 +221,7 @@
 <!-- Как начать: три шага и конфиденциальность -->
 <section class="section" id="how">
   <h2 class="h2"><span>08</span> КАК НАЧАТЬ</h2>
-  <ol class="steps">
-    <li><b>НАПИШИ</b><span>В Telegram или на почту. Одного сообщения достаточно.</span></li>
-    <li><b>ВВОДНАЯ ВСТРЕЧА</b><span>Около трёх часов. Знакомимся, разбираем твою ситуацию и проводим первую сессию. Если идёшь в программу, первая сессия бесплатно.</span></li>
-    <li><b>СТАРТ</b><span>Собираем твой путь под амплуа и цели и начинаем. В любой точке сезона.</span></li>
-  </ol>
+  <ol class="steps" id="steps"></ol>
   <div class="panel secret">
     <p class="secret__tag">КОНФИДЕНЦИАЛЬНО</p>
     <p>Мы не публикуем имён. Ни игроков, ни тренера. Конфиденциальность - часть программы. Познакомимся на первой встрече.</p>
@@ -225,10 +231,10 @@
 <!-- Призыв -->
 <section class="section section--cta" id="start">
   <div class="panel panel--cta">
-    <p class="cta__blink">ГОТОВ?</p>
+    <p class="cta__blink" id="ctaReady">ГОТОВ?</p>
     <h2 class="cta__title">НОВАЯ ИГРА</h2>
-    <p class="cta__path">ТВОЙ ПУТЬ: <span id="ctaPath"></span> <a id="ctaPick" href="#path" hidden>ВЫБРАТЬ ▲</a></p>
-    <p>Напиши нам. Расскажем, как всё устроено, и создадим вместе твой путь под твоё амплуа и цели.</p>
+    <p class="cta__path"><span id="ctaPathLabel">ТВОЙ ПУТЬ:</span> <span id="ctaPath"></span> <a id="ctaPick" href="#path" hidden>ВЫБРАТЬ ▲</a></p>
+    <p id="ctaText"></p>
     <p class="cta__terms">ИЗ ЛЮБОЙ ТОЧКИ МИРА · ЦЕНА ПО ЗАПРОСУ</p>
     <a class="btn btn--cta" id="cta" href="https://t.me/call_pascal" target="_blank" rel="noopener">▶ ЗАПИСАТЬСЯ</a>
     <p class="cta__mail">ИЛИ НА ПОЧТУ: <a id="ctaMail" href="mailto:edgechamps@gmail.com">edgechamps@gmail.com</a>
