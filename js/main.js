@@ -664,7 +664,12 @@
     setTimeout(hard, 5000);                            // сеть зависла: обычный переход
   }
   // «Назад» после мягкого перехода: адрес уже другой, а страница та же, поэтому загружаем её заново
-  window.addEventListener('popstate', function () { location.reload(); });
+  // Переход по якорю внутри страницы (пункты меню) тоже вызывает это событие: его не трогаем,
+  // перезагружаемся только если изменился сам адрес страницы.
+  var builtFor = location.pathname + location.search;
+  window.addEventListener('popstate', function () {
+    if (location.pathname + location.search !== builtFor) location.reload();
+  });
 
   // Звук и музыка включены по умолчанию. Браузеры не дают играть звук, пока
   // человек не коснулся страницы, поэтому запускаем их на первом же действии.
