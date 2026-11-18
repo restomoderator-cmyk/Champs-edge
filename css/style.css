@@ -969,3 +969,21 @@ html[lang="en"] .title__sub { display: none; }
   html.consent-open .title { padding-top: 8px; padding-bottom: 170px; justify-content: flex-start; }
   html.consent-open .title__tag { margin-bottom: 14px; }
 }
+
+/* Вопрос про cookie: компактная полоска, вдвое ниже прежней */
+.consent { padding: 8px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.consent p { margin: 0; flex: 1 1 260px; font-size: 16px; line-height: 1.15; }
+.consent__row { flex: 0 1 auto; gap: 6px 10px; }
+.consent .btn--small { font-size: 8px; padding: 7px 9px; box-shadow: 0 0 0 2px var(--ink); }
+.consent a { font-size: 8px; }
+@media (max-width: 760px) {
+  .consent { left: 4px; right: 4px; bottom: calc(4px + env(safe-area-inset-bottom, 0px)); padding: 6px 8px; gap: 4px 8px; }
+  .consent p { flex-basis: 100%; font-size: 14px; }
+  .consent .btn--small { font-size: 7px; padding: 6px 7px; }
+  .consent a { font-size: 7px; }
+  html.consent-open .title { padding-bottom: 80px; }
+}
+@media (max-width: 380px) {
+  .consent p { font-size: 13px; }
+  html.consent-open .title { padding-bottom: 86px; }
+}
