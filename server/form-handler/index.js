@@ -14,7 +14,7 @@
  */
 
 const LIMITS = { name: 80, club: 120, league: 120, change: 2000, contact: 160, url: 500 };
-const ROLES = ['player', 'agent', 'coach', 'club', 'family'];
+const ROLES = ['player', 'agent', 'coach', 'club'];
 const SITE_ROLES = ['player', 'agent', 'coach', 'club'];
 const PATHS = ['young', 'peak', 'veteran'];
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];

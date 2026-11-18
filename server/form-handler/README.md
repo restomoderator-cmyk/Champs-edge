@@ -61,7 +61,7 @@ paths:
 ```json
 {
   "id": "уникальный номер анкеты, его создаёт браузер",
-  "name": "", "role": "player | agent | coach | club | family",
+  "name": "", "role": "player | agent | coach | club",
   "club": "", "league": "", "change": "", "contact": "",
   "consent": true, "website": "", "elapsed": 12000,
   "r": "ce_xxxxxxxx или пусто", "utm": { "utm_source": "" },

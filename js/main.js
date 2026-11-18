@@ -71,7 +71,7 @@
   (function () {
     var btn = document.getElementById('langToggle'), other = LANG === 'en' ? 'ru' : 'en';
     btn.textContent = other.toUpperCase();
-    btn.setAttribute('aria-label', other === 'en' ? 'Switch to English' : 'Переключить на русский');
+    btn.setAttribute('aria-label', other === 'en' ? 'Переключить на английский' : 'Switch to Russian');
     btn.addEventListener('click', function () {
       store('ce-lang', other);
       if (store('ce-lang') === other && !/[?&]lang=/.test(location.search)) location.reload();
@@ -110,7 +110,7 @@
       text: T('Ты в самом начале карьеры. Закладываем фундамент, на котором она будет строиться.'),
       stage: T('Начало карьеры'), goal: T('Заложить фундамент'),
       about: T('Впереди вся карьера, и привычки ещё не затвердели. Сейчас легче всего выстроить правильное мышление: потом оно будет работать на тебя годами, а переучиваться всегда дороже.'),
-      focus: [T('Понять, кто ты как игрок, раньше, чем это решат за тебя'), T('Научиться учиться: ошибка - это материал, а не приговор'), T('Собрать первые рабочие инструменты до того, как вырастут ставки')],
+      focus: [T('Понять, кто ты как игрок, раньше, чем это решат за тебя'), T('Научиться учиться: ошибка – это материал, а не приговор'), T('Собрать первые рабочие инструменты до того, как вырастут ставки')],
       jersey: '#63c74d', jerseyDark: '#3e8948', trim: '#ffffff', beard: null, letter: null,
       helloOther: T('Путь таланта. Для игрока в начале карьеры: закладываем надёжный фундамент на годы вперёд.'),
       hello: T('Ты выбрал путь таланта. Карьера только начинается, самое время заложить надёжный фундамент на всю карьеру.')
@@ -143,12 +143,12 @@
   // но обращение, кнопки и текст сообщения меняются под них.
   var ROLES = [
     { id: 'player', name: T('ИГРОК'), desc: T('Хочу пройти программу сам.'),
-      hi: T('Привет! Я твой проводник по Champion\'s Edge.'),
+      hi: T('Привет! Я твой проводник по Champion\'s Edge.'), picked: T('Ты игрок. Расскажу о программе для тебя.'),
       aim: T('Выбери свой путь чемпиона броском: внизу трое ворот, у каждых свой путь. Забей в нужные.'),
       pathLead: T('Три пути для трёх этапов карьеры. Выбери свой броском на площадке или карточкой здесь: проводник и запись на программу подстроятся под него.'),
       ready: T('ГОТОВ?'), pathLabel: T('ТВОЙ ПУТЬ:'), button: T('ЗАПИСАТЬСЯ'), panelButton: T('ЗАПИСАТЬСЯ НА ЭТОТ ПУТЬ'),
       ctaText: T('Напиши нам. Расскажем, как всё устроено, и создадим вместе твой путь под твоё амплуа и цели.'),
-      msg: T('Здравствуйте! Хочу записаться на Champion\'s Edge.'), msgPath: T(' Мой путь: '),
+      msg: T('Здравствуйте! Я игрок. Хочу записаться на Champion\'s Edge.'), msgPath: T(' Мой путь: '),
       steps: [[T('НАПИШИ'), T('В Telegram или на почту. Одного сообщения достаточно.')],
         [T('ЗНАКОМСТВО'), T('Бесплатный созвон на 15–20 минут. Понимаем, подходим ли мы друг другу.')],
         [T('ВВОДНАЯ ВСТРЕЧА'), T('Около трёх часов. Разбираем твою ситуацию и проводим первую сессию. Если идёшь в программу, первая сессия бесплатно.')],
@@ -167,6 +167,7 @@
   // блок «Что это даёт», свой заход в разделе о программе и свои шаги.
   var ROLE_PRO = {
    "agent": {
+    "picked": "Вы агент. Покажу программу вашими глазами.",
     "hi": "Здравствуйте! Я проводник по Champion's Edge. Покажу программу глазами агента.",
     "intro": [
      "Это программа индивидуального развития профессиональных атлетов: год системной работы с игроком.",
@@ -222,6 +223,7 @@
     "ctaText": "Напишите нам. Обсудим вашего игрока: где он сейчас и что программа может ему дать."
    },
    "club": {
+    "picked": "Вы представляете клуб. Покажу программу глазами клуба.",
     "hi": "Здравствуйте! Я проводник по Champion's Edge. Покажу программу глазами клуба.",
     "intro": [
      "Это программа индивидуального развития профессиональных атлетов: год системной работы с игроком.",
@@ -277,6 +279,7 @@
     "ctaText": "Напишите нам. Обсудим игроков вашей команды и формат, который подойдёт клубу."
    },
    "coach": {
+    "picked": "Вы тренер. Покажу программу вашими глазами.",
     "hi": "Здравствуйте! Я проводник по Champion's Edge. Покажу программу глазами тренера.",
     "intro": [
      "Это программа индивидуального развития профессиональных атлетов: год системной работы с игроком.",
@@ -417,15 +420,15 @@
 
   // Девять принципов программы
   var PRINCIPLES = [
-    T('Быть чемпионом - это не титулы и награды, а образ жизни и способ мышления. Титулы лишь подтверждают это.'),
+    T('Быть чемпионом – это не титулы и награды, а образ жизни и способ мышления. Титулы лишь подтверждают это.'),
     T('Чем усерднее я работаю сегодня, тем сильнее и увереннее буду завтра.'),
     T('Одно действие сильнее тысячи намерений.'),
     T('Я принимаю и похвалу, и критику со смирением.'),
     T('Я всегда учусь, а не проигрываю. Это часть пути.'),
     T('«Не знаю» не существует. Есть «разберусь и научусь».'),
     T('Я никогда не сдаюсь. Даже когда ничего не выходит, у меня всегда есть выбор продолжать бороться.'),
-    T('Я всегда говорю правду. Тонко.'),
-    T('Великие достижения - всегда командная работа.')
+    T('Я всегда говорю правду. Деликатно.'),
+    T('Великие достижения – всегда командная работа.')
   ];
 
   // Сквозные инструменты: проходят через всю программу и остаются у игрока
@@ -905,7 +908,7 @@
 
   var role = ROLES[0];
   function signupMsg(p) {
-    return role.msg + (TENNIS ? T(' Версия: теннис.') : '') + (p ? role.msgPath + p.name.toLowerCase() + '.' : '') +
+    return role.msg + (TENNIS ? T(' Версия: теннис.') : T(' Версия: хоккей.')) + (p ? role.msgPath + p.name.toLowerCase() + '.' : '') +
       (TR.r ? '\n' + T('код: ') + TR.r : '');       // код персональной ссылки, без имени человека
   }
   function signupHref(p) {
@@ -947,10 +950,13 @@
       pc.el.querySelector('.path__pick').textContent = on ? T('★ ВЫБРАН') : T('ВЫБРАТЬ');
     });
     cta.href = signupHref(p);
+    // ссылки в подвале ведут с тем же готовым текстом: роль, версия, путь и код
+    [].forEach.call(document.querySelectorAll('.footer a[href^="https://t.me/call_pascal"]'), function (a) { a.href = cta.href; });
     // то же сообщение уходит и в письмо
     ctaMail.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Champion\'s Edge') + '&body=' + encodeURIComponent(signupMsg(p));
     if (p) { pathPanel.style.setProperty('--path-col', p.jersey); pathPanel.style.setProperty('--path-dark', p.jerseyDark); }
     pathPanel.classList.toggle('has-path', !!p);
+    [].forEach.call(document.querySelectorAll('.footer a[href^="mailto:"]'), function (a) { a.href = ctaMail.href; });
     ctaPathEl.textContent = p ? p.name : T('НЕ ВЫБРАН');
     ctaPick.hidden = !!p;
     if (p) {
@@ -1003,7 +1009,7 @@
   function showChars(s, n) { dShown.textContent = s.slice(0, n); dRest.textContent = s.slice(n); }
   function typeLine() {
     clearInterval(typer);
-    var s = lines[lineIdx]; charIdx = 0; showChars(s, 0);
+    var s = lines[lineIdx]; charIdx = Math.min(2, s.length); showChars(s, charIdx);     // первые буквы видны сразу, без пустого кадра
     if (reduced) { charIdx = s.length; showChars(s, charIdx); return; }
     typer = setInterval(function () {
       charIdx++;
@@ -1782,7 +1788,6 @@
       [T("БРЭД ГИЛБЕРТ"), T("Тренер Агасси, Роддика и Маррея")],
       [T("НИК БОЛЛЕТЬЕРИ"), T("Основатель академии, из которой вышли десять первых ракеток мира")],
       [T("ТОНИ НАДАЛЬ"), T("Тренер, который вырастил Рафаэля Надаля")],
-      [T("ПАТРИК МУРАТОГЛУ"), T("Тренер Серены Уильямс в десяти победах на «Больших шлемах»")],
       [T("АНДРЕ АГАССИ"), T("Первая ракетка мира, 8 титулов «Большого шлема»")]
     ].forEach(function (m) {
       var li = document.createElement('li'), b = document.createElement('b'), sp = document.createElement('span');
@@ -1819,10 +1824,17 @@
     guideCtx.clearRect(0, 0, 32, 40);
     drawPlayer(guideCtx, 1, 4, look(), 0, false);
   }
+  var guideSettle = 0;
   function guideSync() {
     // какой раздел сейчас перед глазами
     var idx = -1, mid = window.innerHeight * 0.55;
     GUIDE.forEach(function (gd, i) { if (document.getElementById(gd.id).getBoundingClientRect().top < mid) idx = i; });
+    // короткие разделы в конце страницы не доезжают до середины экрана: считаем раздел текущим,
+    // если его заголовок уже виден, а на самом дне страницы текущий всегда последний
+    GUIDE.forEach(function (gd, i) {
+      var top = document.getElementById(gd.id).getBoundingClientRect().top;
+      if (i > idx && top < window.innerHeight - 120 && window.pageYOffset + window.innerHeight >= document.documentElement.scrollHeight - 160) idx = i;
+    });
     // на титуле и рядом с репликой под площадкой проводник не дублируется
     // пока читатель на площадке, говорит реплика под ней; у кнопки записи проводник её не загораживает
     guideEl.hidden = idx < 0 || onScreen(cta);
@@ -1860,6 +1872,7 @@
     }
     if (guideTick) return; guideTick = true;
     requestAnimationFrame(function () { guideTick = false; guideSync(); });
+    clearTimeout(guideSettle); guideSettle = setTimeout(guideSync, 180);       // и ещё раз, когда прокрутка остановилась
   }
   window.addEventListener('scroll', guideOnScroll, { passive: true });
   window.addEventListener('resize', guideOnScroll);
@@ -1904,12 +1917,15 @@
     rolesEl.appendChild(b); roleCards.push({ role: r, el: b });
   });
 
-  function intro() {
-    say([role.hi].concat(role.intro || [
+  // picked: роль только что выбрана, вместо приветствия идёт ответ на выбор
+  function intro(picked) {
+    say([picked && role.picked || role.hi].concat(role.intro || [
       T('Это программа индивидуального развития профессиональных атлетов. Один на один с тренером.'),
-      T('Программа идёт 12 месяцев: 4 фазы, 45 недель. Начать можно в любой точке сезона.')
+      T('Программа идёт 12 месяцев: 4 фазы, 45 рабочих недель. Начать можно в любой точке сезона.')
     ], [role.aim]), { label: T('ИЛИ ВЫБРАТЬ КАРТОЧКОЙ ▼'), target: document.getElementById('path') });
   }
+  var justPicked = false;            // страница пересобрана после выбора роли: проводник продолжает с ответа на выбор
+  try { justPicked = sessionStorage.getItem('ce-go') === 'rink'; } catch (e) {}
   function setRole(r, byUser) {
     // Игрок и профессионалы (агент, клуб, тренер) читают сайт в разных редакциях. При переходе между ними
     // страница пересобирается: экран гаснет и проявляется уже в нужной редакции, на площадке.
@@ -1951,7 +1967,7 @@
       r.benefits.items.map(function (it) { return '<li><b>' + it[0] + '</b><span>' + it[1] + '</span></li>'; }).join('') + '</ul>' : '';
     document.getElementById('steps').innerHTML = r.steps.map(function (st) { return '<li><b>' + st[0] + '</b><span>' + st[1] + '</span></li>'; }).join('');
     choosePath(currentPath, false);                 // пересобирает ссылки и кнопку в описании пути
-    intro();
+    intro(byUser || justPicked); justPicked = false;
     if (byUser) {
       store('ce-role', r.id);
       TR.goal('role_selected', { role: r.id });
@@ -2095,7 +2111,7 @@
       form.elements.name.focus({ preventScroll: true });
       reveal(form);
     });
-    function failed() { busy = false; sendBtn.disabled = false; sendBtn.textContent = T('ОТПРАВИТЬ АНКЕТУ'); note(T('Не получилось отправить форму. Напишите нам в Telegram или на почту, текст обращения уже подготовлен.'), true); }
+    function failed() { busy = false; sendBtn.disabled = false; sendBtn.textContent = T('ОТПРАВИТЬ АНКЕТУ'); note(T('Не получилось отправить форму. Напиши нам в Telegram или на почту, текст обращения уже подготовлен.'), true); }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (busy) return;
@@ -2105,10 +2121,10 @@
         f[k].classList.toggle('is-bad', empty);
         if (empty && !bad) bad = f[k];
       });
-      if (bad) { note(T('Заполните поля, отмеченные звёздочкой.')); bad.focus(); return; }
+      if (bad) { note(T('Заполни поля, отмеченные звёздочкой.')); bad.focus(); return; }
       if (!f.consent.checked) { note(T('Без согласия на обработку персональных данных мы не можем принять анкету.')); f.consent.focus(); return; }
       var elapsed = Date.now() - openedAt;
-      if (elapsed < 3000) { note(T('Секунду. Попробуйте отправить ещё раз.')); return; }
+      if (elapsed < 3000) { note(T('Секунду. Попробуй отправить ещё раз.')); return; }
       if (f.website.value) { failed(); return; }            // ловушка для роботов: человек это поле не видит
       if (!FORM_ENDPOINT) { failed(); return; }             // сервер ещё не подключён: успех не изображаем
       busy = true; sendBtn.disabled = true; sendBtn.textContent = T('ОТПРАВЛЯЕМ...'); note('');

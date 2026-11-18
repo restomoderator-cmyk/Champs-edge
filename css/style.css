@@ -942,3 +942,15 @@ html.is-leaving body, html.is-arriving body { opacity: 0; }
 [data-sport="tennis"] .leagues { display: flex; }
 .only-tennis { display: none; }
 [data-sport="tennis"] .only-tennis { display: block; }
+
+/* В английской версии подзаголовок повторял бы название, поэтому его нет */
+html[lang="en"] .title__sub { display: none; }
+
+/* Карточки путей, уровни на карте и вкладки фаз: содержимое начинается сверху,
+   поэтому фигуры, названия и подписи стоят на одних уровнях при любой длине текста */
+.path { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+.path > * { flex: none; max-width: 100%; }
+.path__pick { margin-top: auto; padding-top: 16px; }
+.node { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+.node > * { max-width: 100%; }
+.phase { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
