@@ -1772,6 +1772,24 @@
       if (!open) reveal(listEl);
     });
   }
+  // В теннисной версии список источников открывают теннисные имена: Голуэй поднимается наверх,
+  // за ним идут тренеры и игроки тура.
+  if (TENNIS) (function () {
+    var list = document.getElementById('masters'), first = list.firstElementChild;
+    var gallwey = [].filter.call(list.children, function (li) { return /ГОЛУЭЙ|GALLWEY/.test(li.textContent); })[0];
+    if (gallwey) list.insertBefore(gallwey, first);
+    [
+      [T("БРЭД ГИЛБЕРТ"), T("Тренер Агасси, Роддика и Маррея")],
+      [T("НИК БОЛЛЕТЬЕРИ"), T("Основатель академии, из которой вышли десять первых ракеток мира")],
+      [T("ТОНИ НАДАЛЬ"), T("Тренер, который вырастил Рафаэля Надаля")],
+      [T("ПАТРИК МУРАТОГЛУ"), T("Тренер Серены Уильямс в десяти победах на «Больших шлемах»")],
+      [T("АНДРЕ АГАССИ"), T("Первая ракетка мира, 8 титулов «Большого шлема»")]
+    ].forEach(function (m) {
+      var li = document.createElement('li'), b = document.createElement('b'), sp = document.createElement('span');
+      b.textContent = m[0]; sp.textContent = m[1]; li.appendChild(b); li.appendChild(sp);
+      list.insertBefore(li, first);
+    });
+  })();
   collapsible('masters', 'mastersToggle', 'masters--collapsed', T('ВСЕХ'));
   collapsible('inventory', 'inventoryToggle', 'is-collapsed', T('ВСЕ'));
 

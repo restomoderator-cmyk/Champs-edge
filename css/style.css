@@ -937,3 +937,8 @@ html.is-leaving body, html.is-arriving body { opacity: 0; }
 
 /* В теннисной версии теннис стоит первым в списке видов спорта */
 [data-sport="tennis"] .lore__sports li:nth-child(3) { order: -1; }
+
+/* Теннис: лиги показаны как подтверждение методики, рядом пояснение про теннисную программу */
+[data-sport="tennis"] .leagues { display: flex; }
+.only-tennis { display: none; }
+[data-sport="tennis"] .only-tennis { display: block; }
