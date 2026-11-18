@@ -922,3 +922,15 @@ html.is-leaving body, html.is-arriving body { opacity: 0; }
 .grid > * { min-width: 0; }
 .item > * { min-width: 0; }
 @media (min-width: 761px) and (max-width: 1000px) { #domainList, #inventory { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- Редакция для агента, клуба и тренера ---------- */
+.about__role { color: var(--white); max-width: 44em; }
+.about__role[hidden], .benefits[hidden] { display: none; }
+.benefits { margin-bottom: 20px; background: #1b2a6b; }
+.benefits__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px 22px; }
+.benefits__list li { min-width: 0; }
+.benefits__list b { display: block; font-family: var(--head); font-weight: 400; font-size: 10px; line-height: 1.7; color: var(--cyan); margin-bottom: 8px; }
+.benefits__list span { color: var(--white); }
+.pathinfo__role { color: var(--white); padding: 10px 14px; border-left: calc(var(--px) * 2) solid var(--path-col, var(--yellow)); background: rgba(24, 20, 37, .45); }
+@media (max-width: 1000px) { .benefits__list { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .benefits__list { grid-template-columns: 1fr; gap: 14px; } }
