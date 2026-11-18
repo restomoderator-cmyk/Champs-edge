@@ -541,5 +541,8 @@ window.CE_EN = {
  "Мы используем cookie. С вашего согласия подключим Яндекс Метрику и Вебвизор, чтобы улучшать сайт и настраивать объявления. Запись начнётся после кнопки «Принять».": "We use cookies. With your consent we will turn on Yandex Metrica and Webvisor to improve the site and tune our ads. Recording starts after you press \"Accept\".",
  "Веди пальцем влево-вправо:": "Slide your finger left or right:",
  "игрок идёт за пальцем.": "the player follows it.",
- "Отправляя анкету, вы даёте согласие на обработку персональных данных оператору: [ОПЕРАТОР: ФИО и статус будут указаны].": "By sending the form you consent to the processing of your personal data by the operator: [OPERATOR: name and status to be provided]."
+ "Отправляя анкету, вы даёте согласие на обработку персональных данных оператору: [ОПЕРАТОР: ФИО и статус будут указаны].": "By sending the form you consent to the processing of your personal data by the operator: [OPERATOR: name and status to be provided].",
+ "Программа длится 12 месяцев и проходит четыре фазы: Фундамент, Заточка, Полигон, Эволюция. Занятия идут онлайн. Начать можно в любой точке сезона: фазы привязаны к ходу программы, а не к календарю.": "The program lasts 12 months and goes through four phases: Foundation, Sharpening, Proving Ground, Evolution. Sessions run online. You can start at any point in the season: the phases follow the program, not the calendar.",
+ "Коротко о формате: один на один с тренером, 12 месяцев онлайн.": "The format in brief: one on one with a coach, 12 months online.",
+ "ОНЛАЙН": "ONLINE"
 };
