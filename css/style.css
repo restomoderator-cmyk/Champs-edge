@@ -904,3 +904,9 @@ body::before {
   /* 4. Без переносов по слогам: слово целиком уходит на новую строку */
   #domainList .item b, #inventory .item b, .masters b { hyphens: none; -webkit-hyphens: none; }
 }
+
+/* На телефоне кнопки игр стоят рядом: фигурка над названием, обе видны сразу */
+@media (max-width: 760px) {
+  .title__starts { flex-wrap: nowrap; gap: 14px; }
+  .title__starts .btn--start { flex: 1 1 0; min-width: 0; max-width: 170px; flex-direction: column; gap: 6px; padding: 10px 6px 10px; font-size: 11px; }
+}

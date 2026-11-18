@@ -13,8 +13,13 @@
     if (saved === 'ru' || saved === 'en') return saved;
     return /^(ru|uk|be|kk)\b/i.test(navigator.language || '') ? 'ru' : 'en';
   })();
-  // Вид спорта: ?sport=tennis в адресе или сохранённый выбор, по умолчанию хоккей.
+  // Вид спорта. У каждого есть своя страница: /hockey/ и /tennis/ (собираются из index.html
+  // скриптом tools/make-sport-pages.py). На главной: ?sport=tennis в адресе или сохранённый выбор,
+  // по умолчанию хоккей.
+  var HAS_PAGES = document.documentElement.hasAttribute('data-pages');          // в предпросмотре одним файлом страниц нет
+  var SPORT_PAGE = document.documentElement.getAttribute('data-sport-page');
   var SPORT = (function () {
+    if (SPORT_PAGE === 'hockey' || SPORT_PAGE === 'tennis') { store('ce-sport', SPORT_PAGE); return SPORT_PAGE; }
     var q = /[?&]sport=(hockey|tennis)\b/.exec(location.search);
     if (q) { store('ce-sport', q[1]); return q[1]; }
     return store('ce-sport') === 'tennis' ? 'tennis' : 'hockey';
@@ -30,9 +35,10 @@
   }
   document.documentElement.lang = LANG;
   if (LANG === 'en') {
-    document.title = "Champion's Edge: individual development for professional athletes";
+    var enWho = SPORT_PAGE === 'tennis' ? 'tennis players' : SPORT_PAGE === 'hockey' ? 'hockey players' : 'athletes';
+    document.title = "Champion's Edge" + (SPORT_PAGE === 'tennis' ? ' Tennis' : SPORT_PAGE === 'hockey' ? ' Hockey' : '') + ': individual development for professional ' + enWho;
     var md = document.querySelector('meta[name="description"]');
-    if (md) md.setAttribute('content', 'An individual development program for professional hockey players and athletes. Built on years of studying champions and coaches across 6 sports. Online.');
+    if (md) md.setAttribute('content', 'An individual development program for professional ' + (SPORT_PAGE ? enWho : 'hockey players and athletes') + '. Built on years of studying champions and coaches across 6 sports. Online.');
   }
   // Тексты, которые стоят прямо в разметке, и подписи для экранных читалок
   if (DICT || SDICT) (function () {
@@ -1741,7 +1747,12 @@
       if (sport !== SPORT) {
         store('ce-sport', sport);
         try { sessionStorage.setItem('ce-go', '1'); } catch (e) {}
-        if (store('ce-sport') === sport && !/[?&]sport=/.test(location.search)) location.reload();
+        if (HAS_PAGES) {
+          // у каждой игры своя страница; остальные параметры адреса (код ссылки, UTM, язык) едут с нами
+          var keep = location.search.replace(/^\?/, '').split('&').filter(function (p) { return p && p.split('=')[0] !== 'sport'; }).join('&');
+          location.href = (SPORT_PAGE ? '../' : '') + sport + '/' + (keep ? '?' + keep : '');
+        }
+        else if (store('ce-sport') === sport && !/[?&]sport=/.test(location.search)) location.reload();
         else location.href = TR.urlWith('sport', sport).replace(/#.*$/, '');   // выбор в адресе, остальные параметры на месте
         return;
       }
