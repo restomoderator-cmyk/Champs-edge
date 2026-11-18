@@ -6,4 +6,16 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://edgechamps.com/?lang=en"/>
     <lastmod>2026-11-16</lastmod>
   </url>
+  <url>
+    <loc>https://edgechamps.com/hockey/</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://edgechamps.com/hockey/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edgechamps.com/hockey/?lang=en"/>
+    <lastmod>2026-11-18</lastmod>
+  </url>
+  <url>
+    <loc>https://edgechamps.com/tennis/</loc>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://edgechamps.com/tennis/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edgechamps.com/tennis/?lang=en"/>
+    <lastmod>2026-11-18</lastmod>
+  </url>
 </urlset>

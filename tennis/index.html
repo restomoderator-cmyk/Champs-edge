@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="ru" data-pages data-sport-page="tennis">
+<head>
+<!-- Файл собран из index.html скриптом tools/make-sport-pages.py. Не править руками. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<!-- Первый кадр страницы: тёмный фон сразу, без белой вспышки при переходе между играми и редакциями.
+     Стоит прямо здесь, чтобы сработать раньше, чем загрузится файл стилей. -->
+<style>html{background:#181425;color-scheme:dark}html.is-arriving body,html.is-leaving body{opacity:0}</style>
+<!-- Яндекс Метрика 114286443 и параметры адреса. Счётчик запускается только после согласия посетителя. -->
+<script src="../js/site-params.js"></script>
+<title>Champion's Edge Tennis: индивидуальное развитие профессиональных теннисистов</title>
+<meta name="description" content="Индивидуальная программа развития для профессиональных теннисистов. Методика выросла из изучения чемпионов и тренеров в 6 видах спорта. Онлайн.">
+<meta name="theme-color" content="#181425">
+<!-- Превью ссылки в мессенджерах и соцсетях -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:site_name" content="Champion's Edge">
+<meta property="og:title" content="Champion's Edge Tennis: индивидуальное развитие профессиональных теннисистов">
+<meta property="og:description" content="Индивидуальная программа развития для профессиональных теннисистов. Методика выросла из изучения чемпионов и тренеров в 6 видах спорта. Онлайн.">
+<meta property="og:url" content="https://edgechamps.com/tennis/">
+<meta property="og:image" content="https://edgechamps.com/img/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://edgechamps.com/img/preview.png">
+<link rel="canonical" href="https://edgechamps.com/tennis/">
+<!-- Языковые версии для поисковиков -->
+<link rel="alternate" hreflang="ru" href="https://edgechamps.com/tennis/">
+<link rel="alternate" hreflang="en" href="https://edgechamps.com/tennis/?lang=en">
+<link rel="alternate" hreflang="x-default" href="https://edgechamps.com/tennis/">
+<meta name="twitter:title" content="Champion's Edge Tennis: индивидуальное развитие профессиональных теннисистов">
+<meta name="twitter:description" content="Индивидуальная программа развития для профессиональных теннисистов. Методика выросла из изучения чемпионов и тренеров в 6 видах спорта. Онлайн.">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "Organization",
+ "name": "Champion's Edge",
+ "alternateName": "Грани Чемпионов",
+ "url": "https://edgechamps.com/",
+ "description": "Индивидуальная программа развития для профессиональных теннисистов. Методика выросла из изучения чемпионов и тренеров в 6 видах спорта. Онлайн.",
+ "logo": "https://edgechamps.com/img/apple-touch-icon.png",
+ "image": "https://edgechamps.com/img/preview.png",
+ "email": "edgechamps@gmail.com",
+ "sameAs": [
+  "https://t.me/call_pascal"
+ ]
+}
+</script>
+<link rel="icon" type="image/png" href="../img/favicon.png">
+<link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
+<link rel="preload" href="../fonts/press-start-2p-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- Верхняя панель -->
+<header class="hud">
+  <a class="hud__logo" href="#top">CE</a>
+  <button class="hud__burger" id="navToggle" type="button" aria-expanded="false" aria-controls="nav">МЕНЮ</button>
+  <nav class="hud__nav" id="nav" aria-label="Разделы">
+    <a href="#role" id="navRole">РОЛЬ: ИГРОК</a>
+    <a href="#rink">ПЛОЩАДКА</a>
+    <a href="#path">ПУТЬ</a>
+    <a href="#about">ПРОГРАММА</a>
+    <a href="#map">КАРТА</a>
+    <a href="#domains">ДОМЕНЫ</a>
+    <a href="#loot">ИНВЕНТАРЬ</a>
+    <a href="#code">КОДЕКС</a>
+    <a href="#science">МЕТОДИКА</a>
+    <a href="#start">ЗАПИСЬ</a>
+  </nav>
+  <button class="hud__lang" id="langToggle" type="button">EN</button>
+  <button class="hud__sound" id="musicToggle" type="button" aria-pressed="true" aria-label="Музыка">МУЗЫКА</button>
+  <button class="hud__sound" id="soundToggle" type="button" aria-pressed="true" aria-label="Звуковые эффекты">ЗВУК</button>
+</header>
+
+<main id="top">
+
+<!-- Титульный экран -->
+<section class="title">
+  <div class="title__stars" aria-hidden="true"></div>
+  <div class="title__inner">
+    <p class="title__kicker">12 МЕСЯЦЕВ · 4 ФАЗЫ · 9 ДОМЕНОВ</p>
+    <h1 class="title__logo">
+      <span class="title__big">CHAMPION'S</span>
+      <span class="title__big title__big--edge">EDGE</span>
+    </h1>
+    <p class="title__sub">ГРАНИ ЧЕМПИОНОВ</p>
+    <p class="title__tag">Индивидуальное развитие профессиональных атлетов</p>
+    <div class="title__starts">
+      <button class="btn btn--start" data-sport="hockey" type="button"><canvas width="32" height="40" aria-hidden="true"></canvas><span>▶ ХОККЕЙ</span></button>
+      <button class="btn btn--start" data-sport="tennis" type="button"><canvas width="32" height="40" aria-hidden="true"></canvas><span>▶ ТЕННИС</span></button>
+    </div>
+    <p class="title__pick">ВЫБЕРИ ИГРУ</p>
+  </div>
+</section>
+
+<!-- Краткое содержание сайта для тех, у кого не работает JavaScript, и для поисковых роботов.
+     Разделы ниже без JavaScript остаются пустыми, поэтому их суть продублирована здесь текстом. -->
+<noscript>
+<section class="section nojs">
+  <p class="lead">Champion's Edge Tennis: индивидуальное развитие профессиональных теннисистов. Этот сайт устроен как игра и полностью работает с включённым JavaScript. Ниже то же содержание обычным текстом.</p>
+
+  <h2 class="h2">Путь</h2>
+  <p>Три пути для трёх этапов карьеры. Путь таланта: для молодых игроков от 18 лет, которые закладывают фундамент карьеры. Путь героя: для сильных игроков, которые хотят стать лучшими. Путь легенды: для игроков 30+, которые хотят продлить или перезагрузить карьеру.</p>
+
+  <h2 class="h2">Программа</h2>
+  <p>Работа идёт один на один, тренер и игрок, из любой точки мира. Программа длится 12 месяцев: 4 фазы, 9 доменов, 45 рабочих недель: остальное время года уходит на восстановление и перерывы. Занятия идут онлайн. Одна сессия длится 120 минут, от одной до четырёх сессий в неделю. Начать можно в любой точке сезона. Возраст участников: 18+. В основе программы многолетнее изучение лучших игроков тура и их тренеров. Стоимость по запросу.</p>
+
+  <h2 class="h2">Карта уровней</h2>
+  <p>Фаза 1, Фундамент (месяцы 1-3): личность и характер, мышление роста, концентрация и фокус, интеграция, состояние потока, инстинкт убийцы. Фаза 2, Заточка (месяцы 4-6): давление, эмоции как оружие, стойкость. Фаза 3, Полигон (месяцы 7-9): лидерство, игра под огнём, глубина. Фаза 4, Эволюция (месяцы 10-12): тело как система, стратегия и деньги, полная интеграция.</p>
+  <p>Девять доменов программы: личность и характер, ментальная эффективность, системы привычек, соревновательное мышление, эмоциональный интеллект, устойчивость, физический интеллект, команда и лидерство, стратегия и дизайн жизни.</p>
+
+  <h2 class="h2">Инвентарь</h2>
+  <p>Инструменты, которые остаются у игрока после программы: Личная Конституция, своя Пирамида, личная операционная система, обзор после исполнения, кнопка сброса, личные дашборды, ментальный набор.</p>
+
+  <h2 class="h2">На чём построено</h2>
+  <p>Методика выросла из многолетнего изучения того, как устроены чемпионы, чемпионские команды и тренеры в шести видах спорта: теннис, хоккей, футбол, баскетбол, бокс и ММА. В основе девять принципов. Первый из них: быть чемпионом значит выбрать образ жизни и способ мышления, а титулы лишь подтверждают это.</p>
+
+  <h2 class="h2">Как записаться</h2>
+  <p>Напишите в Telegram: <a href="https://t.me/call_pascal">t.me/call_pascal</a> или на почту <a href="mailto:edgechamps@gmail.com">edgechamps@gmail.com</a>. При включённом JavaScript на сайте есть короткая анкета на созвон. Дальше бесплатный созвон на 15-20 минут, вводная встреча около трёх часов с первой сессией и старт. Мы не публикуем имён ни игроков, ни тренера. Рекомендации от игроков и тренеров по запросу.</p>
+</section>
+</noscript>
+
+<!-- Выбор роли: сайт говорит с игроком, агентом, клубом или тренером -->
+<section class="section section--role" id="role">
+  <h2 class="role__title">КТО ТЫ?</h2>
+  <p class="lead role__lead">Выбери роль. Сайт расскажет о программе с твоей стороны.</p>
+  <div class="roles" id="roles" role="radiogroup" aria-label="Роль"></div>
+</section>
+
+<!-- Сцена с персонажем -->
+<section class="stage" id="rink">
+  <div class="stage__screen">
+    <canvas id="scene" width="320" height="240" tabindex="0" aria-label="Пиксельная хоккейная площадка: игрок катается и бросает вниз по трём воротам, каждые выбирают путь чемпиона"></canvas>
+    <div class="stage__score" aria-live="polite">ГОЛЫ <span id="score">000</span></div>
+  </div>
+  <div class="dialog" id="dialog" role="button" tabindex="0" aria-label="Реплика проводника. Нажми, чтобы продолжить">
+    <canvas class="dialog__face" id="face" width="16" height="16" aria-hidden="true"></canvas>
+    <p class="dialog__text" id="dialogText"></p>
+    <span class="dialog__next" aria-hidden="true">▼</span>
+    <button class="dialog__go" id="dialogGo" type="button" hidden></button>
+  </div>
+  <p class="stage__help stage__help--keys">Забей в ворота и выберешь путь · СТРЕЛКИ или WASD: кататься · ПРОБЕЛ: бросок · или просто нажми на ворота</p>
+  <ul class="stage__help stage__help--touch">
+    <li><b>Тап по воротам:</b> бросок. Так выбирается путь.</li>
+    <li><b>Тап по льду:</b> поворот. <b>Двойной тап:</b> бросок.</li>
+  </ul>
+</section>
+
+<!-- Выбор пути -->
+<section class="section" id="path">
+  <h2 class="h2"><span>01</span> ВЫБЕРИ ПУТЬ ЧЕМПИОНА</h2>
+  <p class="lead" id="pathLead"></p>
+  <div class="grid grid--3 paths" id="paths" role="radiogroup" aria-label="Путь чемпиона"></div>
+  <div class="paths__nav" aria-label="Листать пути">
+    <button type="button" id="pathsPrev" aria-label="Предыдущий путь">◄</button>
+    <span id="pathsCount" aria-live="polite">1 / 3</span>
+    <button type="button" id="pathsNext" aria-label="Следующий путь">►</button>
+  </div>
+  <div class="panel level pathinfo" id="pathPanel" aria-live="polite"></div>
+</section>
+
+<!-- О программе -->
+<section class="section" id="about">
+  <h2 class="h2"><span>02</span> ЧТО ЭТО ЗА ПРОГРАММА</h2>
+  <!-- заход и блок «Что это даёт» для агента, клуба и тренера: заполняет скрипт -->
+  <p class="lead about__role" id="aboutRole" hidden></p>
+  <div class="panel benefits" id="roleBenefits" hidden></div>
+  <div class="grid grid--2">
+    <div class="panel">
+      <p>Champion's Edge – программа индивидуального развития профессиональных атлетов. Работа идёт один на один, тренер и игрок, из любой точки мира.</p>
+      <p>Программа длится 12 месяцев и проходит четыре фазы: Фундамент, Заточка, Полигон, Эволюция. Занятия идут онлайн, один месяц из двенадцати – предсезонная подготовка офлайн на нашей тренировочной базе в Москве. Начать можно в любой точке сезона: фазы привязаны к ходу программы, а не к календарю.</p>
+      <p>45 недель – это рабочие недели программы. Остальное время года уходит на восстановление и перерывы.</p>
+      <p class="leagues only-tennis"><span>В ОСНОВЕ</span> <b>ФЕДЕРЕР</b><b>НАДАЛЬ</b><b>ДЖОКОВИЧ</b><b>АГАССИ</b><b>БОЛЛЕТЬЕРИ</b><b>ТОНИ НАДАЛЬ</b><b>ГИЛБЕРТ</b></p>
+      <p class="only-tennis">Программа выросла из многолетнего изучения того, как думают и готовятся лучшие игроки тура и как работают их тренеры.</p>
+      <p>Программа живая и подстраивается под цели и задачи конкретного игрока: под его путь, то есть этап карьеры, и под амплуа. У вратаря своя программа, у полевого игрока своя.</p>
+    </div>
+    <div class="panel panel--stats">
+      <h3 class="h3">ПАРАМЕТРЫ</h3>
+      <dl class="stats">
+        <div><dt>РЕЖИМ</dt><dd>1 НА 1</dd></div>
+        <div><dt>ФОРМАТ</dt><dd>ОНЛАЙН + МЕСЯЦ В МОСКВЕ</dd></div>
+        <div><dt>ПРОГРАММА</dt><dd>12 МЕСЯЦЕВ</dd></div>
+        <div><dt>ФАЗЫ</dt><dd>4</dd></div>
+        <div><dt>ДОМЕНЫ</dt><dd>9</dd></div>
+        <div><dt>РАБОЧИЕ НЕДЕЛИ</dt><dd>45</dd></div>
+        <div><dt>ОДНА СЕССИЯ</dt><dd>120 МИНУТ</dd></div>
+        <div><dt>СЕССИЙ В НЕДЕЛЮ</dt><dd>ОТ 1 ДО 4</dd></div>
+        <div><dt>СТАРТ</dt><dd>В ЛЮБОЙ ТОЧКЕ СЕЗОНА</dd></div>
+        <div><dt>ВОЗРАСТ</dt><dd>18+</dd></div>
+        <div><dt>ГДЕ</dt><dd>ИЗ ЛЮБОЙ ТОЧКИ МИРА</dd></div>
+        <div><dt>ЦЕНА</dt><dd class="stats__ask">ПО ЗАПРОСУ</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- Карта уровней -->
+<section class="section" id="map">
+  <h2 class="h2"><span>03</span> КАРТА ПРОГРАММЫ</h2>
+  <p class="lead">Четыре фазы, 45 недель. Выбери фазу, потом уровень, чтобы увидеть, что внутри.</p>
+  <div class="phases" id="phaseTabs" role="tablist" aria-label="Фазы программы"></div>
+  <p class="phase__info" id="phaseInfo" aria-live="polite"></p>
+  <div class="worlds" id="worlds"></div>
+  <div class="panel level" id="levelPanel" aria-live="polite"></div>
+  <p class="map__note">ОСТАЛЬНЫЕ УРОВНИ ОТКРОЮТСЯ В ПРОЦЕССЕ ИГРЫ</p>
+</section>
+
+<!-- Домены -->
+<section class="section" id="domains">
+  <h2 class="h2"><span>04</span> ДЕВЯТЬ ДОМЕНОВ</h2>
+  <p class="lead">Ветки навыков, которые программа прокачивает за год. К концу четвёртой фазы все девять собраны в одну систему.</p>
+  <div class="grid grid--3" id="domainList"></div>
+</section>
+
+<!-- Инвентарь -->
+<section class="section" id="loot">
+  <h2 class="h2"><span>05</span> ИНВЕНТАРЬ</h2>
+  <p class="lead">Инструменты, которые проходят через всю программу. Они остаются с тобой после неё.</p>
+  <div class="grid grid--3 is-collapsed" id="inventory"></div>
+  <p class="masters__more inventory__more"><button type="button" id="inventoryToggle" aria-expanded="false" aria-controls="inventory">▼ ПОКАЗАТЬ ВСЕ · 12</button></p>
+</section>
+
+<!-- Кодекс: девять принципов -->
+<section class="section" id="code">
+  <h2 class="h2"><span>06</span> КОДЕКС ЧЕМПИОНА</h2>
+  <ol class="code" id="principles"></ol>
+</section>
+
+<!-- Методика: откуда взялась книга и на чьи идеи опирается -->
+<section class="section" id="science">
+  <h2 class="h2"><span>07</span> ОТКУДА ВЗЯЛАСЬ МЕТОДИКА</h2>
+  <div class="panel lore">
+    <p class="lore__tag">ЛОР</p>
+    <p>Методика выросла из многолетнего изучения того, как устроены чемпионы. Как думали и готовились Гретцки, Лемье, Джордан и Брайант. Что отличает чемпионские команды. Как работали тренеры, которые выигрывали снова и снова: Скотти Боумен, Фил Джексон, Джон Вуден, Алекс Фергюсон, Пэт Райли и многие другие.</p>
+    <p>Исследования шли в академиях, клубах и школах, в разных видах спорта.</p>
+    <ul class="lore__sports" aria-label="Виды спорта">
+      <li>ХОККЕЙ</li><li>ФУТБОЛ</li><li>ТЕННИС</li><li>БАСКЕТБОЛ</li><li>БОКС</li><li>ММА</li>
+    </ul>
+    <p>Из этого выделены общие закономерности, которые повторяются у лучших независимо от вида спорта. Они переложены в пошаговую систему для одного игрока.</p>
+    <dl class="lore__stats">
+      <div><dd>15</dd><dt>ЛЕТ ИССЛЕДОВАНИЙ</dt></div>
+      <div><dd>6</dd><dt>ВИДОВ СПОРТА</dt></div>
+      <div><dd>1</dd><dt>ИГРОК В ЦЕНТРЕ СИСТЕМЫ</dt></div>
+    </dl>
+  </div>
+  <h3 class="h3 lore__sub">НА ЧЬИ ИДЕИ ОПИРАЕТСЯ</h3>
+  <p class="lead">Кроме практического опыта, программа опирается на работы тренеров, учёных и мыслителей.</p>
+  <ul class="masters masters--collapsed" id="masters">
+    <li><b>АЛЕКС ФЕРГЮСОН</b><span>Тренер, 13 чемпионств Англии с «Манчестер Юнайтед»</span></li>
+    <li><b>ПЕП ГВАРДИОЛА</b><span>Тренер, чемпион Испании, Германии и Англии</span></li>
+    <li><b>СКОТТИ БОУМЕН</b><span>Тренер, рекордные 9 Кубков Стэнли</span></li>
+    <li><b>АНАТОЛИЙ ТАРАСОВ</b><span>Основатель советской хоккейной школы</span></li>
+    <li><b>ФИЛ ДЖЕКСОН</b><span>Тренер, 11 чемпионских перстней НБА</span></li>
+    <li><b>ДЖОН ВУДЕН</b><span>Тренер, 10 титулов NCAA за 12 лет</span></li>
+    <li><b>ПЭТ РАЙЛИ</b><span>Тренер, 5 чемпионств НБА</span></li>
+    <li><b>ТИМ ГРОВЕР</b><span>Личный тренер Джордана и Брайанта</span></li>
+    <li><b>ВИКТОР ТИХОНОВ</b><span>Тренер, три олимпийских золота со сборной</span></li>
+    <li><b>ХЕРБ БРУКС</b><span>Привёл сборную США к «Чуду на льду» 1980 года</span></li>
+    <li><b>ТИМОТИ ГОЛУЭЙ</b><span>Тренер по теннису, создатель «Внутренней игры»</span></li>
+    <li><b>ДЖЕЙМС КЕРР</b><span>Изучал культуру All Blacks, сборной Новой Зеландии по регби</span></li>
+    <li><b>СЭМ УОКЕР</b><span>Изучил капитанов величайших команд в истории спорта</span></li>
+    <li><b>КЭРОЛ ДВЕК</b><span>Психолог Стэнфорда, теория мышления роста</span></li>
+    <li><b>АНДЕРС ЭРИКССОН</b><span>Психолог, исследователь мастерства и осознанной практики</span></li>
+    <li><b>МИХАЙ ЧИКСЕНТМИХАЙИ</b><span>Психолог, описал состояние потока</span></li>
+    <li><b>СТИВЕН КОТЛЕР</b><span>Исследователь потока и пиковой формы</span></li>
+    <li><b>ДЭНИЕЛ ГОУЛМАН</b><span>Психолог, открыл миру эмоциональный интеллект</span></li>
+    <li><b>ДЖЕЙМС КЛИР</b><span>Как строятся привычки: 1% в день</span></li>
+    <li><b>МЭТТЬЮ УОКЕР</b><span>Нейроучёный, исследователь сна</span></li>
+    <li><b>ДЖЕЙМС НЕСТОР</b><span>Исследователь дыхания</span></li>
+    <li><b>МИЯМОТО МУСАСИ</b><span>Непобеждённый мастер меча, Япония, XVII век</span></li>
+    <li><b>МАРК АВРЕЛИЙ</b><span>Римский император и философ-стоик</span></li>
+    <li><b>РАЙАН ХОЛИДЕЙ</b><span>Переложил стоицизм для спорта и бизнеса</span></li>
+    <li><b>ВИКТОР ФРАНКЛ</b><span>Психиатр, прошёл концлагеря, основатель логотерапии</span></li>
+    <li><b>РЭЙ ДАЛИО</b><span>Инвестор, принципы принятия решений</span></li>
+    <li><b>ДЖИМ КОЛЛИНЗ</b><span>Исследователь: что делает хорошее великим</span></li>
+    <li><b>МОРГАН ХАУЗЕЛ</b><span>Психология денег</span></li>
+  </ul>
+  <p class="masters__more"><button type="button" id="mastersToggle" aria-expanded="false" aria-controls="masters">▼ ПОКАЗАТЬ ВСЕХ · 28</button></p>
+</section>
+
+<!-- Как начать: три шага и конфиденциальность -->
+<section class="section" id="how">
+  <h2 class="h2"><span>08</span> КАК НАЧАТЬ</h2>
+  <ol class="steps" id="steps"></ol>
+  <div class="panel secret">
+    <p class="secret__tag">КОНФИДЕНЦИАЛЬНО</p>
+    <p>Мы не публикуем имён. Ни игроков, ни тренера. Конфиденциальность – часть программы. Познакомимся на первой встрече. Рекомендации от игроков и тренеров – по запросу.</p>
+  </div>
+</section>
+
+<!-- Призыв -->
+<section class="section section--cta" id="start">
+  <div class="panel panel--cta">
+    <p class="cta__blink" id="ctaReady">ГОТОВ?</p>
+    <h2 class="cta__title">НОВАЯ ИГРА</h2>
+    <p class="cta__path"><span id="ctaPathLabel">ТВОЙ ПУТЬ:</span> <span id="ctaPath"></span> <a id="ctaPick" href="#path" hidden>ВЫБРАТЬ ▲</a></p>
+    <p id="ctaText"></p>
+    <p class="cta__terms">ИЗ ЛЮБОЙ ТОЧКИ МИРА · ЦЕНА ПО ЗАПРОСУ</p>
+    <a class="btn btn--cta" id="cta" href="https://t.me/call_pascal" target="_blank" rel="noopener">▶ ЗАПИСАТЬСЯ</a>
+    <p class="cta__mail">ИЛИ НА ПОЧТУ: <a id="ctaMail" href="mailto:edgechamps@gmail.com">edgechamps@gmail.com</a>
+      <button type="button" id="mailCopy" aria-label="Скопировать адрес почты">КОПИРОВАТЬ</button></p>
+
+    <!-- Анкета на созвон. Кнопка видна, только когда задан адрес сервера (FORM_ENDPOINT в js/main.js). -->
+    <p class="callform__open"><button type="button" class="btn btn--small" id="formOpen" aria-expanded="false" aria-controls="callForm" hidden>ИЛИ ЗАПОЛНИТЬ АНКЕТУ НА СОЗВОН</button></p>
+    <form class="callform" id="callForm" hidden novalidate>
+      <p class="callform__lead">Берём ограниченное число атлетов в сезон. Анкета нужна, чтобы понять задачу и договориться о коротком разговоре. Место в программе она не обещает.</p>
+      <label class="callform__f"><span>ИМЯ *</span><input type="text" name="name" maxlength="80" autocomplete="name" required></label>
+      <label class="callform__f"><span>РОЛЬ *</span>
+        <select name="role" required>
+          <option value="">ВЫБЕРИ</option>
+          <option value="player">ИГРОК</option>
+          <option value="agent">АГЕНТ</option>
+          <option value="coach">ТРЕНЕР</option>
+          <option value="club">КЛУБ</option>
+        </select></label>
+      <label class="callform__f"><span>КЛУБ</span><input type="text" name="club" maxlength="120" autocomplete="organization"></label>
+      <label class="callform__f"><span>ЛИГА</span><input type="text" name="league" maxlength="120"></label>
+      <label class="callform__f callform__f--wide"><span>ЧТО ХОЧЕШЬ ИЗМЕНИТЬ *</span><textarea name="change" rows="4" maxlength="2000" required></textarea></label>
+      <label class="callform__f callform__f--wide"><span>КОНТАКТ *</span><input type="text" name="contact" maxlength="160" required><small>Телефон, Telegram или почта: как тебе удобно.</small></label>
+      <label class="callform__hp" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+      <label class="callform__agree"><input type="checkbox" name="consent" required><span>Мне исполнилось 18 лет. Согласен на обработку персональных данных, чтобы со мной связались по этой анкете.</span></label>
+      <p class="callform__more"><a href="#privacy" data-legal>ПОЛНЫЙ ТЕКСТ СОГЛАСИЯ ▼</a></p>
+      <button type="submit" class="btn btn--cta btn--small" id="formSend">ОТПРАВИТЬ АНКЕТУ</button>
+      <p class="callform__msg" id="formMsg" role="alert" hidden></p>
+      <p class="callform__fallback" id="formFallback" hidden>
+        <a class="btn btn--small" id="formTg" href="https://t.me/call_pascal" target="_blank" rel="noopener">НАПИСАТЬ В TELEGRAM</a>
+        <a class="btn btn--small" id="formMail" href="mailto:edgechamps@gmail.com">НАПИСАТЬ НА ПОЧТУ</a>
+      </p>
+    </form>
+    <p class="callform__done" id="formDone" role="status" hidden>Заявку получили. Напишем тебе.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- Проводник: сопровождает по странице -->
+<aside class="guide" id="guide" hidden>
+  <div class="guide__bubble" id="guideBubble" aria-live="polite">
+    <p id="guideText"></p>
+    <div class="guide__row">
+      <button class="guide__next" id="guideNext" type="button">ДАЛЬШЕ ▶</button>
+      <a class="guide__next" id="guideCta" href="https://t.me/call_pascal" target="_blank" rel="noopener" hidden>ЗАПИСАТЬСЯ ▶</a>
+      <button class="guide__close" id="guideClose" type="button" aria-label="Скрыть подсказку">×</button>
+    </div>
+  </div>
+  <button class="guide__hero" id="guideHero" type="button" aria-label="Проводник: показать или скрыть подсказку"><canvas width="32" height="40" aria-hidden="true"></canvas></button>
+</aside>
+
+<div class="sheet__back" id="sheetBack" hidden></div>
+
+<!-- Cookie и персональные данные.
+     ЧЕРНОВИК юридических формулировок: до публикации сверить с юристом.
+     Оператор остаётся плейсхолдером, пока его не укажет владелец сайта. -->
+<section class="section section--legal" id="privacy">
+  <details class="panel legal" id="legal">
+    <summary>COOKIE И ПЕРСОНАЛЬНЫЕ ДАННЫЕ</summary>
+    <h3>COOKIE И АНАЛИТИКА</h3>
+    <p>Сайт использует cookie и локальное хранилище браузера. Необходимые записи работают всегда: они помнят язык, роль, путь, настройки звука и код персональной ссылки, если вы пришли по такой ссылке.</p>
+    <p>С вашего согласия подключается Яндекс Метрика (счётчик 114286443) с Вебвизором. Она собирает сведения о посещении: какие разделы вы открывали, клики и прокрутку, запись действий на странице, тип устройства и источник перехода. Это нужно, чтобы понимать, как сайтом пользуются, улучшать его и показывать наши объявления тем, кто уже был на сайте.</p>
+    <p>Аналитика включается только после кнопки «Давай». Если выбрать «Только технические», Метрика и Вебвизор не подключаются, а сайт работает как обычно.</p>
+    <p><button type="button" class="btn btn--small" id="consentChange">ИЗМЕНИТЬ ВЫБОР</button></p>
+    <!-- Согласие на персональные данные показывается только вместе с анкетой (её включает FORM_ENDPOINT в js/main.js).
+         ЧЕРНОВИК: до включения анкеты сверить с юристом и вписать оператора вместо плейсхолдера. -->
+    <div id="legalForm" hidden>
+    <h3>СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ</h3>
+    <p>Отправляя анкету, вы даёте согласие на обработку персональных данных оператору: [ОПЕРАТОР: ФИО и статус будут указаны].</p>
+    <p>Какие данные: имя, роль, клуб, лига, описание запроса и контакт, который вы указали.</p>
+    <p>Зачем: чтобы ответить на обращение и договориться о созвоне.</p>
+    <p>Куда передаём: заявка сначала записывается в базу данных на территории России. Затем её копия доставляется в Telegram (аккаунт @call_pascal) и на почту edgechamps@gmail.com. Доставка в Telegram и Gmail может означать трансграничную передачу данных.</p>
+    <p>Срок хранения: до обработки обращения и в сроки, установленные законом, если иное не потребуется для исполнения договорённости.</p>
+    <p>Ваши права: запросить доступ к своим данным, их уточнение или удаление, а также отозвать согласие. Для этого напишите на edgechamps@gmail.com.</p>
+    <p>Анкета предназначена для лиц от 18 лет. Мы не публикуем имён. Ни игроков, ни тренера.</p>
+    <p class="legal__draft">Черновик формулировок. Будет сверен с юристом до публикации.</p>
+    </div>
+  </details>
+</section>
+
+<!-- Уведомление о cookie и аналитике: показывается, пока посетитель не сделал выбор -->
+<div class="consent" id="consent" role="region" aria-label="Cookie и аналитика" hidden>
+  <p>Поможешь нам сделать сайт ещё лучше? Включим cookie и Яндекс Метрику?</p>
+  <div class="consent__row">
+    <button type="button" class="btn btn--small consent__yes" id="consentYes">ДАВАЙ</button>
+    <button type="button" class="btn btn--small" id="consentNo">ТОЛЬКО ТЕХНИЧЕСКИЕ</button>
+    <a href="#privacy" data-legal>ПОДРОБНЕЕ</a>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>CHAMPION'S EDGE · ГРАНИ ЧЕМПИОНОВ</p>
+  <p><a href="https://t.me/call_pascal" target="_blank" rel="noopener">НАПИСАТЬ В TELEGRAM</a> · <a href="mailto:edgechamps@gmail.com">edgechamps@gmail.com</a> · <a href="#privacy" data-legal>COOKIE И ДАННЫЕ</a></p>
+  <p class="footer__small">© 2026 · Все права защищены</p>
+</footer>
+
+<script src="../js/sport-tennis.js"></script>
+<script src="../js/voice-pro.js"></script>
+<script src="../js/i18n-en.js"></script>
+<script src="../js/main.js"></script>
+</body>
+</html>

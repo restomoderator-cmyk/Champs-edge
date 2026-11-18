@@ -1,6 +1,18 @@
 (function () {
   'use strict';
 
+  // Аналитика и параметры адреса, см. js/site-params.js. Если этот файл не загрузился
+  // (например, его срезал блокировщик), сайт работает без аналитики.
+  var TR = window.CE_TRACK || {
+    r: null, role: null, path: null, utm: {},
+    consent: function () { return 'no'; }, setConsent: function () {}, goal: function () { return false; }, goalOnce: function () {},
+    urlWith: function (k, v) {
+      var parts = location.search.replace(/^\?/, '').split('&').filter(function (p) { return p && p.split('=')[0] !== k; });
+      parts.push(k + '=' + encodeURIComponent(v));
+      return location.pathname + '?' + parts.join('&') + location.hash;
+    }
+  };
+
   /* =====================================================================
      ЯЗЫК: русский или английский
      ===================================================================== */
@@ -11,34 +23,59 @@
     if (saved === 'ru' || saved === 'en') return saved;
     return /^(ru|uk|be|kk)\b/i.test(navigator.language || '') ? 'ru' : 'en';
   })();
+  // Вид спорта. У каждого есть своя страница: /hockey/ и /tennis/ (собираются из index.html
+  // скриптом tools/make-sport-pages.py). На главной: ?sport=tennis в адресе или сохранённый выбор,
+  // по умолчанию хоккей.
+  var HAS_PAGES = document.documentElement.hasAttribute('data-pages');          // в предпросмотре одним файлом страниц нет
+  var SPORT_PAGE = document.documentElement.getAttribute('data-sport-page');
+  var SPORT = (function () {
+    if (SPORT_PAGE === 'hockey' || SPORT_PAGE === 'tennis') { store('ce-sport', SPORT_PAGE); return SPORT_PAGE; }
+    var q = /[?&]sport=(hockey|tennis)\b/.exec(location.search);
+    if (q) { store('ce-sport', q[1]); return q[1]; }
+    return store('ce-sport') === 'tennis' ? 'tennis' : 'hockey';
+  })();
+  var TENNIS = SPORT === 'tennis';
+  document.documentElement.setAttribute('data-sport', SPORT);
+  var SDICT = TENNIS && window.CE_TENNIS || null;   // хоккейная строка → теннисная
+  // Роль посетителя известна до сборки страницы: агент, клуб и тренер читают сайт в своей редакции
+  // (на «вы», об игроке в третьем лице), см. js/voice-pro.js.
+  var ROLE0 = TR.role || store('ce-role') || 'player';
+  var PRO = ROLE0 === 'agent' || ROLE0 === 'club' || ROLE0 === 'coach';
+  var VDICT = PRO && window.CE_PRO || null;
   var DICT = LANG === 'en' && window.CE_EN || null;
   // Перевод строки. Всё, чего нет в словаре, остаётся по-русски.
-  function T(s) { return DICT && Object.prototype.hasOwnProperty.call(DICT, s) ? DICT[s] : s; }
+  function T(s) {
+    if (SDICT && Object.prototype.hasOwnProperty.call(SDICT, s)) s = SDICT[s];     // сначала вид спорта
+    if (VDICT && Object.prototype.hasOwnProperty.call(VDICT, s)) s = VDICT[s];     // потом редакция для профессионалов
+    return DICT && Object.prototype.hasOwnProperty.call(DICT, s) ? DICT[s] : s;   // потом язык
+  }
   document.documentElement.lang = LANG;
   if (LANG === 'en') {
-    document.title = "Champion's Edge: individual development for professional athletes";
+    var enWho = SPORT_PAGE === 'tennis' ? 'tennis players' : SPORT_PAGE === 'hockey' ? 'hockey players' : 'athletes';
+    document.title = "Champion's Edge" + (SPORT_PAGE === 'tennis' ? ' Tennis' : SPORT_PAGE === 'hockey' ? ' Hockey' : '') + ': individual development for professional ' + enWho;
     var md = document.querySelector('meta[name="description"]');
-    if (md) md.setAttribute('content', 'An individual development program for professional hockey players and athletes. Built on years of studying champions and coaches across 6 sports. Online.');
+    if (md) md.setAttribute('content', 'An individual development program for professional ' + (SPORT_PAGE ? enWho : 'hockey players and athletes') + '. Built on years of studying champions and coaches across 6 sports. Online.');
   }
   // Тексты, которые стоят прямо в разметке, и подписи для экранных читалок
-  if (DICT) (function () {
+  if (DICT || SDICT || VDICT) (function () {
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), node, list = [];
     while ((node = walker.nextNode())) list.push(node);
     list.forEach(function (nd) {
       var raw = nd.nodeValue, key = raw.replace(/\s+/g, ' ').trim();
-      if (!key || !Object.prototype.hasOwnProperty.call(DICT, key)) return;
-      nd.nodeValue = raw.replace(/^(\s*)[\s\S]*?(\s*)$/, function (m, a, b) { return a + DICT[key] + b; });
+      var out = key && T(key);
+      if (!key || out === key) return;
+      nd.nodeValue = raw.replace(/^(\s*)[\s\S]*?(\s*)$/, function (m, a, b) { return a + out + b; });
     });
     [].forEach.call(document.querySelectorAll('[aria-label]'), function (el) { el.setAttribute('aria-label', T(el.getAttribute('aria-label'))); });
   })();
   (function () {
     var btn = document.getElementById('langToggle'), other = LANG === 'en' ? 'ru' : 'en';
     btn.textContent = other.toUpperCase();
-    btn.setAttribute('aria-label', other === 'en' ? 'Switch to English' : 'Переключить на русский');
+    btn.setAttribute('aria-label', other === 'en' ? 'Переключить на английский' : 'Switch to Russian');
     btn.addEventListener('click', function () {
       store('ce-lang', other);
       if (store('ce-lang') === other && !/[?&]lang=/.test(location.search)) location.reload();
-      else location.search = '?lang=' + other;        // хранилище недоступно: передаём язык в адресе
+      else location.href = TR.urlWith('lang', other);  // язык в адресе; остальные параметры и hash сохраняются
     });
   })();
 
@@ -72,8 +109,8 @@
       who: T('Для молодых игроков от 18 лет'),
       text: T('Ты в самом начале карьеры. Закладываем фундамент, на котором она будет строиться.'),
       stage: T('Начало карьеры'), goal: T('Заложить фундамент'),
-      about: T('Впереди вся карьера, и привычки ещё не затвердели. Сейчас проще всего поставить голову правильно: потом это будет работать на тебя годами, а переучиваться всегда дороже.'),
-      focus: [T('Понять, кто ты как игрок, раньше, чем это решат за тебя'), T('Научиться учиться: ошибка - это материал, а не приговор'), T('Собрать первые рабочие инструменты до того, как вырастут ставки')],
+      about: T('Впереди вся карьера, и привычки ещё не затвердели. Сейчас легче всего выстроить правильное мышление: потом оно будет работать на тебя годами, а переучиваться всегда дороже.'),
+      focus: [T('Понять, кто ты как игрок, раньше, чем это решат за тебя'), T('Научиться учиться: ошибка – это материал, а не приговор'), T('Собрать первые рабочие инструменты до того, как вырастут ставки')],
       jersey: '#63c74d', jerseyDark: '#3e8948', trim: '#ffffff', beard: null, letter: null,
       helloOther: T('Путь таланта. Для игрока в начале карьеры: закладываем надёжный фундамент на годы вперёд.'),
       hello: T('Ты выбрал путь таланта. Карьера только начинается, самое время заложить надёжный фундамент на всю карьеру.')
@@ -106,12 +143,12 @@
   // но обращение, кнопки и текст сообщения меняются под них.
   var ROLES = [
     { id: 'player', name: T('ИГРОК'), desc: T('Хочу пройти программу сам.'),
-      hi: T('Привет! Я твой проводник по Champion\'s Edge.'),
+      hi: T('Привет! Я твой проводник по Champion\'s Edge.'), picked: T('Ты игрок. Расскажу о программе для тебя.'),
       aim: T('Выбери свой путь чемпиона броском: внизу трое ворот, у каждых свой путь. Забей в нужные.'),
       pathLead: T('Три пути для трёх этапов карьеры. Выбери свой броском на площадке или карточкой здесь: проводник и запись на программу подстроятся под него.'),
       ready: T('ГОТОВ?'), pathLabel: T('ТВОЙ ПУТЬ:'), button: T('ЗАПИСАТЬСЯ'), panelButton: T('ЗАПИСАТЬСЯ НА ЭТОТ ПУТЬ'),
       ctaText: T('Напиши нам. Расскажем, как всё устроено, и создадим вместе твой путь под твоё амплуа и цели.'),
-      msg: T('Здравствуйте! Хочу записаться на Champion\'s Edge.'), msgPath: T(' Мой путь: '),
+      msg: T('Здравствуйте! Я игрок. Хочу записаться на Champion\'s Edge.'), msgPath: T(' Мой путь: '),
       steps: [[T('НАПИШИ'), T('В Telegram или на почту. Одного сообщения достаточно.')],
         [T('ЗНАКОМСТВО'), T('Бесплатный созвон на 15–20 минут. Понимаем, подходим ли мы друг другу.')],
         [T('ВВОДНАЯ ВСТРЕЧА'), T('Около трёх часов. Разбираем твою ситуацию и проводим первую сессию. Если идёшь в программу, первая сессия бесплатно.')],
@@ -126,16 +163,187 @@
       button: T('ОБСУДИТЬ РАБОТУ'), ctaText: T('Напишите нам. Расскажем, как всё устроено, и обсудим, как выстроить работу с вашим игроком вместе.'),
       msg: T('Здравствуйте! Я тренер. Хочу обсудить Champion\'s Edge для игрока, с которым работаю.') }
   ];
-  // общее для всех ролей, кроме игрока
+  // Редакции для агента, клуба и тренера: свои реплики проводника, заметка под каждым путём,
+  // блок «Что это даёт», свой заход в разделе о программе и свои шаги.
+  var ROLE_PRO = {
+   "agent": {
+    "picked": "Вы агент. Покажу программу вашими глазами.",
+    "hi": "Здравствуйте! Я проводник по Champion's Edge. Покажу программу глазами агента.",
+    "intro": [
+     "Это программа индивидуального развития профессиональных атлетов: год системной работы с игроком.",
+     "Игрок выходит из неё сильнее и стабильнее. А сильный игрок сам меняет разговор о своём будущем."
+    ],
+    "aim": "Выберите путь игрока броском по воротам: у каждых ворот свой этап карьеры.",
+    "pathLead": "Три пути для трёх этапов карьеры. Выберите тот, на котором сейчас игрок: броском на площадке или карточкой здесь.",
+    "pathNote": {
+     "young": "Для агента: фундамент, заложенный сейчас, работает на всю карьеру игрока. Чем раньше он появится, тем длиннее и успешнее карьера.",
+     "peak": "Для агента: на пике всё решают стабильность и решающие матчи. Именно они делают игрока тем, за кого борются.",
+     "veteran": "Для агента: каждый сезон на высоком уровне ценен. Работаем на то, чтобы их было больше."
+    },
+    "benefits": {
+     "title": "ЧТО ЭТО ДАЁТ АГЕНТУ",
+     "items": [
+      [
+       "ИГРОК РАСТЁТ",
+       "Стабильнее играет, надёжнее в решающих матчах, быстрее возвращается после неудач. Это видно в игре."
+      ],
+      [
+       "СИЛЬНЕЕ ПОЗИЦИЯ",
+       "Игрок, который прибавляет из сезона в сезон, сам становится главным аргументом в разговоре о его будущем."
+      ],
+      [
+       "ДОЛГАЯ КАРЬЕРА",
+       "Система привычек и восстановления работает на годы вперёд, а не на один сезон."
+      ],
+      [
+       "ВСЁ ВНУТРИ СВЯЗКИ",
+       "Работаем в связке: игрок, вы и мы. Всё, что обсуждается, остаётся внутри неё."
+      ]
+     ]
+    },
+    "aboutLead": "Вы ведёте карьеру игрока. Мы работаем с тем, от чего она зависит изнутри: с головой, привычками и системой жизни профессионала.",
+    "steps": [
+     [
+      "НАПИШИТЕ",
+      "В Telegram или на почту. Одного сообщения достаточно."
+     ],
+     [
+      "ЗНАКОМСТВО",
+      "Бесплатный созвон на 15–20 минут. Обсуждаем игрока, его этап и задачу."
+     ],
+     [
+      "ВВОДНАЯ ВСТРЕЧА",
+      "Около трёх часов с игроком: разбор его ситуации и первая сессия. Если игрок идёт в программу, первая сессия бесплатно."
+     ],
+     [
+      "СТАРТ",
+      "Собираем путь игрока под его этап и цели. Можно привести и двоих: есть работа в паре и в группе до четырёх человек."
+     ]
+    ],
+    "ctaText": "Напишите нам. Обсудим вашего игрока: где он сейчас и что программа может ему дать."
+   },
+   "club": {
+    "picked": "Вы представляете клуб. Покажу программу глазами клуба.",
+    "hi": "Здравствуйте! Я проводник по Champion's Edge. Покажу программу глазами клуба.",
+    "intro": [
+     "Это программа индивидуального развития профессиональных атлетов: год системной работы с игроком.",
+     "Игрок прибавляет во всём: в голове, в теле, в игре. Помогаем клубу вырастить и раскрыть его."
+    ],
+    "aim": "Выберите путь игрока броском по воротам: у каждых ворот свой этап карьеры.",
+    "pathLead": "Три пути для трёх этапов карьеры. Выберите тот, на котором сейчас игрок: броском на площадке или карточкой здесь.",
+    "pathNote": {
+     "young": "Для клуба: молодой игрок быстрее взрослеет и раньше начинает приносить пользу команде.",
+     "peak": "Для клуба: лидер, который играет надёжно, когда всё решается, тянет за собой команду.",
+     "veteran": "Для клуба: опытный игрок дольше остаётся в строю и передаёт свой опыт молодым."
+    },
+    "benefits": {
+     "title": "ЧТО ЭТО ДАЁТ КЛУБУ",
+     "items": [
+      [
+       "АПГРЕЙД ИГРОКА",
+       "Игрок прибавляет по всем параметрам: ментальным, физическим и игровым."
+      ],
+      [
+       "РАСКРЫТЫЙ ПОТЕНЦИАЛ",
+       "Помогаем вырастить игрока для клуба и раскрыть то, что в нём уже есть."
+      ],
+      [
+       "ОДИН, ПАРА ИЛИ ГРУППА",
+       "Можно завести одного игрока или нескольких сразу. Работа идёт индивидуально, в парах или в группе до четырёх человек."
+      ],
+      [
+       "ВСЁ ВНУТРИ СВЯЗКИ",
+       "Работаем в связке: игрок, клуб и мы. Всё, что обсуждается, остаётся внутри неё."
+      ]
+     ]
+    },
+    "aboutLead": "У клуба есть тренировочный процесс. Мы добавляем к нему то, на что в плотном сезоне редко остаётся время: личную работу с игроком.",
+    "steps": [
+     [
+      "НАПИШИТЕ",
+      "В Telegram или на почту. Одного сообщения достаточно."
+     ],
+     [
+      "ЗНАКОМСТВО",
+      "Бесплатный созвон на 15–20 минут. Обсуждаем игроков и задачу клуба."
+     ],
+     [
+      "ВВОДНАЯ ВСТРЕЧА",
+      "Около трёх часов с игроком: разбор его ситуации и первая сессия. Если игрок идёт в программу, первая сессия бесплатно."
+     ],
+     [
+      "СТАРТ",
+      "Собираем формат под клуб: индивидуально, в парах или в группе до четырёх. Условия для нескольких игроков обсуждаем отдельно."
+     ]
+    ],
+    "ctaText": "Напишите нам. Обсудим игроков вашей команды и формат, который подойдёт клубу."
+   },
+   "coach": {
+    "picked": "Вы тренер. Покажу программу вашими глазами.",
+    "hi": "Здравствуйте! Я проводник по Champion's Edge. Покажу программу глазами тренера.",
+    "intro": [
+     "Это программа индивидуального развития профессиональных атлетов: год системной работы с игроком.",
+     "Мы не заменяем вашу работу, а усиливаем её: сверяемся с вами в начале и на каждой фазе."
+    ],
+    "aim": "Выберите путь игрока броском по воротам: у каждых ворот свой этап карьеры.",
+    "pathLead": "Три пути для трёх этапов карьеры. Выберите тот, на котором сейчас игрок: броском на площадке или карточкой здесь.",
+    "pathNote": {
+     "young": "Для тренера: игрок учится учиться, и ваши подсказки начинают доходить быстрее.",
+     "peak": "Для тренера: игрок надёжнее выполняет план, когда цена ошибки высока.",
+     "veteran": "Для тренера: опытный игрок берёт на себя больше и помогает вам с молодыми."
+    },
+    "benefits": {
+     "title": "ЧТО ЭТО ДАЁТ ТРЕНЕРУ",
+     "items": [
+      [
+       "ВАШИ ЗАДАЧИ В ОСНОВЕ",
+       "В начале сверяемся с вами: что вы видите в игроке и какие задачи ставите. Программа работает на них."
+      ],
+      [
+       "ЧЕТЫРЕ СВЕРКИ",
+       "Сверяемся с вами на каждой фазе, четыре раза за программу, и подстраиваем акценты."
+      ],
+      [
+       "ИГРОК ВОСПРИИМЧИВЕЕ",
+       "Лучше слышит обратную связь, быстрее отпускает ошибку и возвращается в игру."
+      ],
+      [
+       "ВСЁ ВНУТРИ СВЯЗКИ",
+       "Работаем в связке: игрок, вы и мы. Всё, что обсуждается, остаётся внутри неё."
+      ]
+     ]
+    },
+    "aboutLead": "Вы работаете с игроком каждый день. Мы берём на себя то, что остаётся за пределами тренировки: голову, привычки и систему жизни профессионала.",
+    "steps": [
+     [
+      "НАПИШИТЕ",
+      "В Telegram или на почту. Одного сообщения достаточно."
+     ],
+     [
+      "ЗНАКОМСТВО",
+      "Бесплатный созвон на 15–20 минут. Обсуждаем игрока и то, как вы видите его задачи."
+     ],
+     [
+      "ВВОДНАЯ ВСТРЕЧА",
+      "Около трёх часов с игроком: разбор его ситуации и первая сессия. Если игрок идёт в программу, первая сессия бесплатно."
+     ],
+     [
+      "СТАРТ",
+      "Сверяем задачи с вами и начинаем. Дальше сверяемся на каждой фазе: четыре раза за программу."
+     ]
+    ],
+    "ctaText": "Напишите нам. Обсудим вашего игрока и то, как выстроить работу вместе."
+   }
+  };
+  function tAll(x) {
+    if (typeof x === 'string') return T(x);
+    if (Array.isArray(x)) return x.map(tAll);
+    var o = {}; for (var k in x) o[k] = tAll(x[k]); return o;
+  }
   ROLES.slice(1).forEach(function (r) {
-    r.hi = T('Здравствуйте! Я проводник по Champion\'s Edge.');
-    r.aim = T('Сайт написан для игрока. Посмотрите программу его глазами и выберите путь ') + r.who + T(' броском по воротам.');
-    r.pathLead = T('Три пути для трёх этапов карьеры. Выберите путь ') + r.who + T(' броском на площадке или карточкой здесь.');
+    var d = tAll(ROLE_PRO[r.id]);
+    for (var k in d) r[k] = d[k];
     r.ready = T('ГОТОВЫ?'); r.pathLabel = T('ПУТЬ ИГРОКА:'); r.panelButton = r.button; r.msgPath = T(' Путь: ');
-    r.steps = [[T('НАПИШИТЕ'), T('В Telegram или на почту. Одного сообщения достаточно.')],
-      [T('ЗНАКОМСТВО'), T('Бесплатный созвон на 15–20 минут. Обсуждаем игрока и задачу.')],
-      [T('ВВОДНАЯ ВСТРЕЧА'), T('Около трёх часов с игроком: разбор его ситуации и первая сессия. Если игрок идёт в программу, первая сессия бесплатно.')],
-      [T('СТАРТ'), T('Собираем путь игрока под его амплуа и цели и начинаем. В любой точке сезона.')]];
   });
 
   // Программа: 12 месяцев, 4 фазы, 45 недель. Фаза 1 расписана по неделям
@@ -149,7 +357,7 @@
       worlds: [
         { name: T('МЕСЯЦ 1 · «ПРОБУЖДЕНИЕ»'), sub: T('личность, мышление, фокус'), levels: [
           { num: T('НЕДЕЛЯ 1'), icon: 'pyramid', title: T('ЛИЧНОСТЬ И ХАРАКТЕР'), q: T('Кто ты до того, что ты делаешь?'),
-            text: T('Начинаем с личности, а не с результата. Кто ты в тот день, когда тебя не поставили в состав? Ловушка в том, чтобы определять себя через голы, очки и номер звена.'),
+            text: T('Начинаем с личности, а не с результата. Кто ты в тот день, когда тебя не поставили в состав? Учимся не определять себя через голы, очки и номер звена.'),
             sessions: [T('Кто ты до того, что ты делаешь'), T('Пирамида: с основания'), T('Система 1%'), T('Твоя операционная система')],
             loot: [T('Личная Конституция: ценности без компромисса'), T('Первая версия личной ОС'), T('Микропривычка на 1% в день')] },
           { num: T('НЕДЕЛЯ 2'), icon: 'arrow', title: T('МЫШЛЕНИЕ РОСТА'), q: T('Как ты растёшь?'),
@@ -212,15 +420,15 @@
 
   // Девять принципов программы
   var PRINCIPLES = [
-    T('Быть чемпионом - это не титулы и награды, а образ жизни и способ мышления. Титулы лишь подтверждают это.'),
+    T('Быть чемпионом – это не титулы и награды, а образ жизни и способ мышления. Титулы лишь подтверждают это.'),
     T('Чем усерднее я работаю сегодня, тем сильнее и увереннее буду завтра.'),
     T('Одно действие сильнее тысячи намерений.'),
     T('Я принимаю и похвалу, и критику со смирением.'),
     T('Я всегда учусь, а не проигрываю. Это часть пути.'),
     T('«Не знаю» не существует. Есть «разберусь и научусь».'),
     T('Я никогда не сдаюсь. Даже когда ничего не выходит, у меня всегда есть выбор продолжать бороться.'),
-    T('Я всегда говорю правду. Тонко.'),
-    T('Великие достижения - всегда командная работа.')
+    T('Я всегда говорю правду. Деликатно.'),
+    T('Великие достижения – всегда командная работа.')
   ];
 
   // Сквозные инструменты: проходят через всю программу и остаются у игрока
@@ -232,9 +440,9 @@
     { icon: 'bolt', name: T('КНОПКА СБРОСА'), text: T('Отпустить плохую смену и вернуть фокус.') },
     { icon: 'bars', name: T('ЛИЧНЫЕ ДАШБОРДЫ'), text: T('Твои показатели на одном экране. Виден тренд, а не оценка.') },
     { icon: 'target', name: T('МЕНТАЛЬНЫЙ НАБОР'), text: T('Фокус, сброс и визуализация на одной карточке.') },
-    { icon: 'wave', name: T('КАРТА ПОТОКА'), text: T('Что предшествует твоей лучшей игре и как это повторить.') },
-    { icon: 'thermo', name: T('ШКАЛА ИНТЕНСИВНОСТИ'), text: T('Свой градус под каждую ситуацию: от рядовой смены до буллита.') },
-    { icon: 'star', name: T('КАПСУЛА ВРЕМЕНИ'), text: T('Письмо себе. Откроешь в последнюю неделю программы.') },
+    { icon: 'lock', name: '???', text: T('Откроется в процессе игры.'), locked: true },
+    { icon: 'lock', name: '???', text: T('Откроется в процессе игры.'), locked: true },
+    { icon: 'lock', name: '???', text: T('Откроется в процессе игры.'), locked: true },
     { icon: 'lock', name: '???', text: T('Откроется в процессе игры.'), locked: true },
     { icon: 'lock', name: '???', text: T('Откроется в процессе игры.'), locked: true }
   ];
@@ -555,7 +763,7 @@
     move: function () { play([[440, 0.05], [660, 0.06]]); },
     select: function () { play([[523, 0.07], [659, 0.07], [784, 0.07], [1047, 0.14]]); },
     locked: function () { play([[140, 0.12, 'sawtooth'], [110, 0.18, 'sawtooth']]); },
-    shot: function () { play([[900, 0.09, 'square', 180]], 0.05); },
+    shot: function () { if (TENNIS) play([[520, 0.05, 'triangle', 240], [300, 0.04, 'triangle']], 0.12); else play([[900, 0.09, 'square', 180]], 0.05); },
     goal: function () { play([[523, 0.09], [659, 0.09], [784, 0.09], [1047, 0.09], [784, 0.09], [1047, 0.3]], 0.05); },
     miss: function () { play([[200, 0.08, 'triangle', 90]], 0.08); },
     start: function () { play([[392, 0.09], [523, 0.09], [659, 0.09], [784, 0.09], [1047, 0.28]], 0.07); }
@@ -568,7 +776,7 @@
      ===================================================================== */
 
   // Рисует хоккеиста (лицом вправо) с левым верхним углом в (x, y). Размер 30×32.
-  function drawPlayer(c, x, y, path, frame, shoot) {
+  function drawHockeyPlayer(c, x, y, path, frame, shoot) {
     function R(col, rx, ry, w, h) { c.fillStyle = col; c.fillRect(x + rx, y + ry, w, h); }
     var K = OUT, bob = frame === 1 ? 1 : 0;
     var by = bob; // тело чуть приседает на втором кадре
@@ -613,6 +821,42 @@
     R('#2ce8f5', 9, 5 + by, 5, 1);          // визор
     if (path.beard) { R(path.beard, 8, 8 + by, 5, 1); R(path.beard, 9, 9 + by, 3, 1); }
   }
+
+  // Теннисист (лицом вправо), тот же размер, что у хоккеиста. swing - момент подачи.
+  function drawTennisPlayer(c, x, y, path, frame, swing) {
+    function R(col, rx, ry, w, h) { c.fillStyle = col; c.fillRect(x + rx, y + ry, w, h); }
+    var K = OUT, SK = '#f2c9a0', by = frame === 1 ? 1 : 0;
+    // ракетка: поднята вверх, на подаче уходит вперёд
+    if (!swing) {
+      R('#b86f50', 21, 13 + by, 2, 6);
+      R(K, 18, 1 + by, 9, 13); R('#fee761', 19, 2 + by, 7, 11);
+      R(K, 19, 5 + by, 7, 1); R(K, 19, 9 + by, 7, 1); R(K, 22, 2 + by, 1, 11);
+    } else {
+      R('#b86f50', 17, 17 + by, 5, 2);
+      R(K, 21, 13 + by, 12, 10); R('#fee761', 22, 14 + by, 10, 8);
+      R(K, 22, 17 + by, 10, 1); R(K, 26, 14 + by, 1, 8);
+    }
+    // ноги и кроссовки
+    var legs = frame === 0 ? [[3, 0], [11, 0]] : [[5, -1], [9, 0]];
+    legs.forEach(function (l) {
+      var lx = l[0], ly = 24 + l[1];
+      R(K, lx - 1, ly, 6, 6); R(SK, lx, ly, 4, 4); R('#ffffff', lx, ly + 4, 4, 1);
+      R(K, lx - 1, ly + 5, 8, 4); R('#ffffff', lx, ly + 6, 6, 2);
+    });
+    // шорты
+    R(K, 2, 19 + by, 13, 7); R('#262b44', 3, 19 + by, 11, 6);
+    // футболка с полосой цвета пути
+    R(K, 1, 9 + by, 15, 11); R('#ffffff', 2, 10 + by, 13, 9); R('#c0cbdc', 2, 10 + by, 2, 9);
+    R(path.jersey, 2, 14 + by, 13, 2);
+    // рука
+    R(K, 11, 11 + by, 8, 6); R('#ffffff', 12, 12 + by, 3, 4); R(SK, 15, 12 + by, 3, 4);
+    // голова с повязкой
+    R(K, 3, 0 + by, 11, 10);
+    R('#733e39', 4, 1 + by, 9, 2); R(path.jersey, 4, 3 + by, 9, 2);
+    R(SK, 4, 5 + by, 9, 4); R('#733e39', 4, 5 + by, 2, 3); R(K, 11, 6 + by, 1, 1);
+    if (path.beard) { R(path.beard, 8, 8 + by, 5, 1); R(path.beard, 9, 9 + by, 3, 1); }
+  }
+  var drawPlayer = TENNIS ? drawTennisPlayer : drawHockeyPlayer;
 
   /* =====================================================================
      ВЫБОР ПУТИ
@@ -663,7 +907,10 @@
   });
 
   var role = ROLES[0];
-  function signupMsg(p) { return role.msg + (p ? role.msgPath + p.name.toLowerCase() + '.' : ''); }
+  function signupMsg(p) {
+    return role.msg + (TENNIS ? T(' Версия: теннис.') : T(' Версия: хоккей.')) + (p ? role.msgPath + p.name.toLowerCase() + '.' : '') +
+      (TR.r ? '\n' + T('код: ') + TR.r : '');       // код персональной ссылки, без имени человека
+  }
   function signupHref(p) {
     // роль и выбранный путь подставляются в текст сообщения
     return ctaBase + '?text=' + encodeURIComponent(signupMsg(p));
@@ -703,14 +950,19 @@
       pc.el.querySelector('.path__pick').textContent = on ? T('★ ВЫБРАН') : T('ВЫБРАТЬ');
     });
     cta.href = signupHref(p);
+    // ссылки в подвале ведут с тем же готовым текстом: роль, версия, путь и код
+    [].forEach.call(document.querySelectorAll('.footer a[href^="https://t.me/call_pascal"]'), function (a) { a.href = cta.href; });
     // то же сообщение уходит и в письмо
     ctaMail.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Champion\'s Edge') + '&body=' + encodeURIComponent(signupMsg(p));
+    if (p) { pathPanel.style.setProperty('--path-col', p.jersey); pathPanel.style.setProperty('--path-dark', p.jerseyDark); }
+    pathPanel.classList.toggle('has-path', !!p);
+    [].forEach.call(document.querySelectorAll('.footer a[href^="mailto:"]'), function (a) { a.href = ctaMail.href; });
     ctaPathEl.textContent = p ? p.name : T('НЕ ВЫБРАН');
     ctaPick.hidden = !!p;
     if (p) {
       pathPanel.innerHTML = '<div class="level__top"><span class="level__tag">' + p.num + '</span><h3 class="level__title">' + p.name + '</h3></div>' +
         T('<dl class="pathinfo__meta"><div><dt>ЭТАП</dt><dd>') + p.stage + T('</dd></div><div><dt>ЦЕЛЬ</dt><dd>') + p.goal + '</dd></div></dl>' +
-        '<p>' + p.about + T('</p><div class="level__cols"><div><h4>НА ЧТО ДЕЛАЕМ УПОР</h4><ul>') +
+        '<p>' + p.about + '</p>' + (role.pathNote ? '<p class="pathinfo__role">' + role.pathNote[p.id] + '</p>' : '') + T('<div class="level__cols"><div><h4>НА ЧТО ДЕЛАЕМ УПОР</h4><ul>') +
         p.focus.map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul></div>' +
         T('<div><h4>ЧТО ОБЩЕЕ У ВСЕХ ПУТЕЙ</h4><ul><li>Формат один на один с тренером</li><li>Та же программа: 4 фазы, 9 доменов</li><li>Примеры и задания из твоей карьеры и твоего этапа</li></ul></div></div>') +
         '<p class="pathinfo__cta"><a class="btn btn--cta btn--small" href="' + cta.href + '" target="_blank" rel="noopener">▶ ' + role.panelButton + '</a></p>';
@@ -722,6 +974,7 @@
     drawFace(); drawGuide(); guideCta.href = cta.href;
     if (byUser) {
       store('ce-path', p.id);
+      TR.goal('path_selected', { path: p.id });
       say([role.id === 'player' ? p.hello : p.helloOther], { label: T('ИЗУЧИТЬ ПУТЬ ▼'), target: pathPanel, exit: true });
       if (!quiet) {
         // выбрали карточкой: показываем раскрывшееся описание
@@ -756,7 +1009,7 @@
   function showChars(s, n) { dShown.textContent = s.slice(0, n); dRest.textContent = s.slice(n); }
   function typeLine() {
     clearInterval(typer);
-    var s = lines[lineIdx]; charIdx = 0; showChars(s, 0);
+    var s = lines[lineIdx]; charIdx = Math.min(2, s.length); showChars(s, charIdx);     // первые буквы видны сразу, без пустого кадра
     if (reduced) { charIdx = s.length; showChars(s, charIdx); return; }
     typer = setInterval(function () {
       charIdx++;
@@ -789,10 +1042,36 @@
     var target = dialogAction.target;
     function go() { target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); }
     // после выбора пути игрок сначала уезжает за свои ворота, «вниз по странице», и только потом листаем
-    if (dialogAction.exit && currentPath && !reduced && onScreen(cv)) startExit(PATHS.indexOf(currentPath), go);
+    if (dialogAction.exit && currentPath && !reduced && onScreen(cv)) startExit(PATHS.indexOf(currentPath), function () { pour(target); go(); });
     else go();
   });
   dialogGo.addEventListener('keydown', function (e) { e.stopPropagation(); });
+
+  // Цвет выбранного пути «вытекает» из площадки вниз по странице, туда, куда ушёл игрок,
+  // и вливается в описание пути: игра и сайт читаются как одно целое.
+  function pour(target) {
+    var cr = cv.getBoundingClientRect(), tr = target.getBoundingClientRect(), sy = window.pageYOffset, sx = window.pageXOffset;
+    var top = cr.bottom + sy, end = tr.top + sy + 6, k = cr.width / W;
+    if (end - top < 20) return;
+    var el = document.createElement('div');
+    el.className = 'pour'; el.setAttribute('aria-hidden', 'true');
+    el.style.setProperty('--path-col', currentPath.jersey); el.style.setProperty('--path-dark', currentPath.jerseyDark);
+    el.style.width = Math.round(40 * k) + 'px';
+    el.style.left = Math.round(cr.left + sx + (hero.x + 11 - 20) * k) + 'px';
+    el.style.top = Math.round(top) + 'px';
+    document.body.appendChild(el);
+    var t0 = performance.now(), dur = 1400;
+    (function grow(now) {
+      // голова потока идёт вместе с прокруткой и всё время видна на экране
+      var len = end - top, h = Math.max(len * Math.min(1, (now - t0) / dur), window.pageYOffset + window.innerHeight * 0.6 - top);
+      var f = Math.min(1, h / len);
+      el.style.height = Math.round(len * f / 8) * 8 + 'px';                  // растёт ступеньками по 8 пикселей
+      if (f < 1 && now - t0 < 3000) { requestAnimationFrame(grow); return; }
+      target.classList.remove('is-poured'); void target.offsetWidth; target.classList.add('is-poured');
+      el.classList.add('is-out');
+      setTimeout(function () { el.remove(); }, 700);
+    })(t0);
+  }
   dialog.addEventListener('click', advance);
   dialog.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); advance(); }
@@ -817,7 +1096,10 @@
 
   var cv = document.getElementById('scene'), g = cv.getContext('2d');
   // Вид сверху-сбоку: трибуны и борт вверху, трое ворот внизу, бросок - вниз.
-  var W = 320, H = 240, ICE_Y = 52, GOAL_Y = 212;
+  // На телефоне площадка выше (320×320 вместо 320×240): занимает больше экрана, игроку просторнее.
+  var TALL = narrow.matches ? 80 : 0;
+  var W = 320, H = 240 + TALL, ICE_Y = 52, GOAL_Y = 212 + TALL;
+  if (TALL) { cv.height = H; cv.parentNode.style.setProperty('--rink-ar', String(W / H)); document.querySelector('.stage').style.setProperty('--rink-ar', String(W / H)); }
   var scoreEl = document.getElementById('score');
   var keys = {}, score = 0;
   var hero = { x: 60, y: 66, vx: 0, vy: 0, dir: 1, auto: true, autoDir: 1, shootT: 0, idleT: 0, target: null, cruise: null };
@@ -825,17 +1107,17 @@
   var goalFlash = 0, banner = '', banner2 = '', bannerT = 0, lastZone = -1, cheerT = 0;
   // Трое ворот - по одним на каждый путь чемпиона: [левая штанга, правая штанга]
   var NETS = [[26, 98], [124, 196], [222, 294]];
-  var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 166;
+  var HERO_MIN_X = 4, HERO_MAX_X = 286, HERO_MIN_Y = 28, HERO_MAX_Y = 166 + TALL;
   // Уход с площадки: чужие ворота гаснут, свои встают в центр, игрок закатывается за них
   var exit = null, netOff = [0, 0, 0], netAlpha = [1, 1, 1];
   function startExit(zone, done) {
     if (exit) return;
     exit = { zone: zone, t: 0, done: done, fired: false };
-    hero.target = null; hero.cruise = null; hero.auto = false; puck.live = false; keys = {};
+    hero.target = null; hero.cruise = null; hero.auto = false; puck.live = false; ball = null; keys = {};
     exit.stopOvation = SFX.ovation();                   // трибуны провожают овацией, пока игрок не скроется
   }
   function updateExit() {
-    var e = exit, z = e.zone, slide = 124 - NETS[z][0];          // на сколько сдвинуть свои ворота до центра
+    var e = exit, z = e.zone, slide = NETS[1][0] - NETS[z][0];          // на сколько сдвинуть свои ворота до центра
     e.t++;
     var k = Math.min(1, e.t / 45), ease = k * k * (3 - 2 * k);
     for (var i = 0; i < 3; i++) {
@@ -906,43 +1188,9 @@
       g.fillStyle = '#ffffff'; g.fillRect(ax + 4, 45, 20, 2); g.fillRect(ax + 28, 45, 10, 2);
     }
 
-    // лёд
-    g.fillStyle = '#e8f2fb'; g.fillRect(0, ICE_Y, W, H - ICE_Y);
-    g.fillStyle = '#d3e3f2';
-    for (var iy = ICE_Y + 8; iy < H; iy += 14) g.fillRect(0, iy, W, 1);
-    g.fillStyle = '#c0cbdc'; g.fillRect(0, ICE_Y, W, 2);
-    g.fillStyle = 'rgba(255,255,255,0.7)';
-    [60, 160, 260].forEach(function (lx) { g.fillRect(lx - 12, 74, 24, 1); g.fillRect(lx - 6, 77, 12, 1); });
-    // синяя линия, точки вбрасывания, линия ворот
-    g.fillStyle = '#0099db'; g.fillRect(0, 124, W, 4);
-    g.fillStyle = '#e43b44';
-    [62, 160, 258].forEach(function (dx) { g.fillRect(dx - 2, 172, 4, 4); });
-    g.fillRect(0, GOAL_Y, W, 2);
-
-    // трое ворот: цвет - форма пути, выбранный путь подсвечен
     var flash = goalFlash > 0 && Math.floor(goalFlash / 4) % 2 === 0;
     g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center';
-    NETS.forEach(function (n, i) {
-      if (netAlpha[i] <= 0) return;
-      g.globalAlpha = netAlpha[i];
-      var off = Math.round(netOff[i]);
-      var p = PATHS[i], l = n[0] + off, r = n[1] + off, hit = flash && lastZone === i, cur = p === currentPath;
-      g.fillStyle = '#e43b44'; g.fillRect(l + 7, GOAL_Y - 9, r - l - 14, 1);            // площадь ворот
-      g.fillRect(l + 7, GOAL_Y - 9, 1, 9); g.fillRect(r - 8, GOAL_Y - 9, 1, 9);
-      g.fillStyle = '#9fd6f5'; g.fillRect(l + 8, GOAL_Y - 8, r - l - 16, 8);
-      g.fillStyle = cur ? p.jerseyDark : '#262b44'; g.fillRect(l, GOAL_Y + 2, r - l, 20);
-      g.fillStyle = hit ? '#fee761' : '#5a6988';                                         // сетка
-      for (var ny = GOAL_Y + 4; ny < GOAL_Y + 22; ny += 3) g.fillRect(l, ny, r - l, 1);
-      for (var nx = l + 2; nx < r; nx += 3) g.fillRect(nx, GOAL_Y + 2, 1, 20);
-      g.fillStyle = hit ? '#fee761' : p.jersey;                                          // рама
-      g.fillRect(l - 2, GOAL_Y - 1, 2, 25); g.fillRect(r, GOAL_Y - 1, 2, 25);
-      g.fillRect(l - 2, GOAL_Y + 22, r - l + 4, 2);
-      // название пути
-      var tw = p.short.length * 8 + 4, mx = (l + r) / 2;
-      g.fillStyle = OUT; g.fillRect(Math.round(mx - tw / 2), GOAL_Y + 7, tw, 11);
-      g.fillStyle = cur ? '#fee761' : '#ffffff'; g.fillText(p.short, mx, GOAL_Y + 16);
-      g.globalAlpha = 1;
-    });
+    if (TENNIS) drawCourt(flash); else drawRink(flash);
 
     drawHero(t);
 
@@ -968,30 +1216,308 @@
     }
   }
 
+  // Хоккейная площадка: лёд и трое ворот
+  function drawRink(flash) {
+    // лёд
+    g.fillStyle = '#e8f2fb'; g.fillRect(0, ICE_Y, W, H - ICE_Y);
+    g.fillStyle = '#d3e3f2';
+    for (var iy = ICE_Y + 8; iy < H; iy += 14) g.fillRect(0, iy, W, 1);
+    g.fillStyle = '#c0cbdc'; g.fillRect(0, ICE_Y, W, 2);
+    g.fillStyle = 'rgba(255,255,255,0.7)';
+    [60, 160, 260].forEach(function (lx) { g.fillRect(lx - 12, 74, 24, 1); g.fillRect(lx - 6, 77, 12, 1); });
+    // синяя линия, точки вбрасывания, линия ворот
+    g.fillStyle = '#0099db'; g.fillRect(0, 124, W, 4);
+    g.fillStyle = '#e43b44';
+    [62, 160, 258].forEach(function (dx) { g.fillRect(dx - 2, 172, 4, 4); });
+    g.fillRect(0, GOAL_Y, W, 2);
+
+    // трое ворот: цвет - форма пути, выбранный путь подсвечен
+    NETS.forEach(function (n, i) {
+      if (netAlpha[i] <= 0) return;
+      g.globalAlpha = netAlpha[i];
+      var off = Math.round(netOff[i]);
+      var p = PATHS[i], l = n[0] + off, r = n[1] + off, hit = flash && lastZone === i, cur = p === currentPath;
+      g.fillStyle = '#e43b44'; g.fillRect(l + 7, GOAL_Y - 9, r - l - 14, 1);            // площадь ворот
+      g.fillRect(l + 7, GOAL_Y - 9, 1, 9); g.fillRect(r - 8, GOAL_Y - 9, 1, 9);
+      g.fillStyle = '#9fd6f5'; g.fillRect(l + 8, GOAL_Y - 8, r - l - 16, 8);
+      g.fillStyle = cur ? p.jerseyDark : '#262b44'; g.fillRect(l, GOAL_Y + 2, r - l, 20);
+      g.fillStyle = hit ? '#fee761' : '#5a6988';                                         // сетка
+      for (var ny = GOAL_Y + 4; ny < GOAL_Y + 22; ny += 3) g.fillRect(l, ny, r - l, 1);
+      for (var nx = l + 2; nx < r; nx += 3) g.fillRect(nx, GOAL_Y + 2, 1, 20);
+      g.fillStyle = hit ? '#fee761' : p.jersey;                                          // рама
+      g.fillRect(l - 2, GOAL_Y - 1, 2, 25); g.fillRect(r, GOAL_Y - 1, 2, 25);
+      g.fillRect(l - 2, GOAL_Y + 22, r - l + 4, 2);
+      // название пути
+      var tw = p.short.length * 8 + 4, mx = (l + r) / 2;
+      g.fillStyle = OUT; g.fillRect(Math.round(mx - tw / 2), GOAL_Y + 7, tw, 11);
+      g.fillStyle = cur ? '#fee761' : '#ffffff'; g.fillText(p.short, mx, GOAL_Y + 16);
+      g.globalAlpha = 1;
+    });
+  }
+
+  /* ---------------------------------------------------------------------
+     ТЕННИС. Вид как в теннисных играх: игрок спиной к нам у ближней задней
+     линии, корт уходит вдаль, за сеткой три зоны. Игрок ходит только вдоль
+     линии и останавливается, когда отпустили клавишу. Подача: подброс и удар.
+     --------------------------------------------------------------------- */
+  var CT = { near: 212 + TALL, far: 72, hwNear: 136, hwFar: 100, q: 0.75 };
+  function ctY(d) { var k = d / (d + (1 - d) * CT.q); return CT.near - (CT.near - CT.far) * k; }       // глубина 0..1 → y
+  function ctHW(y) { return CT.hwNear - (CT.hwNear - CT.hwFar) * (CT.near - y) / (CT.near - CT.far); }  // полуширина корта на высоте y
+  var T_NET = Math.round(ctY(0.5)), T_LAND = Math.round(ctY(0.76)), T_HERO_Y = 189 + TALL;      // игрок стоит за задней линией: подаёт из-за корта
+  var ball = null;
+  if (TENNIS) { hero.x = 149; hero.y = T_HERO_Y; hero.auto = false; }
+
+  // Край зоны i (0..3) на высоте y
+  function zoneX(i, y) { var hw = ctHW(y); return 160 - hw + 2 * hw * i / 3; }
+  function zoneAt(x) {
+    var hw = ctHW(T_LAND), l = 160 - hw, w = 2 * hw / 3;
+    if (x < l + 2 || x > 160 + hw - 2) return -1;
+    var rel = (x - l) / w, i = Math.floor(rel);
+    return Math.abs(rel - Math.round(rel)) * w < 1.5 && Math.round(rel) % 3 !== 0 ? -1 : Math.min(2, i);   // на линии между зонами - аут
+  }
+  // Куда прилетит подача, если игрок стоит в точке hero.x. Подача идёт по диагонали, как в теннисе:
+  // справа подают в левую зону, слева в правую.
+  var AIM_K = ctHW(T_LAND) / CT.hwNear * 1.25;
+  function aimX() { return 160 - (hero.x + 11 - 160) * AIM_K; }
+
+  function poly(col, pts) {
+    g.fillStyle = col; g.beginPath(); g.moveTo(pts[0], pts[1]);
+    for (var k = 2; k < pts.length; k += 2) g.lineTo(pts[k], pts[k + 1]);
+    g.closePath(); g.fill();
+  }
+  function slant(col, x0, y0, x1, y1) {                     // наклонная линия по пикселям, без сглаживания
+    g.fillStyle = col;
+    for (var y = y0; y <= y1; y++) g.fillRect(Math.round(x0 + (x1 - x0) * (y - y0) / (y1 - y0)), y, 1, 1);
+  }
+
+  function drawCourt(flash) {
+    var N = CT.near, F = CT.far;
+    g.fillStyle = '#3e8948'; g.fillRect(0, ICE_Y, W, H - ICE_Y);                  // покрытие вокруг корта
+    g.fillStyle = '#265c42'; g.fillRect(0, ICE_Y, W, 2);
+    poly('#0099db', [160 - CT.hwFar, F, 160 + CT.hwFar, F, 160 + CT.hwNear, N, 160 - CT.hwNear, N]);
+    // три зоны на дальней половине: цвет - форма пути
+    for (var i = 0; i < 3; i++) {
+      if (netAlpha[i] <= 0) continue;
+      var p = PATHS[i], hit = flash && lastZone === i, cur = p === currentPath;
+      g.globalAlpha = netAlpha[i];
+      poly(hit ? '#fee761' : cur ? p.jersey : p.jerseyDark, [zoneX(i, F), F, zoneX(i + 1, F), F, zoneX(i + 1, T_NET), T_NET, zoneX(i, T_NET), T_NET]);
+      var mx = (zoneX(i, 100) + zoneX(i + 1, 100)) / 2, tw = p.short.length * 8 + 4;
+      g.fillStyle = OUT; g.fillRect(Math.round(mx - tw / 2), 93, tw, 11);
+      g.fillStyle = cur ? '#fee761' : '#ffffff'; g.fillText(p.short, Math.round(mx), 102);
+    }
+    g.globalAlpha = 1;
+    // разметка
+    g.fillStyle = '#ffffff';
+    g.fillRect(160 - CT.hwFar, F, CT.hwFar * 2, 1); g.fillRect(160 - CT.hwNear, N, CT.hwNear * 2 + 1, 1);
+    slant('#ffffff', 160 - CT.hwFar, F, 160 - CT.hwNear, N); slant('#ffffff', 160 + CT.hwFar, F, 160 + CT.hwNear, N);
+    slant('#ffffff', zoneX(1, F), F, zoneX(1, T_NET), T_NET); slant('#ffffff', zoneX(2, F), F, zoneX(2, T_NET), T_NET);
+    var sy = Math.round(ctY(0.25));                                               // ближняя линия подачи и центральная
+    g.fillStyle = '#ffffff'; g.fillRect(Math.round(160 - ctHW(sy)), sy, Math.round(ctHW(sy) * 2), 1); g.fillRect(160, T_NET, 1, sy - T_NET);
+    // сетка: полоса с тросом сверху и стойками
+    var nh = ctHW(T_NET) + 7;
+    g.fillStyle = 'rgba(24,20,37,0.55)'; g.fillRect(Math.round(160 - nh), T_NET - 9, Math.round(nh * 2), 9);
+    g.fillStyle = 'rgba(192,203,220,0.35)'; for (var nx = Math.round(160 - nh) + 2; nx < 160 + nh; nx += 4) g.fillRect(nx, T_NET - 8, 1, 8);
+    g.fillStyle = '#ffffff'; g.fillRect(Math.round(160 - nh), T_NET - 10, Math.round(nh * 2), 1);
+    g.fillStyle = '#c0cbdc'; g.fillRect(Math.round(160 - nh) - 2, T_NET - 12, 3, 13); g.fillRect(Math.round(160 + nh) - 1, T_NET - 12, 3, 13);
+    // путь выбран: от своей зоны к игроку и дальше вниз раскатывается дорожка цвета пути
+    if (exit) {
+      var ez = exit.zone, grow = Math.min(1, exit.t / 24), yb = T_NET + (H - T_NET) * grow, hc = hero.x + 11;
+      var xl = zoneX(ez, T_NET), xr = zoneX(ez + 1, T_NET), bl = xl + (hc - 20 - xl) * grow, br = xr + (hc + 20 - xr) * grow;
+      g.globalAlpha = 0.85; poly(PATHS[ez].jersey, [xl, T_NET, xr, T_NET, br, yb, bl, yb]); g.globalAlpha = 1;
+      // затем цвет пути заливает всю ближнюю половину корта
+      var wide = Math.max(0, Math.min(1, (exit.t - 24) / 20));
+      if (wide) { g.globalAlpha = 0.7 * wide; poly(PATHS[ez].jersey, [160 - ctHW(T_NET), T_NET, 160 + ctHW(T_NET), T_NET, 160 + CT.hwNear, CT.near, 160 - CT.hwNear, CT.near]); g.globalAlpha = 1; }
+      g.fillStyle = '#fee761';
+      for (var ay = T_NET + 10 + (exit.t * 1.5) % 22; ay < yb - 6; ay += 22) {       // стрелки бегут вниз
+        var ac = Math.round((xl + xr) / 2 + (hc - (xl + xr) / 2) * (ay - T_NET) / (H - T_NET));
+        g.fillRect(ac - 4, ay, 9, 2); g.fillRect(ac - 2, ay + 2, 5, 2); g.fillRect(ac, ay + 4, 1, 2);
+      }
+    }
+    // прицел: куда уйдёт подача с текущего места
+    if (!ball && !exit) { var ax = Math.round(aimX()); g.fillStyle = '#ffffff'; g.fillRect(ax - 3, T_LAND, 7, 1); g.fillRect(ax, T_LAND - 3, 1, 7); }
+  }
+
+  // Теннисист со спины (22×33). swing - кадр удара.
+  function drawTennisBack(c, x, y, path, frame, swing) {
+    function R(col, rx, ry, w, h) { c.fillStyle = col; c.fillRect(x + rx, y + ry, w, h); }
+    var K = OUT, SK = '#f2c9a0', by = frame === 1 ? 1 : 0;
+    // ракетка: в замахе над плечом, после удара впереди слева
+    if (!swing) {
+      R('#b86f50', 18, 6 + by, 2, 7);
+      R(K, 15, -8 + by, 9, 14); R('#fee761', 16, -7 + by, 7, 12);
+      R(K, 16, -3 + by, 7, 1); R(K, 16, 1 + by, 7, 1); R(K, 19, -7 + by, 1, 12);
+    } else {
+      R('#b86f50', 5, 3 + by, 7, 2);
+      R(K, -6, -8 + by, 12, 12); R('#fee761', -5, -7 + by, 10, 10);
+      R(K, -5, -3 + by, 10, 1); R(K, 0, -7 + by, 1, 10);
+    }
+    // ноги: широкая стойка, на втором кадре переступает
+    var legs = frame === 0 ? [[3, 0], [12, 0]] : [[5, 0], [10, -1]];
+    legs.forEach(function (l) {
+      var lx = l[0], ly = 24 + l[1];
+      R(K, lx - 1, ly, 6, 6); R(SK, lx, ly, 4, 4); R('#ffffff', lx, ly + 4, 4, 1);
+      R(K, lx - 1, ly + 5, 6, 4); R('#ffffff', lx, ly + 6, 4, 2);
+    });
+    R(K, 3, 19 + by, 13, 7); R('#262b44', 4, 19 + by, 11, 6);                      // шорты
+    R(K, 2, 9 + by, 15, 11); R('#ffffff', 3, 10 + by, 13, 9); R('#c0cbdc', 3, 10 + by, 2, 9);   // спина
+    R(path.jersey, 3, 14 + by, 13, 2);
+    R(K, 0, 10 + by, 3, 9); R(SK, 1, 14 + by, 2, 4); R('#ffffff', 1, 11 + by, 2, 3);           // левая рука
+    R(K, 16, 9 + by, 4, 6); R(SK, 17, 10 + by, 2, 4);                                          // правая рука с ракеткой
+    R(K, 4, 0 + by, 11, 10); R('#733e39', 5, 1 + by, 9, 8); R(path.jersey, 5, 3 + by, 9, 2);   // затылок с повязкой
+    R(SK, 5, 8 + by, 9, 1);
+  }
+  function drawTennisHero(t) {
+    var moving = hero.vx !== 0, frame = moving ? Math.floor(t / 110) % 2 : Math.floor(t / 420) % 2;
+    var hx = Math.round(hero.x), hy = Math.round(hero.y - (hero.hop || 0));
+    g.fillStyle = 'rgba(24,20,37,0.3)'; g.fillRect(hx, Math.round(hero.y) + 32, 20, 3);
+    if (exit && exit.t > 40) drawTennisPlayer(g, hx, hy, look(), frame, false);      // развернулся и бежит
+    else drawTennisBack(g, hx, hy, look(), frame, hero.shootT > 0);
+    if (exit) {
+      // праздник: вспышки фотокамер на трибунах и конфетти цвета пути
+      var et = exit.t, cols = [look().jersey, '#fee761', '#ffffff'];
+      for (var f = 0; f < 5; f++) {
+        var fk = Math.floor(et / 4) * 7 + f * 31;
+        g.fillStyle = '#ffffff'; g.fillRect((fk * 73) % W, 4 + (fk * 29) % (ICE_Y - 30), 3, 3);
+      }
+      for (var c = 0; c < 80; c++) {
+        var cy = et * (1.6 + (c % 5) * 0.5) - (c * 13) % 110;
+        if (cy < 0 || cy > H) continue;
+        g.fillStyle = cols[c % 3];
+        g.fillRect(Math.round((c * 53) % W + Math.sin((et + c * 7) / 9) * 4), Math.round(cy), c % 2 ? 3 : 2, 2);
+      }
+    }
+    if (!ball) return;
+    // мяч: тень на корте и сам мяч на высоте
+    var b = ball, s = b.size;
+    g.fillStyle = 'rgba(24,20,37,0.3)'; g.fillRect(Math.round(b.gx), Math.round(b.gy), s, Math.max(1, s - 2));
+    g.fillStyle = OUT; g.fillRect(Math.round(b.gx) - 1, Math.round(b.gy - b.h) - s - 1, s + 2, s + 2);
+    g.fillStyle = '#c6f432'; g.fillRect(Math.round(b.gx), Math.round(b.gy - b.h) - s, s, s);
+  }
+
+  function serve() {
+    if (ball || exit) return;
+    hero.target = null; hero.vx = 0;
+    ball = { phase: 'toss', t: 0, gx: hero.x + 17, gy: hero.y + 33, h: 22, size: 4 };
+  }
+
+  function updateTennis(dt) {
+    if (goalFlash > 0) goalFlash--;
+    if (cheerT > 0) cheerT--;
+    if (bannerT > 0) bannerT--;
+    if (hero.shootT > 0) hero.shootT--;
+    if (exit) {
+      // путь выбран: чужие зоны гаснут, игрок разворачивается и убегает вниз, к описанию пути
+      var e = exit; e.t++;
+      for (var i = 0; i < 3; i++) if (i !== e.zone) netAlpha[i] = 1 - Math.min(1, e.t / 30);
+      // сначала радуется на месте, потом по цветной дорожке своего пути бежит на нас, вниз, к описанию пути
+      hero.vx = 1; hero.hop = e.t <= 40 ? Math.abs(Math.sin(e.t / 20 * Math.PI)) * 9 : 0;
+      if (e.t > 40) hero.y += 1;
+      if (!e.fired) cheerT = 45;
+      if (hero.y > H + 4 && !e.fired) { e.fired = true; e.fireT = e.t; if (e.stopOvation) e.stopOvation(); e.done(); }
+      if (e.fired && e.t - e.fireT > 100) { exit = null; netAlpha = [1, 1, 1]; hero.y = T_HERO_Y; hero.vx = 0; hero.hop = 0; }
+      return;
+    }
+    // движение только вдоль задней линии, без инерции
+    var left = keys.ArrowLeft || keys.a, right = keys.ArrowRight || keys.d;
+    hero.vx = 0;
+    if (!ball || ball.phase !== 'toss') {
+      if (left || right) { hero.target = null; hero.vx = right ? 2.2 : -2.2; }
+      else if (hero.target) {
+        var dx = hero.target.x - hero.x;
+        var sp = hero.target.fast ? 6 : 2.6;       // за пальцем игрок успевает, к зоне идёт обычным шагом
+        if (Math.abs(dx) <= sp) { hero.x = hero.target.x; var go = hero.target.serve; hero.target = null; if (go) serve(); }
+        else hero.vx = dx > 0 ? sp : -sp;
+      }
+    }
+    hero.x = Math.max(12, Math.min(286, hero.x + hero.vx));
+
+    if (!ball) return;
+    var b = ball; b.t++;
+    if (b.phase === 'toss') {
+      // подброс: мяч взлетает над игроком и чуть опускается к точке удара
+      var k = b.t / 20; b.h = 22 + 34 * Math.sin(Math.PI * Math.min(1, k) * 0.78);
+      b.gx = hero.x + 17; b.gy = hero.y + 33;
+      if (b.t >= 20) {
+        hero.shootT = 12; SFX.shot();
+        b.phase = 'fly'; b.t = 0; b.x0 = b.gx; b.y0 = b.gy; b.h0 = b.h;
+        b.x1 = aimX() + (Math.random() - 0.5) * 7; b.y1 = T_LAND;
+      }
+    } else if (b.phase === 'fly') {
+      var f = Math.min(1, b.t / 26);
+      b.gx = b.x0 + (b.x1 - b.x0) * f; b.gy = b.y0 + (b.y1 - b.y0) * f;
+      b.h = b.h0 * (1 - f) + 30 * Math.sin(Math.PI * f) * (1 - f * 0.5);
+      b.size = f > 0.8 ? 2 : f > 0.45 ? 3 : 4;                                   // мяч уменьшается, улетая вдаль
+      if (f >= 1) {
+        var zone = zoneAt(b.x1);
+        b.phase = 'bounce'; b.t = 0; b.h = 0;
+        if (zone >= 0) {
+          score++; scoreEl.textContent = ('00' + score).slice(-3);
+          lastZone = zone; goalFlash = 70; banner = T('ГОЛ!'); banner2 = PATHS[zone].name; bannerT = 90; cheerT = 130; SFX.goal(); SFX.crowd();
+          choosePath(PATHS[zone], true, true);
+        } else { banner = T('МИМО!'); banner2 = ''; bannerT = 40; SFX.miss(); }
+      }
+    } else {
+      // отскок в сторону трибун
+      b.gy -= 1.1; b.h = 12 * Math.sin(Math.PI * Math.min(1, b.t / 16));
+      if (b.t >= 16) ball = null;
+    }
+  }
+
+  // Мышь и палец на корте: нажатие на зону - встать напротив и подать, на свою половину - перейти туда
+  var tDrag = false;
+  function tennisDrag(e) {
+    if (!tDrag || exit || (ball && ball.phase === 'toss')) return;
+    var pt = scenePoint(e);
+    hero.target = { x: Math.max(12, Math.min(286, Math.round(pt.x - 11))), serve: false, fast: true };
+  }
+  cv.addEventListener('pointermove', function (e) { if (TENNIS) tennisDrag(e); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { cv.addEventListener(ev, function () { tDrag = false; }); });
+  function tennisPointer(e) {
+    if (exit) return;
+    var pt = scenePoint(e);
+    if (e.pointerType === 'mouse') e.preventDefault();
+    if (pt.y < T_NET) {
+      var px = 160 - (Math.max(160 - ctHW(T_LAND) + 6, Math.min(160 + ctHW(T_LAND) - 6, pt.x)) - 160) / AIM_K;     // встаёт по диагонали от зоны
+      hero.target = { x: Math.max(12, Math.min(286, Math.round(px - 11))), serve: true };
+      return;
+    }
+    var now = e.timeStamp;
+    if (now - lastTap.t < 320 && Math.abs(pt.x - lastTap.x) < 40) { lastTap.t = 0; serve(); return; }   // двойное нажатие - подача
+    lastTap = { t: now, x: pt.x, y: pt.y };
+    hero.target = { x: Math.max(12, Math.min(286, Math.round(pt.x - 11))), serve: false };
+    tDrag = true;                      // дальше игрок идёт за пальцем, пока его не отпустили
+  }
+
   function drawHero(t) {
+    if (TENNIS) { drawTennisHero(t); return; }
     var hy = Math.round(hero.y), moving = hero.vx !== 0 || hero.vy !== 0;
     var frame = moving ? Math.floor(t / 140) % 2 : Math.floor(t / 500) % 2;
-    g.fillStyle = 'rgba(38,43,68,0.25)'; g.fillRect(Math.round(hero.x) - 1, hy + 32, 22, 3);
+    g.fillStyle = 'rgba(38,43,68,0.25)'; g.fillRect(Math.round(hero.x) - 1, Math.round(hero.y) + 32, 22, 3);
     g.save();
     if (hero.dir < 0) { g.translate(Math.round(hero.x) * 2 + 18, 0); g.scale(-1, 1); }
     drawPlayer(g, Math.round(hero.x), hy, look(), frame, hero.shootT > 0);
     g.restore();
   }
 
-  function shoot() {
+  // aimed: бросок по нажатию на ворота. Посетитель сам указал цель, поэтому шайба летит точно.
+  function shoot(aimed) {
     if (exit) return;
     if (puck.live || hero.shootT > 0) return;
+    if (TENNIS) { serve(); return; }
     hero.dir = 1; hero.shootT = 14;
     puck.live = true;
     puck.x = hero.x + 25; puck.y = hero.y + 29;
     // чем дальше от ворот, тем больше разброс
     var dist = Math.max(0, GOAL_Y - puck.y);
-    puck.vx = (Math.random() - 0.5) * (0.15 + dist / 160);
+    // на высокой площадке (телефон) шайба летит дольше: разброс уменьшаем, чтобы снос остался прежним
+    var k = 212 / GOAL_Y;
+    puck.vx = aimed === true ? (Math.random() - 0.5) * 0.08 : (Math.random() - 0.5) * (0.15 + dist / 160) * k * k;
     puck.vy = 4;
     SFX.shot();
   }
 
   function update(dt) {
+    if (TENNIS) { updateTennis(dt); return; }
     if (exit) { updateExit(); if (goalFlash > 0) goalFlash--; if (bannerT > 0) bannerT--; if (cheerT > 0) cheerT--; return; }
     var left = keys.ArrowLeft || keys.a, right = keys.ArrowRight || keys.d;
     var up = keys.ArrowUp || keys.w, down = keys.ArrowDown || keys.s;
@@ -1013,7 +1539,7 @@
       // нажали на лёд: встаём напротив этой точки и бросаем
       var dx = hero.target - hero.x;
       hero.auto = false; hero.idleT = 0;
-      if (Math.abs(dx) <= 2) { hero.x = hero.target; hero.target = null; shoot(); hero.auto = true; } // после броска катится дальше
+      if (Math.abs(dx) <= 2) { hero.x = hero.target; hero.target = null; shoot(true); hero.auto = true; } // после броска катится дальше
       else hero.vx = dx > 0 ? 2.4 : -2.4;
     } else if (!hero.auto) { hero.idleT += dt; if (hero.idleT > 6000) hero.auto = true; }
     if (hero.auto && hero.shootT <= 0) {
@@ -1027,11 +1553,12 @@
     if (hero.shootT > 0) hero.shootT--;
 
     if (puck.live) {
+      var arrived = false, pcx = 0, zone = -1;
       puck.x += puck.vx; puck.y += puck.vy;
       if (puck.x < 2 || puck.x > W - 7) puck.vx *= -1;
-      if (puck.y >= GOAL_Y) {
+      if (puck.y >= GOAL_Y) { arrived = true; pcx = puck.x + 2.5; }
+      if (arrived) {
         puck.live = false;
-        var pcx = puck.x + 2.5, zone = -1;
         NETS.forEach(function (n, i) { if (pcx > n[0] && pcx < n[1]) zone = i; });
         if (zone >= 0) {
           score++; scoreEl.textContent = ('00' + score).slice(-3);
@@ -1060,16 +1587,18 @@
   var RU_KEYS = { 'ф': 'a', 'в': 'd', 'ц': 'w', 'ы': 's' };
   var MOVE_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's'];
   window.addEventListener('keydown', function (e) {
-    var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    var k = e.key || ''; k = k.length === 1 ? k.toLowerCase() : k;
     k = RU_KEYS[k] || k;
     if (!onScreen(cv)) return;
+    if (e.target.matches && e.target.matches('input, textarea, select')) return;      // человек печатает в анкете
     // Пробел оставляем кнопке только если на неё пришли с клавиатуры (Tab)
     if (k === ' ' && e.target !== cv && e.target.matches && e.target.matches('button:focus-visible, a:focus-visible, [role="button"]:focus-visible, input, textarea, select')) return;
     if (k === ' ') { e.preventDefault(); shoot(); return; }
+    if (TENNIS && /^(ArrowUp|ArrowDown|w|s)$/.test(k)) return;      // в теннисе вверх-вниз не заняты игрой: страница листается
     if (MOVE_KEYS.indexOf(k) >= 0 && !exit) { keys[k] = true; if (k.length > 1) e.preventDefault(); }
   });
   window.addEventListener('keyup', function (e) {
-    var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    var k = e.key || ''; k = k.length === 1 ? k.toLowerCase() : k;
     keys[RU_KEYS[k] || k] = false;
   });
   window.addEventListener('blur', function () { keys = {}; });
@@ -1084,6 +1613,7 @@
   }
   var lastTap = { t: 0, x: 0, y: 0 };
   cv.addEventListener('pointerdown', function (e) {
+    if (TENNIS) { tennisPointer(e); return; }
     if (exit) return;
     var pt = scenePoint(e);
     if (e.pointerType === 'mouse') {
@@ -1248,6 +1778,23 @@
       if (!open) reveal(listEl);
     });
   }
+  // В теннисной версии список источников открывают теннисные имена: Голуэй поднимается наверх,
+  // за ним идут тренеры и игроки тура.
+  if (TENNIS) (function () {
+    var list = document.getElementById('masters'), first = list.firstElementChild;
+    var gallwey = [].filter.call(list.children, function (li) { return /ГОЛУЭЙ|GALLWEY/.test(li.textContent); })[0];
+    if (gallwey) list.insertBefore(gallwey, first);
+    [
+      [T("БРЭД ГИЛБЕРТ"), T("Тренер Агасси, Роддика и Маррея")],
+      [T("НИК БОЛЛЕТЬЕРИ"), T("Основатель академии, из которой вышли десять первых ракеток мира")],
+      [T("ТОНИ НАДАЛЬ"), T("Тренер, который вырастил Рафаэля Надаля")],
+      [T("АНДРЕ АГАССИ"), T("Первая ракетка мира, 8 титулов «Большого шлема»")]
+    ].forEach(function (m) {
+      var li = document.createElement('li'), b = document.createElement('b'), sp = document.createElement('span');
+      b.textContent = m[0]; sp.textContent = m[1]; li.appendChild(b); li.appendChild(sp);
+      list.insertBefore(li, first);
+    });
+  })();
   collapsible('masters', 'mastersToggle', 'masters--collapsed', T('ВСЕХ'));
   collapsible('inventory', 'inventoryToggle', 'is-collapsed', T('ВСЕ'));
 
@@ -1277,10 +1824,17 @@
     guideCtx.clearRect(0, 0, 32, 40);
     drawPlayer(guideCtx, 1, 4, look(), 0, false);
   }
+  var guideSettle = 0;
   function guideSync() {
     // какой раздел сейчас перед глазами
     var idx = -1, mid = window.innerHeight * 0.55;
     GUIDE.forEach(function (gd, i) { if (document.getElementById(gd.id).getBoundingClientRect().top < mid) idx = i; });
+    // короткие разделы в конце страницы не доезжают до середины экрана: считаем раздел текущим,
+    // если его заголовок уже виден, а на самом дне страницы текущий всегда последний
+    GUIDE.forEach(function (gd, i) {
+      var top = document.getElementById(gd.id).getBoundingClientRect().top;
+      if (i > idx && top < window.innerHeight - 120 && window.pageYOffset + window.innerHeight >= document.documentElement.scrollHeight - 160) idx = i;
+    });
     // на титуле и рядом с репликой под площадкой проводник не дублируется
     // пока читатель на площадке, говорит реплика под ней; у кнопки записи проводник её не загораживает
     guideEl.hidden = idx < 0 || onScreen(cta);
@@ -1318,6 +1872,7 @@
     }
     if (guideTick) return; guideTick = true;
     requestAnimationFrame(function () { guideTick = false; guideSync(); });
+    clearTimeout(guideSettle); guideSettle = setTimeout(guideSync, 180);       // и ещё раз, когда прокрутка остановилась
   }
   window.addEventListener('scroll', guideOnScroll, { passive: true });
   window.addEventListener('resize', guideOnScroll);
@@ -1333,7 +1888,9 @@
     drawPlayer(pc.ctx, 1, 4, pc.path, 0, false);
   });
 
-  var saved = store('ce-path');
+  // путь из адреса (?path=) важнее сохранённого: выбирается сразу и без реплики проводника
+  if (TR.path) { store('ce-path', TR.path); TR.goal('path_selected', { path: TR.path }); }
+  var saved = TR.path || store('ce-path');
   choosePath(PATHS.filter(function (p) { return p.id === saved; })[0] || null, false);
   openPhase(0, false);
   carouselSync();
@@ -1360,14 +1917,41 @@
     rolesEl.appendChild(b); roleCards.push({ role: r, el: b });
   });
 
-  function intro() {
-    say([role.hi,
+  // picked: роль только что выбрана, вместо приветствия идёт ответ на выбор
+  function intro(picked) {
+    say([picked && role.picked || role.hi].concat(role.intro || [
       T('Это программа индивидуального развития профессиональных атлетов. Один на один с тренером.'),
-      T('Программа идёт 12 месяцев: 4 фазы, 45 недель. Начать можно в любой точке сезона.'),
-      role.aim
-    ], { label: T('ИЛИ ВЫБРАТЬ КАРТОЧКОЙ ▼'), target: document.getElementById('path') });
+      T('Программа идёт 12 месяцев: 4 фазы, 45 рабочих недель. Начать можно в любой точке сезона.')
+    ], [role.aim]), { label: T('ИЛИ ВЫБРАТЬ КАРТОЧКОЙ ▼'), target: document.getElementById('path') });
   }
+  var justPicked = false;            // страница пересобрана после выбора роли: проводник продолжает с ответа на выбор
+  try { justPicked = sessionStorage.getItem('ce-go') === 'rink'; } catch (e) {}
+  if (location.hash === '#rink' && TR.role) justPicked = true;       // выбор роли приехал в адресе (хранилище недоступно)
   function setRole(r, byUser) {
+    // Игрок и профессионалы (агент, клуб, тренер) читают сайт в разных редакциях. При переходе между ними
+    // страница пересобирается: экран гаснет и проявляется уже в нужной редакции, на площадке.
+    if (byUser && (r.id !== 'player') !== PRO) {
+      store('ce-role', r.id);
+      TR.goal('role_selected', { role: r.id });
+      SFX.select();
+      try { sessionStorage.setItem('ce-go', 'rink'); } catch (e) {}
+      document.documentElement.classList.add('is-leaving');
+      setTimeout(function () {
+        var saved = false; try { saved = sessionStorage.getItem('ce-go') === 'rink'; } catch (e) {}
+        if (saved && store('ce-role') === r.id && !/[?&]role=/.test(location.search)) {
+          // якорь в адресе (#role и т.п.) убираем, иначе после перезагрузки браузер вернёт к нему
+          try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+          location.reload();
+        }
+        // хранилище недоступно или в ссылке была другая роль: роль едет в адресе, а якорь ведёт на площадку
+        else location.href = TR.urlWith('role', r.id).replace(/#.*$/, '') + (saved ? '' : '#rink');      // роль в адресе: хранилище недоступно или в ссылке была другая
+      }, reduced ? 0 : 230);
+      return;
+    }
+    // роль пришла в ссылке, а посетитель выбрал другую: адрес не должен вернуть прежнюю после перезагрузки
+    if (byUser && /[?&]role=/.test(location.search) && window.history && history.replaceState) {
+      try { history.replaceState(null, '', TR.urlWith('role', r.id)); } catch (e) {}
+    }
     role = r;
     document.documentElement.setAttribute('data-role', r.id);
     roleCards.forEach(function (rc) {
@@ -1382,28 +1966,204 @@
     document.getElementById('ctaText').textContent = r.ctaText;
     cta.textContent = '▶ ' + r.button;
     guideCta.textContent = r.button + ' ▶';
+    // свой заход в разделе о программе и блок «Что это даёт» для агента, клуба и тренера
+    var aboutRole = document.getElementById('aboutRole'), benefits = document.getElementById('roleBenefits');
+    aboutRole.hidden = !r.aboutLead; aboutRole.textContent = r.aboutLead || '';
+    benefits.hidden = !r.benefits;
+    benefits.innerHTML = r.benefits ? '<h3 class="h3">' + r.benefits.title + '</h3><ul class="benefits__list">' +
+      r.benefits.items.map(function (it) { return '<li><b>' + it[0] + '</b><span>' + it[1] + '</span></li>'; }).join('') + '</ul>' : '';
     document.getElementById('steps').innerHTML = r.steps.map(function (st) { return '<li><b>' + st[0] + '</b><span>' + st[1] + '</span></li>'; }).join('');
     choosePath(currentPath, false);                 // пересобирает ссылки и кнопку в описании пути
-    intro();
+    intro(byUser || justPicked); justPicked = false;
     if (byUser) {
       store('ce-role', r.id);
+      TR.goal('role_selected', { role: r.id });
       SFX.select();
       cv.focus({ preventScroll: true });
       document.getElementById('rink').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
     }
   }
-  var savedRole = store('ce-role');
+  if (TR.role) { store('ce-role', TR.role); TR.goal('role_selected', { role: TR.role }); }     // роль из адреса (?role=)
+  var savedRole = TR.role || store('ce-role');
   setRole(ROLES.filter(function (r) { return r.id === savedRole; })[0] || ROLES[0], false);
 
-  document.getElementById('pressStart').addEventListener('click', function () {
-    unlockAudio();
-    SFX.start();
-    document.getElementById('role').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+  // Заставка: кнопка START есть у каждой игры. Свой вид спорта открывает сайт дальше,
+  // другой - сохраняется, и страница перезагружается уже в нём.
+  [].forEach.call(document.querySelectorAll('.btn--start'), function (btn) {
+    var sport = btn.getAttribute('data-sport'), c = btn.querySelector('canvas').getContext('2d');
+    (sport === 'tennis' ? drawTennisPlayer : drawHockeyPlayer)(c, 1, 4, PATHS[1], 0, false);
+    btn.setAttribute('aria-pressed', String(sport === SPORT));
+    btn.addEventListener('click', function () {
+      unlockAudio();
+      if (sport !== SPORT) {
+        store('ce-sport', sport);
+        try { sessionStorage.setItem('ce-go', '1'); } catch (e) {}
+        // экран плавно гаснет, страница другой игры так же плавно проявляется: без вспышки
+        document.documentElement.classList.add('is-leaving');
+        setTimeout(function () {
+          if (HAS_PAGES) {
+            // у каждой игры своя страница; остальные параметры адреса (код ссылки, UTM, язык) едут с нами
+            var keep = location.search.replace(/^\?/, '').split('&').filter(function (p) { return p && p.split('=')[0] !== 'sport'; }).join('&');
+            location.href = (SPORT_PAGE ? '../' : '') + sport + '/' + (keep ? '?' + keep : '');
+          }
+          else if (store('ce-sport') === sport && !/[?&]sport=/.test(location.search)) location.reload();
+          else location.href = TR.urlWith('sport', sport).replace(/#.*$/, '');   // выбор в адресе, остальные параметры на месте
+        }, reduced ? 0 : 230);
+        return;
+      }
+      SFX.start();
+      document.getElementById('role').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+    });
   });
+  // после смены игры страница перезагрузилась: сразу ведём к выбору роли
+  try {
+    var goTo = sessionStorage.getItem('ce-go');
+    if (goTo) {
+      sessionStorage.removeItem('ce-go');
+      setTimeout(function () {
+        document.getElementById(goTo === 'rink' ? 'rink' : 'role').scrollIntoView({ behavior: 'instant' });
+        requestAnimationFrame(function () { document.documentElement.classList.remove('is-arriving'); });
+      }, 60);
+    }
+  } catch (e) {}
+  document.documentElement.classList.add('is-ready');
+  setTimeout(function () { document.documentElement.classList.remove('is-arriving'); }, 1500);     // страховка: страница не остаётся скрытой
+  // вернулись кнопкой «назад»: страница не должна остаться погашенной
+  window.addEventListener('pageshow', function (e) { if (e.persisted) document.documentElement.classList.remove('is-leaving', 'is-arriving'); });
 
   // звук на ссылках и кнопках
   document.querySelectorAll('.hud__nav a, .hud__logo').forEach(function (a) { a.addEventListener('click', SFX.move); });
   cta.addEventListener('click', SFX.select);
+
+  /* =====================================================================
+     ЦЕЛИ МЕТРИКИ: клики по контактам и доскролл до ключевых разделов
+     ===================================================================== */
+  function who() { var o = { role: role.id }; if (currentPath) o.path = currentPath.id; return o; }
+  // Ловим на всём документе: кнопка в описании пути пересобирается, а цель должна уйти до перехода
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href]');
+    if (!a) return;
+    var href = a.getAttribute('href');
+    if (href.indexOf('https://t.me/call_pascal') === 0) TR.goal('cta_telegram', who());
+    else if (href.indexOf('mailto:' + MAIL) === 0) TR.goal('cta_email', who());
+  }, true);
+  if (window.IntersectionObserver) (function () {
+    var timers = {}, steps = [];
+    for (var i = 0; i <= 20; i++) steps.push(i / 20);
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        var id = en.target.id;
+        // раздел занимает заметную часть экрана (или виден на 40%) и задержался на нём
+        var seen = en.isIntersecting && (en.intersectionRatio >= 0.4 || en.intersectionRect.height >= window.innerHeight * 0.4);
+        clearTimeout(timers[id]);
+        if (seen) timers[id] = setTimeout(function () { TR.goalOnce('section_' + id); }, 700);
+      });
+    }, { threshold: steps });
+    ['role', 'path', 'about', 'science', 'how', 'start'].forEach(function (id) { io.observe(document.getElementById(id)); });
+  })();
+
+  /* =====================================================================
+     COOKIE И АНАЛИТИКА: уведомление и выбор посетителя
+     ===================================================================== */
+  (function () {
+    var box = document.getElementById('consent'), legal = document.getElementById('legal');
+    function shown(on) { box.hidden = !on; document.documentElement.classList.toggle('consent-open', on); }
+    function decide(yes) { TR.setConsent(yes); shown(false); SFX.move(); }
+    document.getElementById('consentYes').addEventListener('click', function () { decide(true); });
+    document.getElementById('consentNo').addEventListener('click', function () { decide(false); });
+    document.getElementById('consentChange').addEventListener('click', function () { shown(true); });
+    if (!TR.consent()) shown(true);
+    // ссылки на полный текст раскрывают его
+    document.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('a[data-legal]')) legal.open = true;
+    });
+    if (location.hash === '#privacy') legal.open = true;
+  })();
+
+  /* =====================================================================
+     АНКЕТА НА СОЗВОН
+     ===================================================================== */
+  // Публичный адрес сервера заявок (API Gateway в Yandex Cloud, см. server/form-handler/README.md).
+  // Пока адрес не задан, кнопка анкеты скрыта: посетители пишут в Telegram или на почту.
+  // Для проверки вёрстки анкету можно открыть адресом с ?form=test: заявка никуда не уйдёт, покажется запасной путь.
+  var FORM_ENDPOINT = '';
+  (function () {
+    var openBtn = document.getElementById('formOpen'), form = document.getElementById('callForm');
+    var sendBtn = document.getElementById('formSend'), msg = document.getElementById('formMsg');
+    var fallback = document.getElementById('formFallback'), done = document.getElementById('formDone');
+    if (!FORM_ENDPOINT && !/[?&]form=test(&|$)/.test(location.search)) return;
+    openBtn.hidden = false;
+    document.getElementById('legalForm').hidden = false;      // текст согласия на персональные данные нужен только вместе с анкетой
+    var openedAt = 0, leadId = '', busy = false;
+    function newId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+    }
+    function note(text, withFallback) {
+      msg.textContent = text; msg.hidden = !text;
+      fallback.hidden = !withFallback;
+      if (withFallback) {                                   // те же ссылки, что у кнопок выше: с ролью, путём и кодом
+        document.getElementById('formTg').href = cta.href;
+        document.getElementById('formMail').href = ctaMail.href;
+      }
+    }
+    openBtn.addEventListener('click', function () {
+      var show = form.hidden;
+      form.hidden = !show; openBtn.setAttribute('aria-expanded', String(show));
+      SFX.move();
+      if (!show) return;
+      openedAt = Date.now(); leadId = leadId || newId();
+      // роль уже выбрана на сайте или пришла в адресе: подставляем её
+      if (!form.role.value && (TR.role || store('ce-role'))) form.role.value = role.id;
+      TR.goal('form_open', who());
+      form.elements.name.focus({ preventScroll: true });
+      reveal(form);
+    });
+    function failed() { busy = false; sendBtn.disabled = false; sendBtn.textContent = T('ОТПРАВИТЬ АНКЕТУ'); note(T('Не получилось отправить форму. Напиши нам в Telegram или на почту, текст обращения уже подготовлен.'), true); }
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (busy) return;
+      var f = form.elements, bad = null;
+      ['name', 'role', 'change', 'contact'].forEach(function (k) {
+        var empty = !f[k].value.trim();
+        f[k].classList.toggle('is-bad', empty);
+        if (empty && !bad) bad = f[k];
+      });
+      if (bad) { note(T('Заполни поля, отмеченные звёздочкой.')); bad.focus(); return; }
+      if (!f.consent.checked) { note(T('Без согласия на обработку персональных данных мы не можем принять анкету.')); f.consent.focus(); return; }
+      var elapsed = Date.now() - openedAt;
+      if (elapsed < 3000) { note(T('Секунду. Попробуй отправить ещё раз.')); return; }
+      if (f.website.value) { failed(); return; }            // ловушка для роботов: человек это поле не видит
+      if (!FORM_ENDPOINT) { failed(); return; }             // сервер ещё не подключён: успех не изображаем
+      busy = true; sendBtn.disabled = true; sendBtn.textContent = T('ОТПРАВЛЯЕМ...'); note('');
+      var body = {
+        id: leadId, name: f.name.value.trim(), role: f.role.value, club: f.club.value.trim(), league: f.league.value.trim(),
+        change: f.change.value.trim(), contact: f.contact.value.trim(), consent: true, website: '', elapsed: elapsed,
+        r: TR.r || '', utm: TR.utm, site_role: store('ce-role') || TR.role || '', site_path: currentPath ? currentPath.id : '',
+        lang: LANG, sport: SPORT, url: location.href.slice(0, 500)
+      };
+      var ctl = window.AbortController ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 20000);
+      fetch(FORM_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
+        .then(function (res) { return res.json().then(function (j) { return { ok: res.ok, j: j }; }); })
+        .then(function (r) {
+          clearTimeout(timer);
+          var ch = r.j && r.j.channels || {};
+          // успех только когда сервер подтвердил доставку хотя бы в один канал
+          if (!r.ok || !r.j || !r.j.ok || !(ch.telegram || ch.mail)) { failed(); return; }
+          TR.goal('form_submit_ok', { telegram: !!ch.telegram, mail: !!ch.mail });
+          form.hidden = true; openBtn.hidden = true; done.hidden = false; SFX.select();
+          reveal(done);
+        })
+        .catch(function () { clearTimeout(timer); failed(); });
+    });
+  })();
+
+  // Ссылка с якорем (#start и т.п.): разделы дорисовывает скрипт, поэтому после сборки страницы
+  // ещё раз встаём на нужный раздел
+  if (/^#[a-z]+$/.test(location.hash) && document.getElementById(location.hash.slice(1))) setTimeout(function () {
+    document.getElementById(location.hash.slice(1)).scrollIntoView({ behavior: 'auto' });
+  }, 80);
 
   guideSync();
   requestAnimationFrame(loop);
