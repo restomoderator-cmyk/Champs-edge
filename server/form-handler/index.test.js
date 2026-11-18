@@ -3,6 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { handle } = require('./index.js');
 
+function d_tg(o) { return o.tgFails === true; }
 function deps(opts) {
   opts = opts || {};
   const mem = new Map(), sent = { tg: [], mail: [] }, logs = [];
@@ -13,10 +14,10 @@ function deps(opts) {
     now: () => new Date('2026-01-02T03:04:05Z'),
     log: (m) => logs.push(m),
     store: {
-      async get(k) { return mem.has(k) ? JSON.parse(mem.get(k)) : null; },
+      async get(k) { if (opts.readFails) throw new Error('down'); return mem.has(k) ? JSON.parse(mem.get(k)) : null; },
       async put(k, o) { if (opts.storeFails) throw new Error('down'); mem.set(k, JSON.stringify(o)); },
     },
-    async sendTelegram(t) { tgCalls++; if (opts.tgFails === true || (opts.tgFails === 'once' && tgCalls === 1)) throw new Error('tg'); sent.tg.push(t); },
+    async sendTelegram(t) { tgCalls++; if (d_tg(opts) || (opts.tgFails === 'once' && tgCalls === 1)) throw new Error('tg'); sent.tg.push(t); },
     async sendMail(s, t) { if (opts.mailFails && !opts.mailFixed) throw new Error('smtp'); sent.mail.push([s, t]); },
     opts,
   };
@@ -121,4 +122,21 @@ test('невалидный код и мусор в полях отбрасыва
   assert.strictEqual(rec.lead.r, '');
   assert.strictEqual(rec.lead.site_path, '');
   assert.strictEqual(rec.lead.lang, 'ru');
+});
+
+test('ничего не доставлено, человек исправил контакт: уходит исправленная анкета', async () => {
+  const d = deps({ tgFails: true, mailFails: true });
+  await handle(post(lead({ contact: '@oshibka' })), d);
+  d.opts.tgFails = false; d.opts.mailFixed = true;
+  const j = JSON.parse((await handle(post(lead({ contact: '@verno' })), d)).body);
+  assert.strictEqual(j.ok, true);
+  assert.match(d.sent.tg[0], /@verno/);
+  assert.doesNotMatch(d.sent.tg[0], /@oshibka/);
+});
+
+test('хранилище не читается: заявка не дублируется и не отправляется', async () => {
+  const d = deps({ readFails: true });
+  const res = await handle(post(lead()), d);
+  assert.strictEqual(res.statusCode, 502);
+  assert.strictEqual(d.sent.tg.length + d.sent.mail.length, 0);
 });

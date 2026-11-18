@@ -80,7 +80,7 @@
   })();
 
   // --- Яндекс Метрика ---
-  var started = false;
+  var started = false, pending = [];
   function startMetrika() {
     if (started) return;
     started = true;
@@ -98,16 +98,24 @@
       ym(114286443, 'params', { r_code: rCode });
       ym(114286443, 'userParams', { r_code: rCode });
     }
+    // цели, которые случились до согласия (например, роль и путь из ссылки), уходят сейчас
+    pending.splice(0).forEach(function (g) { goal(g[0], g[1]); });
   }
   function consent() { var v = ls('ce_analytics'); return v === 'yes' || v === 'no' ? v : null; }
   function setConsent(yes) {
     ls('ce_analytics', yes ? 'yes' : 'no');
-    if (yes) startMetrika();
+    if (yes) startMetrika(); else pending.length = 0;
     // отказ после согласия действует со следующей загрузки страницы: уже загруженный счётчик выгрузить нельзя
   }
-  // Цель. Возвращает true, если событие действительно ушло в Метрику.
+  // Цель. Пока посетитель не ответил на вопрос о cookie, цели копятся и уходят после согласия;
+  // при отказе они никуда не отправляются. Возвращает true, если цель отправлена или отложена.
   function goal(name, params) {
-    if (!started || typeof window.ym !== 'function') return false;
+    if (!started) {
+      if (consent() === 'no') return false;
+      if (pending.length < 40) pending.push([name, params]);
+      return true;
+    }
+    if (typeof window.ym !== 'function') return false;
     if (params) window.ym(YM_ID, 'reachGoal', name, params); else window.ym(YM_ID, 'reachGoal', name);
     return true;
   }

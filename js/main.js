@@ -1,7 +1,17 @@
 (function () {
   'use strict';
 
-  var TR = window.CE_TRACK;        // аналитика и параметры адреса, см. js/track.js
+  // Аналитика и параметры адреса, см. js/site-params.js. Если этот файл не загрузился
+  // (например, его срезал блокировщик), сайт работает без аналитики.
+  var TR = window.CE_TRACK || {
+    r: null, role: null, path: null, utm: {},
+    consent: function () { return 'no'; }, setConsent: function () {}, goal: function () { return false; }, goalOnce: function () {},
+    urlWith: function (k, v) {
+      var parts = location.search.replace(/^\?/, '').split('&').filter(function (p) { return p && p.split('=')[0] !== k; });
+      parts.push(k + '=' + encodeURIComponent(v));
+      return location.pathname + '?' + parts.join('&') + location.hash;
+    }
+  };
 
   /* =====================================================================
      ЯЗЫК: русский или английский
@@ -1394,7 +1404,7 @@
   var RU_KEYS = { 'ф': 'a', 'в': 'd', 'ц': 'w', 'ы': 's' };
   var MOVE_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's'];
   window.addEventListener('keydown', function (e) {
-    var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    var k = e.key || ''; k = k.length === 1 ? k.toLowerCase() : k;
     k = RU_KEYS[k] || k;
     if (!onScreen(cv)) return;
     if (e.target.matches && e.target.matches('input, textarea, select')) return;      // человек печатает в анкете
@@ -1405,7 +1415,7 @@
     if (MOVE_KEYS.indexOf(k) >= 0 && !exit) { keys[k] = true; if (k.length > 1) e.preventDefault(); }
   });
   window.addEventListener('keyup', function (e) {
-    var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    var k = e.key || ''; k = k.length === 1 ? k.toLowerCase() : k;
     keys[RU_KEYS[k] || k] = false;
   });
   window.addEventListener('blur', function () { keys = {}; });
@@ -1840,6 +1850,7 @@
     var fallback = document.getElementById('formFallback'), done = document.getElementById('formDone');
     if (!FORM_ENDPOINT && !/[?&]form=test(&|$)/.test(location.search)) return;
     openBtn.hidden = false;
+    document.getElementById('legalForm').hidden = false;      // текст согласия на персональные данные нужен только вместе с анкетой
     var openedAt = 0, leadId = '', busy = false;
     function newId() {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();

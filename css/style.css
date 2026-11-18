@@ -816,7 +816,8 @@ body::before {
   color: var(--white); background: var(--ink); border: var(--px) solid var(--slate); border-radius: 0; padding: 8px 10px;
 }
 .callform textarea { resize: vertical; min-height: 96px; }
-.callform input:focus, .callform select:focus, .callform textarea:focus { outline: none; border-color: var(--yellow); }
+.callform input[type="text"]:focus, .callform select:focus, .callform textarea:focus { outline: none; border-color: var(--yellow); }
+.callform__agree input:focus-visible { outline: var(--px) solid var(--yellow); outline-offset: 2px; }
 .callform .is-bad { border-color: #e43b44; }
 .callform__hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .callform__agree { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; color: var(--white); cursor: pointer; }
@@ -916,3 +917,8 @@ html { background: var(--ink); }
 html.is-ready body { transition: opacity .22s steps(5); }
 html.is-leaving body, html.is-arriving body { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { html.is-ready body { transition: none; } }
+
+/* Планшет: карточки доменов и инвентаря в две колонки, длинные слова не распирают сетку */
+.grid > * { min-width: 0; }
+.item > * { min-width: 0; }
+@media (min-width: 761px) and (max-width: 1000px) { #domainList, #inventory { grid-template-columns: 1fr 1fr; } }

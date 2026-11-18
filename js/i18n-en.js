@@ -434,9 +434,7 @@ window.CE_EN = {
  "ЗАПИСАТЬСЯ ▶": "SIGN UP ▶",
  "CHAMPION'S EDGE · ГРАНИ ЧЕМПИОНОВ": "CHAMPION'S EDGE",
  "© 2026 · Все права защищены": "© 2026 · All rights reserved",
- "НАШ КАНАЛ В TELEGRAM:": "OUR TELEGRAM CHANNEL:",
  "НАПИСАТЬ В TELEGRAM": "MESSAGE US ON TELEGRAM",
- "КАНАЛ @ballplease": "CHANNEL @ballplease",
  "Разделы": "Sections",
  "Музыка": "Music",
  "Звуковые эффекты": "Sound effects",
@@ -530,7 +528,6 @@ window.CE_EN = {
  "Запись начинается только после кнопки «Принять». Если выбрать «Только необходимые», Метрика и Вебвизор не подключаются.": "Recording starts only after you press \"Accept\". If you choose \"Essential only\", Metrica and Webvisor are not loaded.",
  "ИЗМЕНИТЬ ВЫБОР": "CHANGE MY CHOICE",
  "СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ": "CONSENT TO PERSONAL DATA PROCESSING",
- "Отправляя анкету, вы даёте согласие на обработку персональных данных оператору: [ОПЕРАТОР: ФИО и статус укажет Арам].": "By sending the form you consent to the processing of your personal data by the operator: [OPERATOR: name and status to be provided by Aram].",
  "Какие данные: имя, роль, клуб, лига, описание запроса и контакт, который вы указали.": "What data: name, role, club, league, the description of your request and the contact you provided.",
  "Зачем: чтобы ответить на обращение и договориться о созвоне.": "Why: to reply to your request and arrange a call.",
  "Куда передаём: заявка сначала записывается в базу данных на территории России. Затем её копия доставляется в Telegram (аккаунт @call_pascal) и на почту edgechamps@gmail.com. Доставка в Telegram и Gmail может означать трансграничную передачу данных.": "Where it goes: the request is first recorded in a database located in Russia. A copy is then delivered to Telegram (account @call_pascal) and to edgechamps@gmail.com. Delivery to Telegram and Gmail may involve a cross-border transfer of data.",
@@ -543,5 +540,6 @@ window.CE_EN = {
  "ПОДРОБНЕЕ": "DETAILS",
  "Мы используем cookie. С вашего согласия подключим Яндекс Метрику и Вебвизор, чтобы улучшать сайт и настраивать объявления. Запись начнётся после кнопки «Принять».": "We use cookies. With your consent we will turn on Yandex Metrica and Webvisor to improve the site and tune our ads. Recording starts after you press \"Accept\".",
  "Веди пальцем влево-вправо:": "Slide your finger left or right:",
- "игрок идёт за пальцем.": "the player follows it."
+ "игрок идёт за пальцем.": "the player follows it.",
+ "Отправляя анкету, вы даёте согласие на обработку персональных данных оператору: [ОПЕРАТОР: ФИО и статус будут указаны].": "By sending the form you consent to the processing of your personal data by the operator: [OPERATOR: name and status to be provided]."
 };

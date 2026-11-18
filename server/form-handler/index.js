@@ -143,7 +143,14 @@ async function handle(event, deps) {
 
   // Повторная отправка той же анкеты: заявку не дублируем, досылаем только то, что не дошло
   let record = null;
-  try { record = await deps.store.get(key); } catch (e) { record = null; }
+  try { record = await deps.store.get(key); } catch (e) {
+    // хранилище не ответило: не гадаем, была ли заявка, иначе можно затереть отметки о доставке
+    deps.log('lead ' + lead.id + ': storage read failed');
+    return reply(502, { ok: false, error: 'storage' }, okOrigin);
+  }
+  // Заявка сохранена, но ещё никуда не доставлена, а человек поправил анкету и отправил снова:
+  // берём исправленные данные. После доставки хотя бы в один канал запись уже не меняется.
+  if (record && !record.channels.telegram && !record.channels.mail) record = null;
   if (!record) {
     lead.received_at = deps.now().toISOString();
     record = { lead, channels: { telegram: false, mail: false } };
