@@ -525,7 +525,6 @@ window.CE_EN = {
  "Cookie и аналитика": "Cookies and analytics",
  "Сайт использует cookie и локальное хранилище браузера. Необходимые записи работают всегда: они помнят язык, роль, путь, настройки звука и код персональной ссылки, если вы пришли по такой ссылке.": "This site uses cookies and the browser's local storage. Essential entries always work: they remember your language, role, path, sound settings and the personal link code if you came through such a link.",
  "С вашего согласия подключается Яндекс Метрика (счётчик 114286443) с Вебвизором. Она собирает сведения о посещении: какие разделы вы открывали, клики и прокрутку, запись действий на странице, тип устройства и источник перехода. Это нужно, чтобы понимать, как сайтом пользуются, улучшать его и показывать наши объявления тем, кто уже был на сайте.": "With your consent we turn on Yandex Metrica (counter 114286443) with Webvisor session replay. It collects information about your visit: which sections you opened, clicks and scrolling, a recording of actions on the page, device type and traffic source. We need this to understand how the site is used, to improve it and to show our ads to people who have already visited.",
- "Запись начинается только после кнопки «Принять». Если выбрать «Только необходимые», Метрика и Вебвизор не подключаются.": "Recording starts only after you press \"Accept\". If you choose \"Essential only\", Metrica and Webvisor are not loaded.",
  "ИЗМЕНИТЬ ВЫБОР": "CHANGE MY CHOICE",
  "СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ": "CONSENT TO PERSONAL DATA PROCESSING",
  "Какие данные: имя, роль, клуб, лига, описание запроса и контакт, который вы указали.": "What data: name, role, club, league, the description of your request and the contact you provided.",
@@ -535,14 +534,15 @@ window.CE_EN = {
  "Ваши права: запросить доступ к своим данным, их уточнение или удаление, а также отозвать согласие. Для этого напишите на edgechamps@gmail.com.": "Your rights: you can request access to your data, its correction or deletion, and withdraw your consent. To do so, write to edgechamps@gmail.com.",
  "Анкета предназначена для лиц от 18 лет. Мы не публикуем имён. Ни игроков, ни тренера.": "The form is intended for people aged 18 and over. We do not publish names. Neither players' nor the coach's.",
  "Черновик формулировок. Будет сверен с юристом до публикации.": "Draft wording. To be reviewed by a lawyer before publication.",
- "ПРИНЯТЬ": "ACCEPT",
- "ТОЛЬКО НЕОБХОДИМЫЕ": "ESSENTIAL ONLY",
  "ПОДРОБНЕЕ": "DETAILS",
- "Мы используем cookie. С вашего согласия подключим Яндекс Метрику и Вебвизор, чтобы улучшать сайт и настраивать объявления. Запись начнётся после кнопки «Принять».": "We use cookies. With your consent we will turn on Yandex Metrica and Webvisor to improve the site and tune our ads. Recording starts after you press \"Accept\".",
  "Веди пальцем влево-вправо:": "Slide your finger left or right:",
  "игрок идёт за пальцем.": "the player follows it.",
  "Отправляя анкету, вы даёте согласие на обработку персональных данных оператору: [ОПЕРАТОР: ФИО и статус будут указаны].": "By sending the form you consent to the processing of your personal data by the operator: [OPERATOR: name and status to be provided].",
  "Программа длится 12 месяцев и проходит четыре фазы: Фундамент, Заточка, Полигон, Эволюция. Занятия идут онлайн. Начать можно в любой точке сезона: фазы привязаны к ходу программы, а не к календарю.": "The program lasts 12 months and goes through four phases: Foundation, Sharpening, Proving Ground, Evolution. Sessions run online. You can start at any point in the season: the phases follow the program, not the calendar.",
  "Коротко о формате: один на один с тренером, 12 месяцев онлайн.": "The format in brief: one on one with a coach, 12 months online.",
- "ОНЛАЙН": "ONLINE"
+ "ОНЛАЙН": "ONLINE",
+ "Включить cookie и Яндекс Метрику? Так мы видим, что на сайте работает, и делаем его лучше.": "Turn on cookies and Yandex Metrica? They show us what works on the site so we can make it better.",
+ "ДА": "YES",
+ "НЕТ": "NO",
+ "Аналитика включается только после кнопки «Да». Если выбрать «Нет», Метрика и Вебвизор не подключаются, а сайт работает как обычно.": "Analytics turns on only after you press \"Yes\". If you choose \"No\", Metrica and Webvisor are not loaded and the site works as usual."
 };
