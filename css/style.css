@@ -987,3 +987,9 @@ html[lang="en"] .title__sub { display: none; }
   .consent p { font-size: 13px; }
   html.consent-open .title { padding-bottom: 86px; }
 }
+
+/* Страница одной игры: одна кнопка START, вторая игра маленькой ссылкой */
+.title__starts .btn--start[hidden] { display: none; }
+.title__pick--other { animation: none; margin-top: 26px; }
+.title__other { font: inherit; color: var(--mist); background: none; border: 0; padding: 10px 8px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.title__other:hover, .title__other:focus-visible { color: var(--yellow); }

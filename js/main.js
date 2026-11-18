@@ -2093,6 +2093,22 @@
       document.getElementById('role').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
     });
   });
+  // На странице своей игры (/hockey/, /tennis/) выбирать нечего: одна кнопка START,
+  // а вторая игра остаётся маленькой ссылкой под ней.
+  if (SPORT_PAGE) (function () {
+    var own = document.querySelector('.btn--start[data-sport="' + SPORT + '"]'),
+        other = document.querySelector('.btn--start:not([data-sport="' + SPORT + '"])'),
+        pick = document.querySelector('.title__pick');
+    if (!own || !other || !pick) return;
+    own.querySelector('span').textContent = '\u25B6 START';
+    other.hidden = true;
+    var en = LANG === 'en', tennis = other.getAttribute('data-sport') === 'tennis';
+    var link = document.createElement('button');
+    link.type = 'button'; link.className = 'title__other';
+    link.textContent = (en ? 'OTHER GAME: ' : 'ДРУГАЯ ИГРА: ') + (tennis ? (en ? 'TENNIS' : 'ТЕННИС') : (en ? 'HOCKEY' : 'ХОККЕЙ'));
+    link.addEventListener('click', function () { other.click(); });
+    pick.textContent = ''; pick.classList.add('title__pick--other'); pick.appendChild(link);
+  })();
   // после смены игры страница перезагрузилась: сразу ведём к выбору роли
   try {
     var goTo = sessionStorage.getItem('ce-go');
