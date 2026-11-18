@@ -74,10 +74,12 @@
     btn.setAttribute('aria-label', other === 'en' ? 'Переключить на английский' : 'Switch to Russian');
     btn.addEventListener('click', function () {
       store('ce-lang', other);
-      if (store('ce-lang') === other && !/[?&]lang=/.test(location.search)) location.reload();
-      else location.href = TR.urlWith('lang', other);  // язык в адресе; остальные параметры и hash сохраняются
+      // язык в адресе; остальные параметры и hash сохраняются
+      langGo(store('ce-lang') === other && !/[?&]lang=/.test(location.search) ? location.pathname + location.search + location.hash : TR.urlWith('lang', other));
     });
   })();
+
+  function langGo(url) { softGo(url); }               // softGo объявлена ниже и к моменту нажатия уже готова
 
   // Высота шапки нужна стилям, чтобы переходы по странице не уезжали под неё
   (function () {
@@ -633,6 +635,37 @@
   }
   musicBtn.addEventListener('click', function () { setMusic(!musicOn); });
 
+  /* Мягкий переход между игрой и редакциями. Обычная перезагрузка обрывает музыку: браузер не даёт
+     новой странице играть звук, пока человек её не коснётся. Поэтому новую страницу мы загружаем сами
+     и подменяем ею текущую в том же окне: звуковой движок остаётся жив, и музыка идёт дальше с того же
+     такта. Если так не получается (нет сети, старый браузер, предпросмотр), идём обычным переходом. */
+  var dead = false;                                    // эта копия сайта заменена новой: остановить всё своё
+  function softGo(url) {
+    var done = false;
+    function hard() { if (done) return; done = true; location.href = url; }
+    document.documentElement.classList.add('is-leaving');
+    if (!HAS_PAGES || !window.fetch || !window.history || !history.pushState) { setTimeout(hard, 230); return; }
+    var t0 = Date.now();
+    fetch(url, { credentials: 'same-origin' }).then(function (r) {
+      if (!r.ok) throw new Error('http');
+      return r.text();
+    }).then(function (html) {
+      if (!/<html[^>]*data-pages/.test(html)) throw new Error('not our page');
+      setTimeout(function () {
+        if (done) return; done = true;
+        try {
+          window.CE_KEEP = audio ? { audio: audio, musicGain: musicGain, musicOn: musicOn, soundOn: soundOn, mStep: mStep, mNext: mNext } : null;
+          dead = true; clearInterval(musicTimer); musicTimer = null; clearInterval(typer);
+          history.pushState(null, '', url);
+          document.open(); document.write(html); document.close();
+        } catch (e) { location.href = url; }
+      }, Math.max(0, 230 - (Date.now() - t0)));
+    }).catch(hard);
+    setTimeout(hard, 5000);                            // сеть зависла: обычный переход
+  }
+  // «Назад» после мягкого перехода: адрес уже другой, а страница та же, поэтому загружаем её заново
+  window.addEventListener('popstate', function () { location.reload(); });
+
   // Звук и музыка включены по умолчанию. Браузеры не дают играть звук, пока
   // человек не коснулся страницы, поэтому запускаем их на первом же действии.
   var audioUnlocked = false;
@@ -645,6 +678,17 @@
   ['pointerup', 'keydown', 'click'].forEach(function (ev) { document.addEventListener(ev, unlockAudio, true); });
   soundBtn.setAttribute('aria-pressed', String(store('ce-sound') !== '0'));
   musicBtn.setAttribute('aria-pressed', String(store('ce-music') !== '0'));
+  // Пришли мягким переходом: звуковой движок прежней страницы уже работает, продолжаем с того же такта
+  (function () {
+    var keep = window.CE_KEEP; window.CE_KEEP = null;
+    if (!keep || !keep.audio || keep.audio.state === 'closed') return;
+    audio = keep.audio; musicGain = keep.musicGain; mStep = keep.mStep || 0; mNext = keep.mNext || 0;
+    audioUnlocked = true;
+    ['pointerup', 'keydown', 'click'].forEach(function (ev) { document.removeEventListener(ev, unlockAudio, true); });
+    soundOn = !!keep.soundOn; soundBtn.setAttribute('aria-pressed', String(soundOn));
+    musicOn = !!keep.musicOn && !!musicGain; musicBtn.setAttribute('aria-pressed', String(musicOn));
+    if (musicOn && !document.hidden) { musicTimer = setInterval(mSchedule, 100); mSchedule(); }
+  })();
   document.addEventListener('visibilitychange', function () {
     if (!musicOn) return;
     if (document.hidden) mRun(false); else reviveAudio();
@@ -1574,6 +1618,7 @@
 
   var last = 0, acc = 0, sceneVisible = true;
   function loop(t) {
+    if (dead) return;
     requestAnimationFrame(loop);
     if (!sceneVisible) { last = t; return; }
     acc += Math.min(100, t - last); last = t;
@@ -1935,17 +1980,13 @@
       TR.goal('role_selected', { role: r.id });
       SFX.select();
       try { sessionStorage.setItem('ce-go', 'rink'); } catch (e) {}
-      document.documentElement.classList.add('is-leaving');
-      setTimeout(function () {
-        var saved = false; try { saved = sessionStorage.getItem('ce-go') === 'rink'; } catch (e) {}
-        if (saved && store('ce-role') === r.id && !/[?&]role=/.test(location.search)) {
-          // якорь в адресе (#role и т.п.) убираем, иначе после перезагрузки браузер вернёт к нему
-          try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
-          location.reload();
-        }
-        // хранилище недоступно или в ссылке была другая роль: роль едет в адресе, а якорь ведёт на площадку
-        else location.href = TR.urlWith('role', r.id).replace(/#.*$/, '') + (saved ? '' : '#rink');      // роль в адресе: хранилище недоступно или в ссылке была другая
-      }, reduced ? 0 : 230);
+      var saved = false; try { saved = sessionStorage.getItem('ce-go') === 'rink'; } catch (e) {}
+      if (saved && store('ce-role') === r.id && !/[?&]role=/.test(location.search)) {
+        // якорь в адресе (#role и т.п.) убираем, иначе после перезагрузки браузер вернёт к нему
+        softGo(location.pathname + location.search);
+      }
+      // хранилище недоступно или в ссылке была другая роль: роль едет в адресе, а якорь ведёт на площадку
+      else softGo(TR.urlWith('role', r.id).replace(/#.*$/, '') + (saved ? '' : '#rink'));      // роль в адресе: хранилище недоступно или в ссылке была другая
       return;
     }
     // роль пришла в ссылке, а посетитель выбрал другую: адрес не должен вернуть прежнюю после перезагрузки
@@ -1972,6 +2013,9 @@
     benefits.hidden = !r.benefits;
     benefits.innerHTML = r.benefits ? '<h3 class="h3">' + r.benefits.title + '</h3><ul class="benefits__list">' +
       r.benefits.items.map(function (it) { return '<li><b>' + it[0] + '</b><span>' + it[1] + '</span></li>'; }).join('') + '</ul>' : '';
+    // выбранная роль сразу стоит в анкете; если человек сам поменял её в анкете, не трогаем
+    var cf = document.getElementById('callForm');
+    if (cf && !cf.getAttribute('data-role-touched') && cf.elements.role.querySelector('option[value="' + r.id + '"]')) cf.elements.role.value = r.id;
     document.getElementById('steps').innerHTML = r.steps.map(function (st) { return '<li><b>' + st[0] + '</b><span>' + st[1] + '</span></li>'; }).join('');
     choosePath(currentPath, false);                 // пересобирает ссылки и кнопку в описании пути
     intro(byUser || justPicked); justPicked = false;
@@ -1998,17 +2042,16 @@
       if (sport !== SPORT) {
         store('ce-sport', sport);
         try { sessionStorage.setItem('ce-go', '1'); } catch (e) {}
-        // экран плавно гаснет, страница другой игры так же плавно проявляется: без вспышки
-        document.documentElement.classList.add('is-leaving');
-        setTimeout(function () {
-          if (HAS_PAGES) {
-            // у каждой игры своя страница; остальные параметры адреса (код ссылки, UTM, язык) едут с нами
-            var keep = location.search.replace(/^\?/, '').split('&').filter(function (p) { return p && p.split('=')[0] !== 'sport'; }).join('&');
-            location.href = (SPORT_PAGE ? '../' : '') + sport + '/' + (keep ? '?' + keep : '');
-          }
-          else if (store('ce-sport') === sport && !/[?&]sport=/.test(location.search)) location.reload();
-          else location.href = TR.urlWith('sport', sport).replace(/#.*$/, '');   // выбор в адресе, остальные параметры на месте
-        }, reduced ? 0 : 230);
+        // экран плавно гаснет и проявляется уже в другой игре; музыка при этом не обрывается
+        var keep = location.search.replace(/^\?/, '').split('&').filter(function (p) { return p && p.split('=')[0] !== 'sport'; }).join('&');
+        if (HAS_PAGES) softGo((SPORT_PAGE ? '../' : '') + sport + '/' + (keep ? '?' + keep : ''));   // у каждой игры своя страница
+        else {
+          document.documentElement.classList.add('is-leaving');
+          setTimeout(function () {
+            if (store('ce-sport') === sport && !/[?&]sport=/.test(location.search)) location.reload();
+            else location.href = TR.urlWith('sport', sport).replace(/#.*$/, '');   // выбор в адресе, остальные параметры на месте
+          }, reduced ? 0 : 230);
+        }
         return;
       }
       SFX.start();
@@ -2107,6 +2150,7 @@
         document.getElementById('formMail').href = ctaMail.href;
       }
     }
+    form.elements.role.addEventListener('change', function () { form.setAttribute('data-role-touched', '1'); });
     openBtn.addEventListener('click', function () {
       var show = form.hidden;
       form.hidden = !show; openBtn.setAttribute('aria-expanded', String(show));
@@ -2114,7 +2158,7 @@
       if (!show) return;
       openedAt = Date.now(); leadId = leadId || newId();
       // роль уже выбрана на сайте или пришла в адресе: подставляем её
-      if (!form.role.value && (TR.role || store('ce-role'))) form.role.value = role.id;
+      if (!form.role.value) form.role.value = role.id;
       TR.goal('form_open', who());
       form.elements.name.focus({ preventScroll: true });
       reveal(form);

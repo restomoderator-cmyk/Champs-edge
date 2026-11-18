@@ -84,6 +84,15 @@
   function startMetrika() {
     if (started) return;
     started = true;
+    // Мягкий переход между страницами (см. softGo в main.js): счётчик в этом окне уже работает,
+    // второй раз его не запускаем, а сообщаем о просмотре новой страницы.
+    if (window.CE_YM_STARTED && typeof window.ym === 'function') {
+      window.ym(YM_ID, 'hit', location.href);
+      if (rCode) window.ym(YM_ID, 'params', { r_code: rCode });
+      pending.splice(0).forEach(function (g) { goal(g[0], g[1]); });
+      return;
+    }
+    window.CE_YM_STARTED = true;
     /* Yandex.Metrika counter: официальный код без изменений */
     (function(m,e,t,r,i,k,a){
         m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
