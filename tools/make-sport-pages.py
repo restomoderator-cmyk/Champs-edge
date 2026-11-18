@@ -29,6 +29,10 @@ PAGES = {
         # ...и офлайн-месяц в Москве: он относится только к хоккейной программе
         'cut': [' Опыт работы с игроками НХЛ, КХЛ, ВХЛ и МХЛ.',
                 ', один месяц из двенадцати проходит офлайн на тренировочной базе в Москве'],
+        # хоккейные лиги в разметке теннисной страницы не нужны даже скрытыми
+        'cut_re': [r'[ \t]*<p class="leagues">.*?</p>\n'],
+        # в тексте для поисковиков теннис называется первым
+        'swap': [('хоккей, футбол, теннис, баскетбол', 'теннис, хоккей, футбол, баскетбол')],
     },
 }
 
@@ -46,6 +50,11 @@ for sport, cfg in PAGES.items():
     html = must_replace(html, WHO, cfg['who'])
     for piece in cfg['cut']:
         html = must_replace(html, piece, '')
+    for pattern in cfg.get('cut_re', []):
+        html, n = re.subn(pattern, '', html, flags=re.S)
+        if not n: sys.exit('make-sport-pages: не найдено по шаблону: ' + pattern)
+    for old, new in cfg.get('swap', []):
+        html = must_replace(html, old, new)
     # адреса страницы для поисковиков и превью
     html = must_replace(html, '"%s?lang=en"' % SITE, '"%s%s/?lang=en"' % (SITE, sport))
     html = re.sub(r'(<meta property="og:url" content="|<link rel="canonical" href="|hreflang="(?:ru|x-default)" href=")' + re.escape(SITE) + '"',

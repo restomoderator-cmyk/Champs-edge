@@ -934,3 +934,6 @@ html.is-leaving body, html.is-arriving body { opacity: 0; }
 .pathinfo__role { color: var(--white); padding: 10px 14px; border-left: calc(var(--px) * 2) solid var(--path-col, var(--yellow)); background: rgba(24, 20, 37, .45); }
 @media (max-width: 1000px) { .benefits__list { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .benefits__list { grid-template-columns: 1fr; gap: 14px; } }
+
+/* В теннисной версии теннис стоит первым в списке видов спорта */
+[data-sport="tennis"] .lore__sports li:nth-child(3) { order: -1; }
