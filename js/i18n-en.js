@@ -541,8 +541,8 @@ window.CE_EN = {
  "Программа длится 12 месяцев и проходит четыре фазы: Фундамент, Заточка, Полигон, Эволюция. Занятия идут онлайн. Начать можно в любой точке сезона: фазы привязаны к ходу программы, а не к календарю.": "The program lasts 12 months and goes through four phases: Foundation, Sharpening, Proving Ground, Evolution. Sessions run online. You can start at any point in the season: the phases follow the program, not the calendar.",
  "Коротко о формате: один на один с тренером, 12 месяцев онлайн.": "The format in brief: one on one with a coach, 12 months online.",
  "ОНЛАЙН": "ONLINE",
- "НЕ НАДО": "NO THANKS",
- "Помоги нам сделать сайт лучше! Включим cookie и Яндекс Метрику?": "Help us make the site better! Shall we turn on cookies and Yandex Metrica?",
  "ДАВАЙ": "SURE",
- "Аналитика включается только после кнопки «Давай». Если выбрать «Не надо», Метрика и Вебвизор не подключаются, а сайт работает как обычно.": "Analytics turns on only after you press \"Sure\". If you choose \"No thanks\", Metrica and Webvisor are not loaded and the site works as usual."
+ "Поможешь нам сделать сайт ещё лучше? Включим cookie и Яндекс Метрику?": "Will you help us make the site even better? Shall we turn on cookies and Yandex Metrica?",
+ "ТОЛЬКО ТЕХНИЧЕСКИЕ": "ESSENTIAL ONLY",
+ "Аналитика включается только после кнопки «Давай». Если выбрать «Только технические», Метрика и Вебвизор не подключаются, а сайт работает как обычно.": "Analytics turns on only after you press \"Sure\". If you choose \"Essential only\", Metrica and Webvisor are not loaded and the site works as usual."
 };
