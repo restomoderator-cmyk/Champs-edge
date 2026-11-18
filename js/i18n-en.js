@@ -640,8 +640,6 @@ window.CE_EN = {
  "Путь легенды. Для игрока 30+, который хочет продлить карьеру.": "Path of the Legend. For a player 30+ who wants to extend their career.",
  "Методика выросла из многолетнего изучения того, как устроены чемпионы. Как думали и готовились Федерер, Надаль, Джокович, Агасси, Сампрас, Синнер и Алькарас. Что отличает чемпионские команды. Как работали тренеры, которые выигрывали снова и снова: Скотти Боумен, Фил Джексон, Джон Вуден, Алекс Фергюсон, Пэт Райли и многие другие.": "The method grew out of many years of studying how champions are built. How Federer, Nadal, Djokovic, Agassi, Sampras, Sinner and Alcaraz thought and prepared. What sets championship teams apart. How the coaches who won again and again worked: Scotty Bowman, Phil Jackson, John Wooden, Alex Ferguson, Pat Riley and many others.",
  "Исследования шли в академиях, клубах и школах, в разных видах спорта. Среди них академия Ника Боллетьери и академия Рафаэля Надаля.": "The research took place in academies, clubs and schools, across different sports. Among them were the Nick Bollettieri academy and the Rafa Nadal Academy.",
- "МЕТОДИКА ОТРАБОТАНА С ИГРОКАМИ": "THE METHOD HAS BEEN PROVEN WITH PLAYERS FROM:",
- "Теннисная программа построена на той же методике и на изучении лучших игроков и академий тура.": "The tennis program is built on the same method and on the study of the tour's best players and academies.",
  "БРЭД ГИЛБЕРТ": "BRAD GILBERT",
  "Тренер Агасси, Роддика и Маррея": "Coach of Agassi, Roddick and Murray",
  "НИК БОЛЛЕТЬЕРИ": "NICK BOLLETTIERI",
@@ -680,5 +678,13 @@ window.CE_EN = {
  "Вы представляете клуб. Покажу программу глазами клуба.": "You represent a club. Let me show you the program through a club's eyes.",
  "Вы тренер. Покажу программу вашими глазами.": "You're a coach. Let me show you the program through your eyes.",
  "Вы представляете академию. Покажу программу глазами академии.": "You represent an academy. Let me show you the program through an academy's eyes.",
- "Ты игрок. Расскажу о программе для тебя.": "You're a player. Let me tell you about the program made for you."
+ "Ты игрок. Расскажу о программе для тебя.": "You're a player. Let me tell you about the program made for you.",
+ "ФЕДЕРЕР": "FEDERER",
+ "НАДАЛЬ": "NADAL",
+ "ДЖОКОВИЧ": "DJOKOVIC",
+ "АГАССИ": "AGASSI",
+ "БОЛЛЕТЬЕРИ": "BOLLETTIERI",
+ "ГИЛБЕРТ": "GILBERT",
+ "В ОСНОВЕ": "BUILT ON",
+ "Программа выросла из многолетнего изучения того, как думают и готовятся лучшие игроки тура и как работают их тренеры.": "The program grew out of years of studying how the tour's best players think and prepare, and how their coaches work."
 };

@@ -954,3 +954,7 @@ html[lang="en"] .title__sub { display: none; }
 .node { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
 .node > * { max-width: 100%; }
 .phase { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+
+/* Теннис: вместо хоккейных лиг показаны игроки и тренеры, на изучении которых стоит программа */
+[data-sport="tennis"] .leagues:not(.only-tennis) { display: none; }
+[data-sport="tennis"] .leagues.only-tennis { display: flex; }
