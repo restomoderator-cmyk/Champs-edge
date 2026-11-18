@@ -291,7 +291,6 @@ window.CE_EN = {
  "ЗАПИСЬ": "SIGN UP",
  "МУЗЫКА": "MUSIC",
  "ЗВУК": "SOUND",
- "12 МЕСЯЦЕВ · 4 ФАЗЫ · 9 ДОМЕНОВ": "12 MONTHS · 4 PHASES · 9 DOMAINS",
  "ГРАНИ ЧЕМПИОНОВ": "THE EDGE OF CHAMPIONS",
  "Индивидуальное развитие профессиональных атлетов": "Individual development for professional athletes",
  "▶ НАЖМИ START": "▶ PRESS START",
