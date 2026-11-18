@@ -910,3 +910,9 @@ body::before {
   .title__starts { flex-wrap: nowrap; gap: 14px; }
   .title__starts .btn--start { flex: 1 1 0; min-width: 0; max-width: 170px; flex-direction: column; gap: 6px; padding: 10px 6px 10px; font-size: 11px; }
 }
+
+/* Смена игры: экран гаснет и проявляется ступеньками, без белой вспышки при переходе */
+html { background: var(--ink); }
+html.is-ready body { transition: opacity .22s steps(5); }
+html.is-leaving body, html.is-arriving body { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { html.is-ready body { transition: none; } }

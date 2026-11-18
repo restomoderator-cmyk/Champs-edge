@@ -128,6 +128,10 @@
     return location.pathname + '?' + parts.join('&') + location.hash;
   }
 
+  // Пришли со страницы другой игры: экран проявляется плавно (см. .is-arriving в стилях).
+  // Ставится здесь, в <head>, чтобы страница не успела мигнуть заставкой.
+  if (ss('ce-go')) document.documentElement.className += ' is-arriving';
+
   window.CE_TRACK = {
     r: rCode, role: urlRole, path: urlPath, utm: utm,
     consent: consent, setConsent: setConsent, goal: goal, goalOnce: goalOnce, urlWith: urlWith

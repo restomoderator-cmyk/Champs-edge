@@ -1747,13 +1747,17 @@
       if (sport !== SPORT) {
         store('ce-sport', sport);
         try { sessionStorage.setItem('ce-go', '1'); } catch (e) {}
-        if (HAS_PAGES) {
-          // у каждой игры своя страница; остальные параметры адреса (код ссылки, UTM, язык) едут с нами
-          var keep = location.search.replace(/^\?/, '').split('&').filter(function (p) { return p && p.split('=')[0] !== 'sport'; }).join('&');
-          location.href = (SPORT_PAGE ? '../' : '') + sport + '/' + (keep ? '?' + keep : '');
-        }
-        else if (store('ce-sport') === sport && !/[?&]sport=/.test(location.search)) location.reload();
-        else location.href = TR.urlWith('sport', sport).replace(/#.*$/, '');   // выбор в адресе, остальные параметры на месте
+        // экран плавно гаснет, страница другой игры так же плавно проявляется: без вспышки
+        document.documentElement.classList.add('is-leaving');
+        setTimeout(function () {
+          if (HAS_PAGES) {
+            // у каждой игры своя страница; остальные параметры адреса (код ссылки, UTM, язык) едут с нами
+            var keep = location.search.replace(/^\?/, '').split('&').filter(function (p) { return p && p.split('=')[0] !== 'sport'; }).join('&');
+            location.href = (SPORT_PAGE ? '../' : '') + sport + '/' + (keep ? '?' + keep : '');
+          }
+          else if (store('ce-sport') === sport && !/[?&]sport=/.test(location.search)) location.reload();
+          else location.href = TR.urlWith('sport', sport).replace(/#.*$/, '');   // выбор в адресе, остальные параметры на месте
+        }, reduced ? 0 : 230);
         return;
       }
       SFX.start();
@@ -1764,9 +1768,16 @@
   try {
     if (sessionStorage.getItem('ce-go')) {
       sessionStorage.removeItem('ce-go');
-      setTimeout(function () { document.getElementById('role').scrollIntoView({ behavior: 'auto' }); }, 60);
+      setTimeout(function () {
+        document.getElementById('role').scrollIntoView({ behavior: 'instant' });
+        requestAnimationFrame(function () { document.documentElement.classList.remove('is-arriving'); });
+      }, 60);
     }
   } catch (e) {}
+  document.documentElement.classList.add('is-ready');
+  setTimeout(function () { document.documentElement.classList.remove('is-arriving'); }, 1500);     // страховка: страница не остаётся скрытой
+  // вернулись кнопкой «назад»: страница не должна остаться погашенной
+  window.addEventListener('pageshow', function (e) { if (e.persisted) document.documentElement.classList.remove('is-leaving', 'is-arriving'); });
 
   // звук на ссылках и кнопках
   document.querySelectorAll('.hud__nav a, .hud__logo').forEach(function (a) { a.addEventListener('click', SFX.move); });
