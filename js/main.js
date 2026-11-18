@@ -617,6 +617,7 @@
   function reviveAudio() {
     if (!audio || (!musicOn && !soundOn)) return;
     if (audio.state !== 'running') audio.resume().catch(function () {});
+    syncSilent();
     if (musicOn && !document.hidden && !musicTimer) mRun(true);
     audioStalled = false;
   }
@@ -633,7 +634,7 @@
     musicBtn.setAttribute('aria-pressed', String(musicOn));
     store('ce-music', musicOn ? '1' : '0');
   }
-  musicBtn.addEventListener('click', function () { setMusic(!musicOn); });
+  musicBtn.addEventListener('click', function () { setMusic(!musicOn); syncSilent(); });
 
   /* Мягкий переход между игрой и редакциями. Обычная перезагрузка обрывает музыку: браузер не даёт
      новой странице играть звук, пока человек её не коснётся. Поэтому новую страницу мы загружаем сами
@@ -673,12 +674,32 @@
 
   // Звук и музыка включены по умолчанию. Браузеры не дают играть звук, пока
   // человек не коснулся страницы, поэтому запускаем их на первом же действии.
+  /* Беззвучный режим телефона. iPhone глушит звук страницы, когда переключатель сбоку стоит на «без звука».
+     Чтобы музыка и эффекты играли и тогда, страница объявляет себя проигрывателем: в новых версиях iOS
+     это делается одной настройкой, в старых помогает тихий звуковой файл, который крутится по кругу.
+     Кнопки «МУЗЫКА» и «ЗВУК» в шапке по-прежнему всё выключают. */
+  var SILENCE = 'data:audio/wav;base64,UklGRvQHAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdAHAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
+  function loudOnSilent(on) {
+    try { if (navigator.audioSession) { navigator.audioSession.type = on ? 'playback' : 'auto'; return; } } catch (e) {}
+    try {
+      var el = window.CE_SILENT_AUDIO;
+      if (!on) { if (el) el.pause(); return; }
+      if (!el) {
+        el = window.CE_SILENT_AUDIO = document.createElement('audio');
+        el.setAttribute('playsinline', ''); el.loop = true; el.preload = 'auto'; el.src = SILENCE;
+      }
+      var p = el.play(); if (p && p.catch) p.catch(function () {});
+    } catch (e) {}
+  }
+  function syncSilent() { loudOnSilent((musicOn || soundOn) && !document.hidden); }
+
   var audioUnlocked = false;
   function unlockAudio() {
     if (audioUnlocked) return; audioUnlocked = true;
     ['pointerup', 'keydown', 'click'].forEach(function (ev) { document.removeEventListener(ev, unlockAudio, true); });
     if (store('ce-sound') !== '0') setSound(true);
     if (store('ce-music') !== '0') setMusic(true);
+    syncSilent();
   }
   ['pointerup', 'keydown', 'click'].forEach(function (ev) { document.addEventListener(ev, unlockAudio, true); });
   soundBtn.setAttribute('aria-pressed', String(store('ce-sound') !== '0'));
@@ -693,8 +714,10 @@
     soundOn = !!keep.soundOn; soundBtn.setAttribute('aria-pressed', String(soundOn));
     musicOn = !!keep.musicOn && !!musicGain; musicBtn.setAttribute('aria-pressed', String(musicOn));
     if (musicOn && !document.hidden) { musicTimer = setInterval(mSchedule, 100); mSchedule(); }
+    syncSilent();
   })();
   document.addEventListener('visibilitychange', function () {
+    syncSilent();
     if (!musicOn) return;
     if (document.hidden) mRun(false); else reviveAudio();
   });
@@ -818,7 +841,7 @@
     start: function () { play([[392, 0.09], [523, 0.09], [659, 0.09], [784, 0.09], [1047, 0.28]], 0.07); }
   };
 
-  soundBtn.addEventListener('click', function () { setSound(!soundOn); SFX.move(); });
+  soundBtn.addEventListener('click', function () { setSound(!soundOn); SFX.move(); syncSilent(); });
 
   /* =====================================================================
      ПЕРСОНАЖ
@@ -986,8 +1009,15 @@
     pathsCount.textContent = (i + 1) + ' / ' + pathCards.length;
     pathsPrev.disabled = i === 0; pathsNext.disabled = i === pathCards.length - 1;
   }
-  pathsPrev.addEventListener('click', function () { SFX.move(); carouselGo(carouselIndex() - 1); });
-  pathsNext.addEventListener('click', function () { SFX.move(); carouselGo(carouselIndex() + 1); });
+  // Стрелки карусели сразу выбирают соседний путь: описание под каруселью меняется вместе с карточкой
+  function carouselStep(d) {
+    var i = Math.max(0, Math.min(PATHS.length - 1, carouselIndex() + d));
+    SFX.select();
+    choosePath(PATHS[i], true, true);            // выбран, но страницу к описанию не прокручиваем
+    carouselGo(i);
+  }
+  pathsPrev.addEventListener('click', function () { carouselStep(-1); });
+  pathsNext.addEventListener('click', function () { carouselStep(1); });
   pathsEl.addEventListener('scroll', function () { requestAnimationFrame(carouselSync); }, { passive: true });
   window.addEventListener('resize', carouselSync);
 
