@@ -958,3 +958,14 @@ html[lang="en"] .title__sub { display: none; }
 /* Теннис: вместо хоккейных лиг показаны игроки и тренеры, на изучении которых стоит программа */
 [data-sport="tennis"] .leagues:not(.only-tennis) { display: none; }
 [data-sport="tennis"] .leagues.only-tennis { display: flex; }
+
+/* Пока на экране вопрос про cookie, заставка оставляет под него место: кнопки игр не закрыты */
+@media (max-width: 760px) { html.consent-open .title { padding-bottom: 150px; } }
+@media (max-width: 380px) {
+  .consent p { font-size: 15px; }
+  .consent .btn--small { font-size: 7px; padding: 9px 7px; }
+}
+@media (max-width: 380px) {
+  html.consent-open .title { padding-top: 8px; padding-bottom: 170px; justify-content: flex-start; }
+  html.consent-open .title__tag { margin-bottom: 14px; }
+}

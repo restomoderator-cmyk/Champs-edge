@@ -1926,6 +1926,7 @@
   }
   var justPicked = false;            // страница пересобрана после выбора роли: проводник продолжает с ответа на выбор
   try { justPicked = sessionStorage.getItem('ce-go') === 'rink'; } catch (e) {}
+  if (location.hash === '#rink' && TR.role) justPicked = true;       // выбор роли приехал в адресе (хранилище недоступно)
   function setRole(r, byUser) {
     // Игрок и профессионалы (агент, клуб, тренер) читают сайт в разных редакциях. При переходе между ними
     // страница пересобирается: экран гаснет и проявляется уже в нужной редакции, на площадке.
@@ -1936,8 +1937,14 @@
       try { sessionStorage.setItem('ce-go', 'rink'); } catch (e) {}
       document.documentElement.classList.add('is-leaving');
       setTimeout(function () {
-        if (store('ce-role') === r.id && !/[?&]role=/.test(location.search)) location.reload();
-        else location.href = TR.urlWith('role', r.id).replace(/#.*$/, '');      // роль в адресе: хранилище недоступно или в ссылке была другая
+        var saved = false; try { saved = sessionStorage.getItem('ce-go') === 'rink'; } catch (e) {}
+        if (saved && store('ce-role') === r.id && !/[?&]role=/.test(location.search)) {
+          // якорь в адресе (#role и т.п.) убираем, иначе после перезагрузки браузер вернёт к нему
+          try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+          location.reload();
+        }
+        // хранилище недоступно или в ссылке была другая роль: роль едет в адресе, а якорь ведёт на площадку
+        else location.href = TR.urlWith('role', r.id).replace(/#.*$/, '') + (saved ? '' : '#rink');      // роль в адресе: хранилище недоступно или в ссылке была другая
       }, reduced ? 0 : 230);
       return;
     }
@@ -2060,11 +2067,12 @@
      ===================================================================== */
   (function () {
     var box = document.getElementById('consent'), legal = document.getElementById('legal');
-    function decide(yes) { TR.setConsent(yes); box.hidden = true; SFX.move(); }
+    function shown(on) { box.hidden = !on; document.documentElement.classList.toggle('consent-open', on); }
+    function decide(yes) { TR.setConsent(yes); shown(false); SFX.move(); }
     document.getElementById('consentYes').addEventListener('click', function () { decide(true); });
     document.getElementById('consentNo').addEventListener('click', function () { decide(false); });
-    document.getElementById('consentChange').addEventListener('click', function () { box.hidden = false; });
-    if (!TR.consent()) box.hidden = false;
+    document.getElementById('consentChange').addEventListener('click', function () { shown(true); });
+    if (!TR.consent()) shown(true);
     // ссылки на полный текст раскрывают его
     document.addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('a[data-legal]')) legal.open = true;
