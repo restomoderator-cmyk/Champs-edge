@@ -4,6 +4,10 @@
 <!-- Файл собран из index.html скриптом tools/make-sport-pages.py. Не править руками. -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<!-- Первый кадр страницы: тёмный фон сразу, без белой вспышки при переходе между играми и редакциями.
+     Стоит прямо здесь, чтобы сработать раньше, чем загрузится файл стилей. -->
+<style>html{background:#181425;color-scheme:dark}html.is-arriving body,html.is-leaving body{opacity:0}</style>
 <!-- Яндекс Метрика 114286443 и параметры адреса. Счётчик запускается только после согласия посетителя. -->
 <script src="../js/site-params.js"></script>
 <title>Champion's Edge Tennis: индивидуальное развитие профессиональных теннисистов</title>
