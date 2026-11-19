@@ -688,5 +688,20 @@ window.CE_EN = {
  "Ведите пальцем влево-вправо:": "Slide your finger left or right:",
  "Свой градус под каждую ситуацию: от рядового розыгрыша до матчбола.": "The right level for every situation: from a routine point to a match point.",
  "Что предшествует лучшей игре игрока и как это повторить.": "What comes before the player's best performance and how to repeat it.",
- "Письмо игрока самому себе. Он откроет его в последнюю неделю программы.": "The player's letter to themselves. They open it in the last week of the program."
+ "Письмо игрока самому себе. Он откроет его в последнюю неделю программы.": "The player's letter to themselves. They open it in the last week of the program.",
+ "Куда девать злость?": "Where does the anger go?",
+ "Эмоции как инструмент игры. Назвать чувство вовремя важнее, чем его побороть. Управлять, а не подавлять: у каждого чувства свой адрес. И читать других: соперника и свою команду.": "Emotions as a tool of the game. Naming a feeling in time matters more than beating it. Manage it, don't suppress it: every feeling has its own address. And read others: the opponent and your own team.",
+ "Назвать чувство": "Name the feeling",
+ "Чувство как топливо": "Feeling as fuel",
+ "Читать других": "Reading others",
+ "Карта чувств": "Map of feelings",
+ "Формула паузы: имя, выдох, адрес": "The pause formula: name, exhale, address",
+ "СТРЕСС-ТЕСТ СИСТЕМЫ": "SYSTEM STRESS TEST",
+ "Что работает само?": "What runs on its own?",
+ "Закрытие второго месяца. Новых тем нет: проверяем всё построенное одним матчем, от утра до вечернего разбора. Находим два слабых звена и чиним их. ОС собираем заново: в неё идёт только то, что живёт само.": "Closing the second month. No new topics: we test everything built so far with one full match, from the morning to the evening review. We find the two weakest links and fix them. The OS is rebuilt from scratch: only what runs on its own goes in.",
+ "Матч целиком": "The whole match",
+ "Починка двух звеньев": "Fixing two links",
+ "Два месяца на одной странице": "Two months on one page",
+ "ОС 2.0 на одной странице": "OS 2.0 on one page",
+ "Три цели на третий месяц": "Three goals for month three"
 };
