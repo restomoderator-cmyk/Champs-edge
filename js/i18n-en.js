@@ -685,5 +685,8 @@ window.CE_EN = {
  "Программа выросла из многолетнего изучения того, как думают и готовятся лучшие игроки тура и как работают их тренеры.": "The program grew out of years of studying how the tour's best players think and prepare, and how their coaches work.",
  "ХОРОШО": "SURE",
  "Аналитика включается только после кнопки «Хорошо». Если выбрать «Только технические», Метрика и Вебвизор не подключаются, а сайт работает как обычно.": "Analytics turns on only after you press \"Sure\". If you choose \"Essential only\", Metrica and Webvisor are not loaded and the site works as usual.",
- "Ведите пальцем влево-вправо:": "Slide your finger left or right:"
+ "Ведите пальцем влево-вправо:": "Slide your finger left or right:",
+ "Свой градус под каждую ситуацию: от рядового розыгрыша до матчбола.": "The right level for every situation: from a routine point to a match point.",
+ "Что предшествует лучшей игре игрока и как это повторить.": "What comes before the player's best performance and how to repeat it.",
+ "Письмо игрока самому себе. Он откроет его в последнюю неделю программы.": "The player's letter to themselves. They open it in the last week of the program."
 };
