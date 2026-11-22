@@ -1,6 +1,6 @@
 const {chromium}=require('playwright');const D=__dirname;const MODE=process.argv[2]||'pro';(async()=>{const b=await chromium.launch();
  const c=await b.newContext({locale:'ru-RU',viewport:{width:390,height:664}});const p=await c.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});
- await p.goto('file://'+D+'/test.html');await p.waitForTimeout(300);if(process.argv[3])await p.evaluate(v=>window.__mvp.seg(v),+process.argv[3]);
+ await p.goto('file://'+D+'/'+(process.env.SEASON_PAGE||'test.html'));await p.waitForTimeout(300);if(process.argv[3])await p.evaluate(v=>window.__mvp.seg(v),+process.argv[3]);
  const shot=n=>p.screenshot({path:D+'/w-'+n+'.png'});const seen={};const once=async n=>{if(!seen[n]){seen[n]=1;await shot(n);}};
  const click=async s=>{await p.click(s,{timeout:3000});await p.waitForTimeout(120)};const has=async s=>(await p.locator(s).count())>0;
  let guard=0,shots=0,quitDone=false;

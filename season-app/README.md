@@ -9,6 +9,9 @@
 - `simrun.js`: команда ботов, сотни матчей без экрана. `node simrun.js 80`
 - `bot2.js`: бот на настоящем экране, проходит все четыре матча. `node bot2.js tap 14`
 - `so.js`: проверка овертайма и буллитов.
+- `engine-next.js`, `build_next.py`, `patch-next.py`: рабочая копия игры со всем новым, сборка в `season-next.html`.
+- `simcheck.js`: проверка баланса ботами, PASS или FAIL. `python3 build_next.py && node simcheck.js 200`
+- `PLAN.md`, `REPORT.md`: план работы и отчёт.
 - `docs/`: карта игры, концепция, опросник.
 - `old-prototype/`: первая версия, на которой шла первая фокус-группа.
 

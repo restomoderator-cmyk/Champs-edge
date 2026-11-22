@@ -1,6 +1,6 @@
 const {chromium}=require('playwright');const D=__dirname;(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:390,height:664}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
-await p.goto('file://'+D+'/test.html');await p.evaluate(()=>{localStorage.setItem('ce-season-mvp-2',JSON.stringify({sound:false,done:{1:true,2:true},stars:{},role:'D',num:'9',values:['Смелость','Упорство','Честность'],core:false,trust:0,room:0,fix:false,reset:null,life:{1:'yes'},taught:true}))});await p.reload();
-await p.evaluate(()=>window.__mvp.seg(3));await p.click('[data-act="match"][data-m="3"]');await p.click('[data-act="go"]');
+await p.goto('file://'+D+'/'+(process.env.SEASON_PAGE||'test.html'));await p.evaluate(()=>{localStorage.setItem('ce-season-mvp-2',JSON.stringify({sound:false,done:{1:true,2:true},stars:{},role:'D',num:'9',values:['Смелость','Упорство','Честность'],core:false,trust:0,room:0,fix:false,reset:null,life:{1:'yes'},taught:true}))});await p.reload();
+await p.evaluate(()=>window.__mvp.seg(3));await p.click('[data-act="match"][data-m="1"]');await p.click('[data-act="go"]');
 await p.keyboard.down('ArrowLeft');await p.keyboard.down('ArrowRight');let shots=0,shotSO=false,shotOT=false;
 for(let i=0;i<900;i++){ if(await p.locator('.final').count())break;
  if(await p.locator('[data-act="choose"]').count()){await p.click('[data-act="choose"][data-i="1"]');await p.click('[data-act="decided"]');continue;}
