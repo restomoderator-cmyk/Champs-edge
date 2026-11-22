@@ -1,0 +1,932 @@
+<title>Edge Season</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/*FONTS*/
+/* Layout: one-screen arcade. HUD and scoreboard on top, the rink fills the middle, one big RESET button at the bottom. */
+:root {
+  color-scheme: dark;
+  --ink: #181425; --navy: #262b44; --slate: #3a4466; --steel: #5a6988; --mist: #c0cbdc; --white: #ffffff;
+  --red: #e43b44; --red-dark: #9e2835; --gold: #feae34; --yellow: #fee761; --green: #63c74d; --cyan: #2ce8f5;
+  --head: "Press Start 2P", "Courier New", monospace;
+  --body: "Handjet", "Arial Narrow", "Segoe UI", sans-serif;
+  --px: 4px;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--ink); color: var(--mist); font-family: var(--body); font-size: 22px; line-height: 1.15; overflow: hidden; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+button, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+canvas { image-rendering: pixelated; }
+p { margin: 0; }
+.app { height: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; }
+.gut { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+.hud { display: flex; align-items: center; gap: 10px; padding-block: 6px; border-bottom: var(--px) solid var(--slate); }
+.hud__ce { font-family: var(--head); font-size: 11px; background: var(--red); color: var(--ink); padding: 8px 7px; border: 3px solid var(--white); }
+.hud__t { font-family: var(--head); font-size: 9px; color: var(--yellow); flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip { font-family: var(--head); font-size: 9px; background: var(--ink); color: var(--green); border: 3px solid var(--green); padding: 7px 8px; min-height: 44px; min-width: 44px; }
+.chip--x { color: var(--white); border-color: var(--white); font-size: 12px; }
+.chip[aria-pressed="false"] { color: var(--steel); border-color: var(--steel); }
+.chip--lang { background: var(--cyan); color: var(--ink); border-color: var(--cyan); }
+
+/* text screens */
+.stage { flex: 1 1 0; min-height: 0; overflow-y: auto; padding-block: 18px 24px; display: flex; flex-direction: column; gap: 14px; }
+.h1 { font-family: var(--head); font-size: 15px; line-height: 1.5; color: var(--yellow); margin: 0; text-wrap: balance; }
+.h2 { font-family: var(--head); font-size: 10px; line-height: 1.6; color: var(--cyan); margin: 0; letter-spacing: .04em; }
+.tag { font-family: var(--head); font-size: 9px; letter-spacing: .06em; color: var(--ink); background: var(--yellow); padding: 5px 6px; display: inline-block; align-self: flex-start; }
+.tag--red { background: var(--red); color: var(--white); }
+.lead { color: var(--white); font-size: 24px; }
+.note { font-size: 20px; color: #8b9bb4; }
+.panel { background: var(--navy); border: var(--px) solid var(--slate); padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 var(--px) 0 #0e0c18; }
+.panel--hot { border-color: var(--yellow); }
+.btn { font-family: var(--head); font-size: 11px; line-height: 1.4; background: var(--gold); color: var(--ink); border: 0; padding: 14px 12px; min-height: 52px; width: 100%; box-shadow: inset 0 4px 0 var(--yellow), inset 0 -4px 0 #b86f50, 0 4px 0 #0e0c18; }
+.btn:active { transform: translateY(2px); }
+.btn:disabled { background: var(--slate); color: var(--steel); box-shadow: none; cursor: default; }
+.btn--ghost { background: var(--ink); color: var(--white); box-shadow: inset 0 0 0 3px var(--white); }
+.words { display: flex; flex-wrap: wrap; gap: 8px; }
+.word { background: var(--ink); border: 3px solid var(--steel); color: var(--mist); padding: 6px 10px; font-size: 22px; text-align: left; }
+.word[aria-pressed="true"] { background: var(--yellow); border-color: var(--yellow); color: var(--ink); }
+.opt { background: var(--ink); border: 3px solid var(--steel); padding: 10px 12px; text-align: left; display: flex; flex-direction: column; gap: 4px; color: var(--mist); width: 100%; }
+.opt b { font-family: var(--head); font-size: 10px; font-weight: 400; color: var(--white); line-height: 1.5; }
+.opt[aria-pressed="true"] { border-color: var(--yellow); background: #2f3554; }
+.opt[aria-pressed="true"] b { color: var(--yellow); }
+.quote { border-left: var(--px) solid var(--yellow); padding-left: 12px; color: var(--white); }
+.stats { display: grid; grid-template-columns: 1fr auto auto; gap: 6px 14px; align-items: baseline; }
+.stats span { font-size: 21px; }
+.stats b { font-family: var(--head); font-size: 11px; font-weight: 400; color: var(--white); text-align: right; font-variant-numeric: tabular-nums; }
+.stats b.was { color: var(--steel); }
+.stats i { font-family: var(--head); font-size: 9px; font-style: normal; color: var(--cyan); text-align: right; }
+.final { font-family: var(--head); font-size: 26px; color: var(--white); text-align: center; letter-spacing: .08em; }
+.xprow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.xpnum { font-family: var(--head); font-size: 14px; font-weight: 400; color: var(--green); }
+.xpbar { height: 16px; background: #0e0c18; border: 3px solid var(--steel); }
+.xpbar i { display: block; height: 100%; background: var(--green); transition: width 1.1s steps(22); }
+.stats--xp i { color: var(--steel); }
+.final small { display: block; font-size: 9px; color: var(--steel); margin-top: 8px; letter-spacing: .04em; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: baseline; }
+.keys b { font-family: var(--head); font-size: 9px; font-weight: 400; color: var(--yellow); }
+
+/* match */
+.board { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding-block: 5px; }
+.board__s { font-family: var(--head); font-size: 9px; color: var(--mist); }
+.board__s b { font-size: 18px; font-weight: 400; color: var(--white); margin-left: 6px; font-variant-numeric: tabular-nums; }
+.board__s:last-child { text-align: right; }
+.board__s:last-child b { margin: 0 6px 0 0; }
+.board__t { font-family: var(--head); font-size: 14px; color: var(--yellow); font-variant-numeric: tabular-nums; }
+.head { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; padding-bottom: 5px; }
+.head span { font-family: var(--head); font-size: 10px; color: var(--mist); letter-spacing: .06em; }
+.head b { height: 24px; border: 3px solid var(--mist); display: block; background: linear-gradient(90deg, #1f4d2a 0 35%, #6b5a1e 35% 60%, #5c1f2a 60% 100%); }
+.head b i { display: block; height: 100%; width: 0; background: var(--green); }
+.rinkwrap { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#rink { display: block; border: var(--px) solid var(--slate); touch-action: none; user-select: none; -webkit-user-select: none; background: #dfe9f5; }
+.pad { padding-block: 6px max(10px, env(safe-area-inset-bottom, 0px)); }
+.foot { display: flex; flex-direction: column; gap: 8px; padding-block: 10px max(12px, env(safe-area-inset-bottom, 0px)); border-top: var(--px) solid var(--slate); background: var(--ink); }
+.app:has(.tabs) .foot { padding-bottom: 10px; }
+.reset.is-call { animation: call .7s steps(2) infinite; }
+.reset.is-cool { background: var(--slate); color: var(--steel); box-shadow: none; }
+@keyframes call { 50% { box-shadow: inset 0 0 0 4px var(--white), 0 4px 0 #0e0c18; } }
+@media (prefers-reduced-motion: reduce) { .reset.is-call { animation: none; box-shadow: inset 0 0 0 4px var(--white); } }
+.reset { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--red); color: var(--white); box-shadow: inset 0 4px 0 #f6757a, inset 0 -4px 0 var(--red-dark), 0 4px 0 #0e0c18; padding-block: 18px; min-height: 60px; }
+.reset i { position: absolute; inset: 0 auto 0 0; width: 0; background: rgba(255, 255, 255, .45); pointer-events: none; }
+.reset span { position: relative; }
+
+.hero { display: flex; align-items: center; gap: 14px; }
+.hero canvas { width: 68px; height: 72px; flex: none; }
+.grow { flex: 1 1 0; min-width: 0; }
+.row { display: flex; align-items: center; gap: 12px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn--red { background: var(--red); color: var(--white); box-shadow: inset 0 4px 0 #f6757a, inset 0 -4px 0 var(--red-dark), 0 4px 0 #0e0c18; }
+.tag--mute { background: var(--slate); color: var(--mist); }
+.num { font-family: var(--head); font-size: 10px; font-weight: 400; color: var(--white); white-space: nowrap; }
+.dim { color: #8b9bb4; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: var(--px) solid var(--slate); background: var(--navy); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.tab { font-family: var(--head); font-size: 9px; background: none; border: 0; color: #8b9bb4; padding: 4px 2px; min-height: 54px; }
+.tab[aria-current="page"] { color: var(--yellow); box-shadow: inset 0 4px 0 var(--yellow); }
+.node { display: flex; gap: 12px; align-items: center; background: var(--navy); border: var(--px) solid var(--slate); padding: 10px; width: 100%; text-align: left; color: var(--mist); }
+.node canvas { width: 40px; height: 40px; flex: none; }
+.node b { font-family: var(--head); font-size: 9px; font-weight: 400; line-height: 1.5; color: var(--white); display: block; }
+.node--hot { border-color: var(--yellow); }
+.node--locked { opacity: .55; }
+.node .xpbar { display: block; height: 12px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.kv dt { font-family: var(--head); font-size: 9px; color: var(--cyan); padding-top: 6px; }
+.kv dd { margin: 0; color: var(--white); }
+.score { font-family: var(--head); font-size: 9px; line-height: 1.7; color: var(--yellow); text-align: center; margin: 0; }
+.hit { font-family: var(--head); font-size: 12px; line-height: 1.6; color: var(--white); background: var(--red-dark); border: var(--px) solid var(--red); padding: 16px 12px; text-align: center; min-height: 76px; display: flex; align-items: center; justify-content: center; }
+.hit.ok { background: #1f4d2a; border-color: var(--green); }
+.timer { height: 18px; background: var(--navy); border: 3px solid var(--steel); }
+.timer i { display: block; height: 100%; background: var(--cyan); }
+.timer.low i { background: var(--red); }
+label.f { display: flex; flex-direction: column; gap: 6px; }
+label.f span { font-family: var(--head); font-size: 9px; line-height: 1.6; color: var(--cyan); }
+.in { background: #0e0c18; border: 3px solid var(--steel); color: var(--white); padding: 10px; width: 100%; font-size: 24px; border-radius: 0; resize: none; }
+.in:focus { border-color: var(--yellow); outline: none; }
+
+.dots3 { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.dots3 i { width: 10px; height: 10px; border: 2px solid var(--steel); background: var(--ink); display: block; }
+.dots3 i.on { background: var(--yellow); border-color: var(--yellow); }
+.dots3 i.fl { background: var(--cyan); border-color: var(--cyan); }
+.stage__in { margin-block: auto; display: flex; flex-direction: column; gap: 14px; }
+.ask { position: fixed; inset: 0; z-index: 40; background: rgba(14, 12, 24, .82); display: flex; align-items: center; justify-content: center; }
+.ask .panel { width: 100%; max-width: 420px; }
+.score--warn { color: var(--red); }
+.fillc { background: var(--cyan) !important; opacity: .85; }
+.btn.is-done, .btn.is-done:disabled { background: #1f4d2a; color: var(--green); box-shadow: inset 0 0 0 3px var(--green); }
+.reset { -webkit-touch-callout: none; }
+
+.chip--q { color: var(--yellow); border-color: var(--yellow); font-size: 12px; }
+.rinkwrap { position: relative; }
+.coach { position: absolute; left: 50%; bottom: 40%; transform: translateX(-50%); width: min(88%, 300px); background: rgba(24, 20, 37, .94); border: var(--px) solid var(--yellow); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 5; }
+.coach--mid { pointer-events: auto; }
+.coach__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.coach b { font-family: var(--head); font-size: 10px; font-weight: 400; line-height: 1.5; color: var(--yellow); }
+.coach p { color: var(--white); font-size: 21px; }
+.coach__skip { font-family: var(--head); font-size: 8px; color: var(--mist); background: none; border: 0; padding: 12px 4px; pointer-events: auto; text-decoration: underline; }
+.helpbox { max-height: 88%; overflow: hidden; }
+.helpbox .keys { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.helpbox .btn { flex: none; }
+@media (max-width: 360px) { body { font-size: 20px; } }
+</style>
+
+<div class="app" id="app"></div>
+
+<script>
+(function () {
+  'use strict';
+  var OUT = '#181425';
+/*SPRITES*/
+
+  /* ---------- state ---------- */
+  var KEY = 'ce-season-proto-2';
+  function blank() { return { lang: null, sound: true, n: 1, reset: null, upg: {}, hist: [], seen: null, xp: 0, best: {} }; }
+  var S = blank();
+  try { var raw = localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); for (var k in o) S[k] = o[k]; } } catch (e) {}
+  if (!S.lang) S.lang = /^(ru|uk|be|kk)\b/i.test(navigator.language || '') ? 'ru' : 'en';
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function t(ru, en) { return S.lang === 'en' ? en : ru; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var view = 'intro', pick = {}, askWipe = false, DUR = 60, paused = false;
+  var app = document.getElementById('app');
+
+  /* ---------- sound ---------- */
+  var audio = null;
+  function beep(notes, vol) {
+    if (!S.sound) return;
+    try {
+      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume();
+      var at = audio.currentTime + 0.01;
+      notes.forEach(function (n) {
+        var o = audio.createOscillator(), g = audio.createGain();
+        o.type = n[2] || 'square'; o.frequency.setValueAtTime(n[0], at);
+        if (n[3]) o.frequency.exponentialRampToValueAtTime(n[3], at + n[1]);
+        g.gain.setValueAtTime((vol || 0.05) * 0.5, at); g.gain.exponentialRampToValueAtTime(0.0001, at + n[1]);
+        o.connect(g); g.connect(audio.destination); o.start(at); o.stop(at + n[1] + 0.02); at += n[1] * 0.85;
+      });
+    } catch (e) {}
+  }
+  // рёв трибун: короткий шум через полосовой фильтр
+  function roar(v) {
+    if (!S.sound) return;
+    try {
+      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+      var n = Math.floor(audio.sampleRate * 0.9), buf = audio.createBuffer(1, n, audio.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      var src = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain();
+      src.buffer = buf; f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 0.6; g.gain.value = 0.09 * v;
+      src.connect(f); f.connect(g); g.connect(audio.destination); src.start();
+    } catch (e) {}
+  }
+  function buzz(ms) { try { if (S.sound && navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+  var SFX = {
+    tap: function () { beep([[660, 0.05]]); },
+    shot: function () { beep([[900, 0.09, 'square', 180]]); },
+    goal: function (k) { var m = Math.pow(1.122, Math.min(6, (k || 1) - 1)); beep([[523 * m, 0.07], [659 * m, 0.07], [784 * m, 0.07], [1047 * m, 0.24]], 0.07); roar(0.5 + Math.min(0.5, (k || 1) * 0.12)); },
+    post: function () { beep([[1568, 0.05, 'triangle'], [1319, 0.16, 'triangle']], 0.09); },
+    xp: function () { beep([[784, 0.05], [988, 0.05], [1175, 0.05], [1568, 0.2]], 0.05); },
+    bad: function () { beep([[200, 0.1, 'triangle', 90]], 0.08); },
+    riv: function () { beep([[140, 0.14, 'sawtooth'], [110, 0.22, 'sawtooth']], 0.06); },
+    reset: function () { beep([[262, 0.12, 'triangle'], [392, 0.12, 'triangle'], [523, 0.12, 'triangle'], [784, 0.12, 'triangle'], [1047, 0.4, 'triangle']], 0.1); },
+    flow: function () { beep([[659, 0.07], [784, 0.07], [988, 0.07], [1319, 0.3]], 0.06); },
+    end: function () { beep([[523, 0.12], [392, 0.12], [523, 0.3]], 0.06); }
+  };
+
+  /* ---------- shell ---------- */
+  function hud(title) {
+    var live = view === 'play' || view === 'drill' || view === 'rdrill' || view === 'bench' || view === 'between';
+    if (live) return '<header class="hud gut"><span class="hud__ce">CE</span><span class="hud__t">' + title + '</span><button class="chip chip--q" data-act="help" type="button" aria-label="' + t('Подсказка', 'Help') + '">?</button><button class="chip chip--x" data-act="quit" type="button" aria-label="' + t('Выйти', 'Quit') + '">✕</button></header>';
+    return '<header class="hud gut"><span class="hud__ce">CE</span><span class="hud__t">' + title + '</span>' +
+      '<button class="chip chip--q" data-act="help" type="button" aria-label="' + t('Подсказка', 'Help') + '">?</button>' +
+      '<button class="chip chip--lang" data-act="lang" type="button" aria-label="' + t('Switch to English', 'Переключить на русский') + '">' + (S.lang === 'en' ? 'RU' : 'EN') + '</button>' +
+      '<button class="chip" data-act="sound" type="button" aria-pressed="' + !!S.sound + '">' + t('ЗВУК', 'SOUND') + '</button></header>';
+  }
+  // главные кнопки экрана всегда внизу, под большим пальцем, а не в конце прокрутки
+  function dock() {
+    var st = document.querySelector('#stage > .stage__in') || document.getElementById('stage'); if (!st) return; var run = [];
+    while (st.lastElementChild && st.lastElementChild.classList.contains('btn')) { run.unshift(st.lastElementChild); st.removeChild(st.lastElementChild); }
+    if (!run.length) return; var f = document.createElement('div'); f.className = 'foot gut'; run.forEach(function (b) { f.appendChild(b); });
+    var host = document.getElementById('stage'); host.parentNode.insertBefore(f, host.nextSibling);
+  }
+  function screen(title, body) { app.innerHTML = hud(title) + '<main class="stage gut" id="stage"><div class="stage__in">' + body + '</div></main>'; dock(); }
+  function last() { return S.hist[S.hist.length - 1]; }
+  function GESTURES() { return [t('Стукнуть клюшкой по льду', 'Tap the stick on the ice'), t('Поправить шлем', 'Adjust the helmet'), t('Сжать и разжать кулак', 'Clench and open the fist'), t('Глоток воды', 'A sip of water')]; }
+  function WORDS() { return [t('Следующая', 'Next'), t('Здесь', 'Here'), t('Моя', 'Mine'), t('Дальше', 'Onward'), t('Играю', 'Play')]; }
+  function UPG() {
+    return [
+      ['fast', t('БЫСТРЫЙ СБРОС', 'FAST RESET'), t('Сброс срабатывает за секунду, а не за полторы.', 'The reset takes one second, not one and a half.')],
+      ['steady', t('ТВЁРДАЯ РУКА', 'STEADY HAND'), t('Когда голова горячая, бросок уводит на треть меньше.', 'When your head is hot, the shot drifts a third less.')],
+      ['flow', t('ДЛИННЫЙ ПОТОК', 'LONG FLOW'), t('Поток держится 8 секунд вместо 5.', 'Flow lasts 8 seconds instead of 5.')]
+    ];
+  }
+
+  /* ---------- text screens ---------- */
+  function render() {
+    if (view === 'play') return;
+    if (hubRender()) return;
+    if (view === 'intro') return intro();
+    if (view === 'result') return result();
+    if (view === 'craft') return craft();
+    if (view === 'reflect') return reflect();
+  }
+  function intro() {
+    var n = S.n, h = '<span class="tag">' + t('ПРОТОТИП · ХОККЕЙ', 'PROTOTYPE · HOCKEY') + '</span><h1 class="h1">' + t('МАТЧ ', 'MATCH ') + n + '</h1>';
+    if (n === 1) h += '<p class="lead">' + t('60 секунд. Забей больше соперника.', '60 seconds. Outscore the rival.') + '</p>' +
+      '<section class="panel"><div class="keys">' +
+      '<b>' + t('ВЕДИ', 'DRAG') + '</b><span>' + t('Палец по льду: игрок едет за ним.', 'Finger on the ice: the player follows it.') + '</span>' +
+      '<b>' + t('ТАП', 'TAP') + '</b><span>' + t('Бросок. Короткий тап или смахни вверх. Лови открытый угол.', 'The shot. A quick tap or a flick up. Pick the open corner.') + '</span>' +
+      '<b>' + t('ГОЛОВА', 'HEAD') + '</b><span>' + t('Шкала сверху. Промахи и голы соперника толкают её вверх.', 'The meter on top. Misses and rival goals push it up.') + '</span>' +
+      '<b>' + t('СБРОС', 'RESET') + '</b><span>' + t('Шкала пожелтела: держи красную кнопку внизу.', 'The meter turns yellow: hold the red button below.') + '</span>' +
+      '</div><p class="note">' + (S.tut ? t('С клавиатуры: стрелки, пробел, R.', 'Keyboard: arrows, space, R.') : t('Сначала короткая разминка: покажем всё по шагам.', 'First a short warm-up: we show everything step by step.')) + '</p></section>';
+    else if (n === 2) h += '<p class="lead">' + t('Тот же соперник. Теперь сброс твой.', 'Same rival. Now the reset is yours.') + '</p>' +
+      '<section class="panel panel--hot"><span class="tag tag--red">' + t('ТВОЙ СБРОС', 'YOUR RESET') + '</span><h2 class="h2">' + t('КНОПКА СБРОСА', 'RESET BUTTON') + '</h2>' +
+      '<p>' + t('Когда шкала головы пожелтела, держи кнопку внизу полторы секунды. Игрок в это время стоит. После сброса шесть секунд холодной головы: бросок идёт точно туда, куда целишься, и шкала не растёт.', 'When the head meter turns yellow, hold the button below for a second and a half. The player stands still meanwhile. After a reset you get six seconds of a cool head: the shot goes exactly where you aim and the meter does not rise.') + '</p>' +
+      '<p class="quote">' + esc(S.reset.gesture) + ' · ' + t('выдох', 'exhale') + ' · ' + esc(S.reset.word) + '</p></section>';
+    else {
+      var mine = UPG().filter(function (u) { return S.upg[u[0]]; }).map(function (u) { return u[1]; });
+      h += '<p class="lead">' + t('Три гола подряд включают поток: игра замедляется, гол идёт за два.', 'Three goals in a row switch on flow: the game slows down and a goal counts double.') + '</p>' +
+        (mine.length ? '<section class="panel"><h2 class="h2">' + t('ТВОИ УЛУЧШЕНИЯ', 'YOUR UPGRADES') + '</h2><p>' + mine.join(' · ') + '</p></section>' : '');
+    }
+    if (S.hist.length) h += '<div class="xprow"><span class="h2">' + t('УРОВЕНЬ ', 'LEVEL ') + (Math.floor(S.xp / 200) + 1) + '</span><b class="xpnum">' + S.xp + ' XP</b></div><div class="xpbar"><i style="width:' + (S.xp % 200) / 2 + '%"></i></div>';
+    h += '<button class="btn" type="button" data-act="play">▶ ' + t('НА ЛЁД', 'HIT THE ICE') + '</button>';
+    if (S.hub) h += '<button class="btn btn--ghost" type="button" data-act="hub">' + t('НА ГЛАВНУЮ', 'HOME') + '</button>';
+    else if (S.hist.length) h += askWipe
+      ? '<section class="panel"><p>' + t('Стереть прогресс на этом устройстве?', 'Erase progress on this device?') + '</p><button class="btn btn--ghost" type="button" data-act="wipe">' + t('СТЕРЕТЬ', 'ERASE') + '</button></section>'
+      : '<button class="btn btn--ghost" type="button" data-act="askwipe">' + t('НАЧАТЬ ЗАНОВО', 'START OVER') + '</button>';
+    screen(t('СЕЗОН', 'SEASON'), h);
+  }
+
+  function result() {
+    var r = last(), p = S.hist[S.hist.length - 2], h = '';
+    var verdict = r.you > r.riv ? t('ПОБЕДА', 'WIN') : r.you < r.riv ? t('ПОРАЖЕНИЕ', 'LOSS') : t('НИЧЬЯ', 'DRAW');
+    h += '<span class="tag' + (r.you > r.riv ? '' : ' tag--red') + '">' + t('МАТЧ ', 'MATCH ') + r.n + ' · ' + verdict + '</span>' +
+      '<div class="final">' + r.you + ' : ' + r.riv + '<small>' + t('ТЫ · СОПЕРНИК', 'YOU · RIVAL') + '</small></div>';
+    function row(label, v, pv, unit) { return '<span>' + label + '</span>' + (p ? '<b class="was">' + pv + (unit || '') + '</b>' : '<i></i>') + '<b>' + v + (unit || '') + '</b>'; }
+    var LV = 200, lv0 = Math.floor(r.from / LV) + 1, lv1 = Math.floor((r.from + r.xp) / LV) + 1, up = lv1 > lv0;
+    if (r.rec && r.rec.length && r.you >= r.riv) h += '<span class="tag">' + t('НОВЫЙ РЕКОРД: ', 'NEW RECORD: ') + r.rec.join(' · ') + '</span>';
+    h += '<section class="panel panel--hot"><div class="xprow"><span class="h2">' + t('УРОВЕНЬ ', 'LEVEL ') + lv1 + (up ? ' · ' + t('НОВЫЙ!', 'NEW!') : '') + '</span><b class="xpnum">+' + r.xp + ' XP</b></div>' +
+      '<div class="xpbar"><i id="xpfill" data-to="' + ((r.from + r.xp) % LV) / LV * 100 + '" style="width:' + (up ? 0 : (r.from % LV) / LV * 100) + '%"></i></div>' +
+      '<div class="stats stats--xp"><span>' + t('Голы', 'Goals') + '</span><i>' + r.goals + ' × 10</i><b>' + r.goals * 10 + '</b>' +
+      '<span>' + t('Сбросы', 'Resets') + '</span><i>' + r.resets + ' × 15</i><b>' + r.resets * 15 + '</b>' +
+      '<span>' + t('Секунды в потоке', 'Seconds in flow') + '</span><i>' + r.flow + ' × 5</i><b>' + r.flow * 5 + '</b>' +
+      '<span>' + t('Матч доигран', 'Match finished') + '</span><i></i><b>30</b></div></section>';
+    h += '<section class="panel"><div class="stats">' +
+      (p ? '<span></span><i>' + t('МАТЧ ', 'MATCH ') + p.n + '</i><i>' + t('СЕЙЧАС', 'NOW') + '</i>' : '') +
+      row(t('С горячей головой', 'With a hot head'), r.spiral, p && p.spiral, t(' с', ' s')) +
+      row(t('Сбросов', 'Resets'), r.resets, p && p.resets) +
+      row(t('В потоке', 'In flow'), r.flow, p && p.flow, t(' с', ' s')) + '</div></section>';
+    if (r.n === 1) {
+      h += '<p class="lead">' + (r.resets
+        ? t('Сброс возвращал тебе холодную голову и точный бросок. В настоящей игре он работает так же.', 'The reset gave you back a cool head and a true shot. In a real game it works the same way.')
+        : t('Ты ни разу не нажал сброс. В игре так же: под давлением про инструмент забывают.', 'You never pressed the reset. It is the same in a game: under pressure people forget the tool.')) + '</p>' +
+        '<p>' + t('Сейчас сброс был общий. Собери свой: одно движение и одно слово, которые сработают на настоящем льду.', 'This time the reset was a generic one. Build your own: one movement and one word that will work on real ice.') + '</p>' +
+        '<button class="btn" type="button" data-act="go" data-v="craft">' + t('СОБРАТЬ СВОЙ СБРОС · 1 МИНУТА', 'BUILD YOUR RESET · 1 MINUTE') + '</button>';
+    } else if (r.n === 2) {
+      var better = p && r.spiral < p.spiral;
+      h += '<p class="lead">' + (r.resets
+        ? (better ? t('С горячей головой ты играл меньше, чем в прошлом матче. Сброс становится привычкой.', 'You played with a hot head for less time than last match. The reset is becoming a habit.')
+                  : t('Сброс у тебя есть, но голова пока закипает быстрее. Жми его раньше: когда шкала только пожелтела.', 'You have the reset, but your head still heats up faster. Hit it earlier: when the meter has only turned yellow.'))
+        : t('Ты ни разу не нажал сброс. В игре так же: инструмент есть, а в момент давления про него забывают.', 'You never pressed the reset. It is the same in a game: the tool is there, and under pressure people forget it.')) + '</p>' +
+        '<button class="btn" type="button" data-act="go" data-v="reflect">' + t('ОДИН ВОПРОС ПОСЛЕ ИГРЫ', 'ONE QUESTION AFTER THE GAME') + '</button>';
+    } else {
+      h += '<p class="lead">' + (r.flow ? t('Ты был в потоке. Он приходит не от старания, а от серии простых точных действий.', 'You were in flow. It does not come from trying hard, it comes from a run of simple accurate actions.')
+        : t('До потока не дошло: нужна серия из трёх голов без промаха.', 'No flow this time: it takes three goals in a row without a miss.')) + '</p>';
+      h += UPG().some(function (u) { return !S.upg[u[0]]; })
+        ? '<button class="btn" type="button" data-act="go" data-v="reflect">' + t('РАЗБОР И УЛУЧШЕНИЕ', 'REVIEW AND UPGRADE') + '</button>'
+        : '<button class="btn" type="button" data-act="next">▶ ' + t('ЕЩЁ МАТЧ', 'ONE MORE MATCH') + '</button>';
+      if (S.hub) h += '<button class="btn btn--ghost" type="button" data-act="hub">' + t('НА ГЛАВНУЮ', 'HOME') + '</button>';
+    }
+    screen(t('ИТОГ', 'RESULT'), h);
+    var xf = document.getElementById('xpfill'); if (xf) setTimeout(function () { xf.style.width = xf.getAttribute('data-to') + '%'; SFX.xp(); }, 350);
+  }
+
+  function words(key, list) {
+    return '<div class="words">' + list.map(function (w) { return '<button class="word" type="button" data-act="pick" data-k="' + key + '" data-v="' + esc(w) + '" aria-pressed="' + (pick[key] === w) + '">' + esc(w) + '</button>'; }).join('') + '</div>';
+  }
+  function craft() {
+    screen(t('СБРОС', 'RESET'), '<span class="tag">' + t('НАСТОЯЩЕЕ ЗАДАНИЕ · 1 МИНУТА', 'REAL TASK · 1 MINUTE') + '</span><h1 class="h1">' + t('СОБЕРИ СВОЙ СБРОС', 'BUILD YOUR RESET') + '</h1>' +
+      '<p>' + t('Десять секунд и три действия: отпустить, выдох, перефокус. Выбери свои. Они станут твоей кнопкой сброса в игре и пригодятся на настоящем льду.', 'Ten seconds and three actions: let go, exhale, refocus. Choose yours. They become your reset button in the game and they work on real ice.') + '</p>' +
+      '<h2 class="h2">' + t('1. ОТПУСТИТЬ: ОДНО ДВИЖЕНИЕ', '1. LET GO: ONE MOVEMENT') + '</h2>' + words('gesture', GESTURES()) +
+      '<h2 class="h2">' + t('2. ВЫДОХ: ОДИН ДЛИННЫЙ', '2. EXHALE: ONE LONG ONE') + '</h2>' +
+      '<h2 class="h2">' + t('3. ПЕРЕФОКУС: ОДНО СЛОВО', '3. REFOCUS: ONE WORD') + '</h2>' + words('word', WORDS()) +
+      '<button class="btn" type="button" data-act="crafted"' + (pick.gesture && pick.word ? '' : ' disabled') + '>' + t('СДЕЛАТЬ СБРОС СВОИМ', 'MAKE THE RESET YOURS') + '</button>');
+  }
+  function reflect() {
+    var qs = [t('После гола соперника', 'After a rival goal'), t('После своего промаха', 'After my own miss'), t('Когда кончалось время', 'When time was running out'), t('Я не закипал', 'I kept my cool')];
+    var left = UPG().filter(function (u) { return !S.upg[u[0]]; });
+    screen(t('РАЗБОР', 'REVIEW'), '<span class="tag">' + t('НАСТОЯЩЕЕ ЗАДАНИЕ · 30 СЕКУНД', 'REAL TASK · 30 SECONDS') + '</span><h1 class="h1">' + t('КОГДА ТЫ ЗАКИПЕЛ?', 'WHEN DID YOU LOSE YOUR COOL?') + '</h1>' +
+      '<p>' + t('Вспомни матч. Честный ответ даёт улучшение.', 'Think back to the match. An honest answer earns an upgrade.') + '</p>' + words('when', qs) +
+      '<h2 class="h2">' + t('ВЫБЕРИ УЛУЧШЕНИЕ', 'CHOOSE AN UPGRADE') + '</h2>' +
+      left.map(function (u) { return '<button class="opt" type="button" data-act="pick" data-k="upg" data-v="' + u[0] + '" aria-pressed="' + (pick.upg === u[0]) + '"><b>' + u[1] + '</b><span>' + u[2] + '</span></button>'; }).join('') +
+      '<p class="note">' + t('В полной версии улучшения дают за разбор настоящих тренировок и игр.', 'In the full version upgrades come from reviewing real practices and games.') + '</p>' +
+      '<button class="btn" type="button" data-act="reflected"' + (pick.when && pick.upg ? '' : ' disabled') + '>▶ ' + t('СЛЕДУЮЩИЙ МАТЧ', 'NEXT MATCH') + '</button>');
+  }
+
+  /* ---------- the match ---------- */
+  var W = 320, H = 460, NET_L = 110, NET_R = 210, GW = 46, PLAYER_Y = 322, BLADE = 52;
+  var G = null, cv = null, cx = null, raf = 0, prev = 0, spr = {}, els = {};
+  function makeSprite(path) { var c = document.createElement('canvas'); c.width = 34; c.height = 36; drawHockeyPlayer(c.getContext('2d'), 2, 3, path, 0, false); return c; }
+  function startMatch() {
+    var n = S.n, tut = n === 1 && !S.tut && !S.hub;
+    G = { n: n, t: 0, you: 0, riv: 0, tilt: 0, streak: 0, flow: 0, flowT: 0, px: 160, tx: 160, gx: 143,
+      puck: { s: 'in', t: 0.6, x: 0, y: 0, vx: 0 }, clock: 0,
+      defs: [{ x: 40, y: 222, v: 62, from: n === 1 ? 20 : 0 }, { x: 240, y: 172, v: -78, from: n === 1 ? 28 : 0 }, { x: 140, y: 128, v: 92, from: n === 1 ? 45 : 35 }], out: {}, gdir: 1, gs: 96,
+      rivNext: n === 1 ? 20 : 8, k: n === 1 ? 0.45 : n === 2 ? 0.6 : n <= 4 ? 0.8 : 1, sub: '', shotTilt: 0, wasY: false, parts: [], stop: 0, jump: 0, net: 0, clear: 0, ring: 0, trail: [],
+      msg: '', msgT: 0, msgC: '#fff', spiral: 0, lost: 0, wasHigh: false, resets: 0, hold: 0, holding: false, cool: 0,
+      shots: 0, goals: 0, banners: [], bannerT: 0.4, flash: 0, clutchSaid: false, over: false,
+      can: true, need: S.upg.fast ? 1.0 : 1.5, drift: S.upg.steady ? 0.66 : 1, flowDur: S.upg.flow ? 8 : 5 };
+    view = 'play';
+    app.innerHTML = hud(t('МАТЧ ', 'MATCH ') + n) +
+      '<div class="gut"><div class="board"><span class="board__s">' + t('ТЫ', 'YOU') + '<b id="sYou">0</b><span class="dots3" id="sFlow" role="img" aria-label="' + t('Голы подряд до потока', 'Goals in a row until flow') + '"><i></i><i></i><i></i></span></span><span class="board__t" id="sTime">1:00</span><span class="board__s"><b id="sRiv">0</b>' + t('СОПЕРНИК', 'RIVAL') + '</span></div>' +
+      '<div class="head"><span>' + t('ГОЛОВА', 'HEAD') + '</span><b role="img" aria-label="' + t('Шкала головы: от холодной до горячей', 'Head meter: from cool to hot') + '"><i id="sHead"></i></b></div></div>' +
+      '<div class="rinkwrap gut" id="wrap"><canvas id="rink" width="' + W + '" height="' + H + '" aria-label="' + t('Площадка', 'Rink') + '"></canvas></div>' +
+      '<div class="gut pad"><button class="btn reset" type="button" id="reset"><i id="rfill"></i><span id="rlabel">' + t('СБРОС · ДЕРЖИ', 'RESET · HOLD') + '</span></button></div>';
+    cv = document.getElementById('rink'); cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false;
+    els = { you: document.getElementById('sYou'), riv: document.getElementById('sRiv'), time: document.getElementById('sTime'), head: document.getElementById('sHead'), fill: document.getElementById('rfill'), reset: document.getElementById('reset'), rlabel: document.getElementById('rlabel'), dots: document.getElementById('sFlow').children };
+    spr.me = makeSprite({ jersey: '#e43b44', jerseyDark: '#9e2835', trim: '#ffffff', beard: null, letter: 'C' });
+    spr.def = makeSprite({ jersey: '#3b55b8', jerseyDark: '#1b2a6b', trim: '#feae34', beard: null, letter: null });
+    if (tut) { G.tut = 0; G.tutMove = 0; G.tutPx = G.px; G.tutMiss = 0; G.defs.forEach(function (d) { d.from = 999; }); G.puck.t = 0.2; var cw = document.getElementById('wrap'), co = document.createElement('div'); co.id = 'coach'; co.className = 'coach'; cw.appendChild(co); tutDraw(); }
+    fit(); bindMatch();
+    prev = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+  }
+  function fit() {
+    var w = document.getElementById('wrap'); if (!w || !cv) return;
+    var cs = getComputedStyle(w), aw = w.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8, ah = w.clientHeight - 8;
+    var k = Math.max(0.4, Math.min(aw / W, ah / H));
+    cv.style.width = Math.floor(W * k) + 'px'; cv.style.height = Math.floor(H * k) + 'px';
+  }
+  window.addEventListener('resize', function () { fit(); if (typeof fitF === 'function' && F) fitF(); });
+  function say(m, c, d) { G.msg = m; G.msgC = c || '#ffffff'; G.msgT = d || 1.1; G.sub = ''; }
+  function clutch() { return G.t >= DUR - 12; }
+  function addTilt(v) { if (G.tut != null) { G.tutMiss++; return; } if (G.clear > 0) return; var was = G.tilt; G.tilt = Math.min(1, G.tilt + v * G.k * (1 + G.tilt) * (clutch() ? 1.4 : 1)); if (was < 0.35) G.tilt = Math.min(G.tilt, 0.46); }   // из зелёной зоны нельзя перескочить жёлтую
+  function nextPuck(d) { G.puck.s = 'in'; G.puck.t = d || 1.9; }
+  function miss(text, soft, why) { G.out[text] = (G.out[text] || 0) + 1; G.streak = 0; G.flow = 0; addTilt(soft ? 0.09 : 0.2); say(text, soft ? '#fee761' : '#e43b44', 1.6); G.sub = why || ''; if (soft) SFX.post(); else SFX.bad(); nextPuck(soft ? 1.5 : 2.2); }
+  function burst(x, y, n, cols) { for (var i = 0; i < n; i++) G.parts.push({ x: x, y: y, vx: (Math.random() - 0.5) * 220, vy: -60 - Math.random() * 200, l: 0.6 + Math.random() * 0.6, c: cols[i % cols.length] }); }
+  function shoot() {
+    var p = G.puck; if (G.over || p.s !== 'ready' || G.holding) return;
+    p.s = 'fly'; p.x = G.px; p.y = PLAYER_Y + 22; p.vx = G.clear > 0 ? 0 : (Math.random() * 2 - 1) * G.tilt * 120 * G.drift; G.shots++; G.trail = []; G.shotTilt = G.clear > 0 ? 0 : G.tilt; SFX.shot();
+  }
+  function update(dt) {
+    var g = G, p = g.puck, slow = g.flow > 0 ? 0.5 : 1;
+    if (g.tut != null) tutStep(dt); else { g.t += dt; if (g.t >= DUR) return endMatch(); }
+    if (g.msgT > 0) g.msgT -= dt; if (g.cool > 0) g.cool -= dt; if (g.flash > 0) g.flash -= dt;
+    if (g.jump > 0) g.jump -= dt; if (g.net > 0) g.net -= dt; if (g.clear > 0) g.clear -= dt; if (g.ring > 0) g.ring -= dt;
+    g.parts.forEach(function (q) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 520 * dt; q.l -= dt; }); g.parts = g.parts.filter(function (q) { return q.l > 0; });
+    if (g.tut == null && clutch() && !g.clutchSaid) { g.clutchSaid = true; say(t('РЕШАЮЩИЙ МОМЕНТ', 'CLUTCH TIME'), '#fee761', 1.6); }
+    if (g.tut == null && g.t >= g.rivNext && g.t < DUR - 2) { g.riv++; g.rivNext = g.t + Math.max(5, (g.n === 1 ? 13 : g.n === 2 ? 11 : 10) - Math.max(0, g.you - g.riv)) + Math.random() * 2 - 1; addTilt(0.3); say(t('СОПЕРНИК ЗАБИЛ', 'RIVAL SCORES'), '#e43b44', 1.4); SFX.riv(); }
+    // голова: ниже порога успокаивается сама, выше порога раскручивается сама
+    if (g.tut == null) g.tilt = Math.max(0, Math.min(1, g.tilt + (g.tilt >= 0.35 ? (g.clear > 0 ? 0 : 0.03 * g.k) : -0.012) * dt));
+    if (g.tut == null && g.tilt >= 0.35 && !g.wasY) { g.wasY = true; say(t('ДЕРЖИ ДЛЯ СБРОСА', 'HOLD TO RESET'), '#fee761', 2); g.sub = t('КРАСНАЯ КНОПКА ВНИЗУ', 'THE RED BUTTON BELOW'); }
+    if (g.tilt < 0.25) g.wasY = false;
+    if (g.tut == null && g.tilt >= 0.6) g.spiral += dt;
+    if (g.tilt >= 0.8 && !g.wasHigh) { g.wasHigh = true; g.lost++; }
+    if (g.tilt < 0.5) g.wasHigh = false;
+    if (g.flow > 0) { g.flow -= dt; g.flowT += dt; }
+    // сброс
+    if (g.holding && g.can && g.cool <= 0) {
+      g.hold += dt;
+      if (g.hold >= g.need) { g.tilt = 0; g.resets++; g.cool = 2.5; g.hold = 0; g.holding = false; g.flash = 0.35; g.banners = []; g.clear = 6; g.ring = 0.7; buzz([20, 40, 60]); say(S.reset ? S.reset.word.toUpperCase() : t('СБРОС', 'RESET'), '#2ce8f5', 1.2); g.sub = ''; SFX.reset(); }
+    } else if (!g.holding) g.hold = 0;
+    if (!g.holding) { var dx = g.tx - g.px, mv = 300 * dt; g.px += Math.abs(dx) < mv ? dx : (dx > 0 ? mv : -mv); }
+    // вратарь ходит от штанги к штанге в своём ритме: чем сильнее несёт, тем он быстрее
+    g.gs = 96 * (1 + 0.9 * g.tilt) * (clutch() ? 1.12 : 1) * slow * (g.clear > 0 ? 0.7 : 1) * (g.n === 1 && g.t < 20 ? 0.5 : 1);
+    g.gx += g.gdir * g.gs * dt;
+    if (g.gx < NET_L) { g.gx = NET_L; g.gdir = 1; } if (g.gx > NET_R - GW) { g.gx = NET_R - GW; g.gdir = -1; }
+    g.defs.forEach(function (d) { if (g.t < d.from) return; d.x += d.v * slow * dt; if (d.x < 16) { d.x = 16; d.v = -d.v; } if (d.x > W - 16 - 34) { d.x = W - 16 - 34; d.v = -d.v; } });
+    if (p.s === 'in') { p.t -= dt; if (p.t <= 0) { p.s = 'ready'; g.clock = 3.6; } }
+    else if (p.s === 'ready') { g.clock -= dt; if (g.clock <= 0) miss(t('ПОТЕРЯ', 'TURNOVER'), false, t('НЕ УСПЕЛ БРОСИТЬ', 'YOU DID NOT SHOOT IN TIME')); }
+    else if (p.s === 'fly') {
+      var py = p.y; p.y -= 600 * dt; p.x += p.vx * dt; g.trail.push([p.x, p.y]); if (g.trail.length > 7) g.trail.shift();
+      for (var i = 0; i < g.defs.length; i++) { var d = g.defs[i]; if (g.t < d.from) continue; if (py > d.y + 26 && p.y <= d.y + 26 && p.x > d.x + 2 && p.x < d.x + 36) return miss(t('БЛОК', 'BLOCKED'), false, t('ЗАЩИТНИК НА ЛИНИИ БРОСКА', 'A DEFENDER IN THE SHOT LANE')); }
+      if (p.y <= 84) {
+        if (p.x > g.gx - 3 && p.x < g.gx + GW + 3) miss(t('СЕЙВ', 'SAVE'), false, t('ВРАТАРЬ БЫЛ НА ЛИНИИ БРОСКА', 'THE GOALIE WAS IN THE SHOT LANE'));
+        else if (p.x > NET_L + 2 && p.x < NET_R - 2) {
+          var two = g.flow > 0; g.you += two ? 2 : 1; g.goals++; g.streak++; g.tilt = Math.max(0, g.tilt - 0.04);
+          g.stop = 0.1; g.jump = 0.5; g.net = 0.5; buzz(30); burst(p.x, 70, two ? 26 : 16, two ? ['#2ce8f5', '#ffffff', '#fee761'] : ['#fee761', '#feae34', '#ffffff']); SFX.goal(g.streak);
+          if (g.streak >= 3 && g.flow <= 0) { g.flow = g.flowDur; say(t('ПОТОК', 'FLOW'), '#2ce8f5', 1.5); SFX.flow(); }
+          else say(two ? t('ГОЛ ×2', 'GOAL ×2') : g.streak >= 2 ? t('ГОЛ · ', 'GOAL · ') + g.streak + t(' ПОДРЯД', ' IN A ROW') : t('ГОЛ', 'GOAL'), '#63c74d');
+          nextPuck();
+        } else if (Math.abs(p.x - NET_L) < 9 || Math.abs(p.x - NET_R) < 9) miss(t('ШТАНГА!', 'POST!'), true, g.shotTilt > 0.2 ? t('ГОРЯЧАЯ ГОЛОВА: БРОСОК УВЕЛО', 'HOT HEAD: THE SHOT DRIFTED') : t('ЧУТЬ ТОЧНЕЕ', 'JUST A BIT OFF'));
+        else miss(t('МИМО', 'WIDE'), false, g.shotTilt > 0.2 ? t('ГОРЯЧАЯ ГОЛОВА: БРОСОК УВЕЛО', 'HOT HEAD: THE SHOT DRIFTED') : t('ЛИНИЯ БРОСКА МИМО ВОРОТ', 'THE SHOT LINE MISSED THE NET'));
+      }
+    }
+    // выкрики трибун: в четырёх местах за линией ворот, по углам, не поверх игроков
+    if (g.tilt > 0.45) { g.bannerT -= dt; if (g.bannerT <= 0) { g.bannerT = 1.5 - g.tilt * 0.6; var B = [t('БУУУ!', 'BOOO!'), t('СМЕНИСЬ!', 'GET OFF!'), g.you + ':' + g.riv, t('ОПЯТЬ!', 'AGAIN!'), t('ЭЙ, ТЫ!', 'HEY, YOU!')];
+      var free = [0, 1, 2, 3].filter(function (i) { return !g.banners.some(function (q) { return q.i === i; }); });
+      if (free.length) g.banners.push({ i: free[Math.floor(Math.random() * free.length)], s: B[Math.floor(Math.random() * B.length)], l: 1.4 }); } }
+    g.banners.forEach(function (q) { q.l -= dt; }); g.banners = g.banners.filter(function (q) { return q.l > 0; });
+  }
+  function R(c, x, y, w, h) { cx.fillStyle = c; cx.fillRect(Math.round(x), Math.round(y), w, h); }
+  function draw() {
+    var g = G, p = g.puck, sh = g.tilt > 0.4 ? g.tilt * 3 : 0, nk = g.net > 0 ? Math.round(Math.sin(g.net * 40) * 2) : 0, jy = g.jump > 0 ? Math.round(Math.sin(g.jump / 0.5 * Math.PI) * 10) : 0;
+    cx.setTransform(1, 0, 0, 1, 0, 0); R('#181425', 0, 0, W, H);
+    cx.translate(Math.round((Math.random() - 0.5) * sh), Math.round((Math.random() - 0.5) * sh));
+    R('#dfe9f5', 8, 8, W - 16, H - 16); R('#c8d6e8', 8, 8, W - 16, 4);
+    R('#e43b44', 8, 80, W - 16, 3); R('#0099db', 8, 262, W - 16, 4);
+    R('#bcd3ee', NET_L - 16, 83, NET_R - NET_L + 32, 30);                       // вратарская
+    R(OUT, NET_L - 4, 44, NET_R - NET_L + 8, 38); R('#ffffff', NET_L, 48, NET_R - NET_L, 32);
+    for (var i = NET_L + 8; i < NET_R; i += 10) R('#c0cbdc', i + nk, 48 - Math.abs(nk), 1, 32);
+    for (var j = 56; j < 80; j += 8) R('#c0cbdc', NET_L, j, NET_R - NET_L, 1);
+    R('#e43b44', NET_L - 4, 44, 4, 38); R('#e43b44', NET_R, 44, 4, 38); R('#e43b44', NET_L - 4, 44, NET_R - NET_L + 8, 4);
+    // вратарь
+    R(OUT, g.gx - 1, 66, GW + 2, 30); R('#3b55b8', g.gx, 67, GW, 14); R('#ffffff', g.gx, 81, GW, 14); R('#feae34', g.gx, 79, GW, 2);
+    R(OUT, g.gx + 15, 58, 12, 11); R('#f4f4f4', g.gx + 16, 59, 10, 9); R(OUT, g.gx + 18, 63, 6, 2);
+    g.defs.forEach(function (d) { if (g.t < d.from) return; cx.drawImage(spr.def, Math.round(d.x), d.y - 12, 51, 54); });
+    if (p.s === 'fly') { g.trail.forEach(function (q, k) { R(g.flow > 0 ? '#2ce8f5' : g.clear > 0 ? '#ffffff' : '#8b9bb4', q[0] - 2, q[1], 4, 4 + k); }); R(OUT, p.x - 4, p.y - 3, 8, 6); R('#3a4466', p.x - 3, p.y - 2, 6, 3); }
+    g.parts.forEach(function (q) { R(q.c, q.x, q.y, 3, 3); });
+    if (g.flow > 0 || g.clear > 0) { cx.fillStyle = g.flow > 0 ? 'rgba(44,232,245,.35)' : 'rgba(255,255,255,.35)'; cx.fillRect(Math.round(g.px - BLADE) + 6, PLAYER_Y + 62 - jy, 40, 4); }
+    cx.drawImage(spr.me, Math.round(g.px - BLADE), PLAYER_Y - 6 - jy, 68, 72);
+    if (p.s === 'ready' && !g.holding) {
+      var sp = g.clear > 0 ? 0 : g.tilt * 120 * g.drift * 0.43, ac = g.gx - 3 < g.px && g.px < g.gx + GW + 3 || g.px < NET_L + 2 || g.px > NET_R - 2 ? '#e43b44' : '#63c74d';
+      if (sp > 4) { cx.fillStyle = 'rgba(228,59,68,.16)'; cx.beginPath(); cx.moveTo(g.px, PLAYER_Y + 36); cx.lineTo(g.px - sp, 86); cx.lineTo(g.px + sp, 86); cx.closePath(); cx.fill(); }
+      for (var ay = PLAYER_Y + 30; ay > 96; ay -= 14) R(ac, g.px - 1, ay, 3, 8);
+      R(ac, g.px - 7, 96, 15, 3); R(ac, g.px - 4, 92, 9, 3); R(ac, g.px - 1, 88, 3, 3);
+    }
+    if (p.s === 'ready') { R(OUT, g.px - 5, PLAYER_Y + 46, 10, 6); R('#3a4466', g.px - 4, PLAYER_Y + 47, 8, 3);
+      R(OUT, g.px - 47, PLAYER_Y - 20 - jy, 42, 7); R(g.clock < 1.2 ? '#e43b44' : '#63c74d', g.px - 46, PLAYER_Y - 19 - jy, Math.max(0, 40 * g.clock / 3.6), 5); }
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    if (g.tilt > 0.2) { var a = (g.tilt - 0.2) * 0.75, gr = cx.createRadialGradient(W / 2, H / 2, 60, W / 2, H / 2, 300); gr.addColorStop(0, 'rgba(158,40,53,0)'); gr.addColorStop(1, 'rgba(158,40,53,' + a.toFixed(2) + ')'); cx.fillStyle = gr; cx.fillRect(0, 0, W, H); }
+    if (g.flow > 0) { cx.fillStyle = 'rgba(44,232,245,.16)'; cx.fillRect(0, 0, W, H); R('#2ce8f5', 8, H - 14, (W - 16) * g.flow / g.flowDur, 6); }
+    cx.font = '8px "Press Start 2P", monospace'; cx.textBaseline = 'top';
+    g.banners.forEach(function (q) { var w = cx.measureText(q.s).width + 8, bx = q.i < 2 ? 12 : W - 12 - w, by = 46 + (q.i % 2) * 16; R('#181425', bx, by, w, 14); R('#e43b44', bx, by, w, 2); cx.fillStyle = '#ffffff'; cx.fillText(q.s, bx + 4, by + 4); });
+    if (g.holding && g.can) { cx.fillStyle = 'rgba(24,20,37,.6)'; cx.fillRect(0, 0, W, H); var rr = 70 * (1 - Math.min(1, g.hold / g.need)) + 12; cx.strokeStyle = '#2ce8f5'; cx.lineWidth = 4; cx.beginPath(); cx.arc(W / 2, H / 2, rr, 0, 6.3); cx.stroke(); cx.fillStyle = '#ffffff'; cx.textAlign = 'center'; cx.fillText(t('ВЫДОХ...', 'EXHALE...'), W / 2, H / 2 - 4); cx.textAlign = 'left'; }
+    if (g.ring > 0) { cx.strokeStyle = 'rgba(44,232,245,' + (g.ring / 0.7).toFixed(2) + ')'; cx.lineWidth = 6; cx.beginPath(); cx.arc(g.px, PLAYER_Y + 30, (0.7 - g.ring) * 520, 0, 6.3); cx.stroke(); }
+    if (g.clear > 0) { R('#ffffff', 8, 8, (W - 16) * g.clear / 6, 4); cx.fillStyle = '#ffffff'; cx.fillText(t('ХОЛОДНАЯ ГОЛОВА', 'COOL HEAD'), 14, 18); }
+    if (g.flash > 0) { cx.fillStyle = 'rgba(255,255,255,' + (g.flash * 1.2).toFixed(2) + ')'; cx.fillRect(0, 0, W, H); }
+    if (g.msgT > 0) { cx.font = '14px "Press Start 2P", monospace'; cx.textAlign = 'center'; cx.fillStyle = OUT; cx.fillText(g.msg, W / 2 + 2, 152); cx.fillStyle = g.msgC; cx.fillText(g.msg, W / 2, 150);
+      if (g.sub) { cx.font = '8px "Press Start 2P", monospace'; var sw = cx.measureText(g.sub).width + 14; R('#181425', W / 2 - sw / 2, 172, sw, 18); cx.fillStyle = '#ffffff'; cx.fillText(g.sub, W / 2, 177); }
+      cx.textAlign = 'left'; }
+    if (g.t < 6 && g.n <= 2 && !g.shots) { cx.font = '8px "Press Start 2P", monospace'; cx.textAlign = 'center'; cx.fillStyle = '#5a6988'; cx.fillText(t('ВЕДИ ПАЛЬЦЕМ · ТАП: БРОСОК', 'DRAG TO MOVE · TAP TO SHOOT'), W / 2, H - 30); cx.textAlign = 'left'; }
+    // табло
+    var left = Math.max(0, Math.ceil(DUR - g.t)), tm = Math.floor(left / 60) + ':' + ('0' + left % 60).slice(-2);
+    if (els.time.textContent !== tm) els.time.textContent = tm;
+    if (els.you.textContent !== String(g.you)) els.you.textContent = g.you;
+    if (els.riv.textContent !== String(g.riv)) els.riv.textContent = g.riv;
+    els.head.style.width = Math.round(g.tilt * 100) + '%'; els.head.style.background = g.tilt < 0.35 ? '#63c74d' : g.tilt < 0.6 ? '#fee761' : '#e43b44';
+    els.fill.style.width = g.holding && g.can ? Math.min(100, g.hold / g.need * 100) + '%' : '0';
+    var want = g.can && g.cool <= 0 && g.tilt >= 0.35 && !g.holding, cl = 'btn reset' + (want ? ' is-call' : '') + (g.can && g.cool > 0 ? ' is-cool' : '');
+    if (els.reset.className !== cl) { els.reset.className = cl; els.rlabel.textContent = want ? t('ДЕРЖИ ДЛЯ СБРОСА', 'HOLD TO RESET') : t('СБРОС · ДЕРЖИ', 'RESET · HOLD'); }
+    for (var fi = 0; fi < 3; fi++) { var fc = g.flow > 0 ? 'fl' : fi < g.streak ? 'on' : ''; if (els.dots[fi].className !== fc) els.dots[fi].className = fc; }
+  }
+  function loop(now) {
+    if (view !== 'play' || !G || G.over) return;
+    if (paused) { prev = now; raf = requestAnimationFrame(loop); return; }
+    var dt = Math.min(0.05, (now - prev) / 1000); prev = now;
+    if (G.stop > 0) G.stop -= dt; else update(dt);
+    if (view === 'play' && G && !G.over) { draw(); raf = requestAnimationFrame(loop); }
+  }
+  function endMatch() {
+    var g = G; g.over = true; cancelAnimationFrame(raf); SFX.end();
+    var fl = Math.round(g.flowT), xp = g.goals * 10 + g.resets * 15 + fl * 5 + 30, rec = [];
+    if (g.you > (S.best.you || 0)) { if (S.hist.length) rec.push(t('СЧЁТ', 'SCORE')); S.best.you = g.you; }
+    if (fl > (S.best.flow || 0)) { if (S.best.flow) rec.push(t('ПОТОК', 'FLOW')); S.best.flow = fl; }
+    if (g.can && (S.best.spiral == null || Math.round(g.spiral) < S.best.spiral)) { if (S.best.spiral != null) rec.push(t('САМАЯ ХОЛОДНАЯ ГОЛОВА', 'COOLEST HEAD')); S.best.spiral = Math.round(g.spiral); }
+    S.hist.push({ n: g.n, you: g.you, riv: g.riv, spiral: Math.round(g.spiral), lost: g.lost, resets: g.resets, flow: fl, acc: g.shots ? Math.round(g.goals / g.shots * 100) : 0, goals: g.goals, xp: xp, from: S.xp, rec: rec });
+    S.xp += xp; if (S.hub) S.days = (S.days || 0) + 1;
+    if (S.hist.length > 20) S.hist.shift();
+    save(); view = 'result'; pick = {}; render();
+  }
+  function bindMatch() {
+    function toX(e) { var r = cv.getBoundingClientRect(); return Math.max(BLADE + 10, Math.min(W - 12, (e.clientX - r.left) / r.width * W)); }
+    var tp = null;
+    cv.addEventListener('pointerdown', function (e) { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {} tp = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false, tr: [[performance.now(), e.clientY]] }; });
+    cv.addEventListener('pointermove', function (e) {
+      if (e.pointerType === 'mouse' && !e.buttons) { G.tx = toX(e); return; }
+      if (!tp) return; var now = performance.now();
+      if (Math.abs(e.clientX - tp.x) > 8 || Math.abs(e.clientY - tp.y) > 8) tp.moved = true;
+      tp.tr.push([now, e.clientY]); while (tp.tr.length > 2 && now - tp.tr[0][0] > 160) tp.tr.shift();
+      if (tp.moved || now - tp.t > 120) G.tx = toX(e);
+    });
+    cv.addEventListener('pointerup', function (e) {
+      e.preventDefault(); if (!tp) return; var now = performance.now(), quick = now - tp.t < 280 && !tp.moved, flick = tp.tr.length > 1 && tp.tr[0][1] - e.clientY > 30;
+      tp = null; if (quick || flick) shoot();
+    });
+    cv.addEventListener('pointercancel', function () { tp = null; });
+    var b = document.getElementById('reset');
+    function down(e) { if (!G || !G.can) return; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} G.holding = true; if (G.cool > 0) { say(t('ПОДОЖДИ СЕКУНДУ', 'WAIT A SECOND'), '#c0cbdc', 0.9); } }
+    function up() { if (!G) return; if (G.holding && G.cool <= 0 && G.hold > 0.12 && G.hold < G.need) { say(t('ДЕРЖИ ДОЛЬШЕ', 'HOLD LONGER'), '#fee761', 1.4); G.sub = t('ДО КОНЦА КОЛЬЦА', 'UNTIL THE RING CLOSES'); } G.holding = false; }
+    b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
+    b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (view !== 'play' || !G) return;
+    if (e.key === 'ArrowLeft') { G.tx = Math.max(BLADE + 10, G.tx - 28); e.preventDefault(); }
+    else if (e.key === 'ArrowRight') { G.tx = Math.min(W - 12, G.tx + 28); e.preventDefault(); }
+    else if (e.key === ' ') { e.preventDefault(); if (!e.repeat) shoot(); }
+    else if ((e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') && G.can) G.holding = true;
+  });
+  document.addEventListener('keyup', function (e) { if (G && (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К')) G.holding = false; });
+
+  /* =====================================================================
+     ХАБ: главный экран, тренировка дня, режимы, команда, разбор игры
+     ===================================================================== */
+  S.rec = S.rec || {}; S.days = S.days || 0; S.reviews = S.reviews || 0;
+  var T = null, F = null, RD = null, BN = null, frm = {};
+  function icon(n) { return '<canvas width="16" height="16" data-icon="' + n + '" aria-hidden="true"></canvas>'; }
+  function page(title, body, cur) {
+    var TB = [['home', t('СЕГОДНЯ', 'TODAY')], ['modes', t('РЕЖИМЫ', 'MODES')], ['team', t('КОМАНДА', 'TEAM')], ['me', t('ИГРОК', 'PLAYER')]];
+    app.innerHTML = hud(title) + '<main class="stage gut" id="stage">' + (cur ? body : '<div class="stage__in">' + body + '</div>') + '</main>' +
+      (cur ? '<nav class="tabs" aria-label="' + t('Разделы', 'Sections') + '">' + TB.map(function (x) { return '<button class="tab" type="button" data-act="tab" data-v="' + x[0] + '"' + (cur === x[0] ? ' aria-current="page"' : '') + '>' + x[1] + '</button>'; }).join('') + '</nav>' : '');
+    dock();
+    [].forEach.call(app.querySelectorAll('canvas[data-icon]'), function (c) { drawIcon(c, c.getAttribute('data-icon')); });
+    [].forEach.call(app.querySelectorAll('canvas[data-me]'), function (c) { drawHockeyPlayer(c.getContext('2d'), 2, 3, { jersey: '#e43b44', jerseyDark: '#9e2835', trim: '#ffffff', beard: null, letter: 'C' }, 0, false); });
+  }
+  function lvl() { return Math.floor(S.xp / 200) + 1; }
+  function xpLine() { return '<div class="xprow"><span class="h2">' + t('УРОВЕНЬ ', 'LEVEL ') + lvl() + '</span><b class="xpnum">' + S.xp + ' XP</b></div><div class="xpbar"><i style="width:' + (S.xp % 200) / 2 + '%"></i></div>'; }
+  // условные партнёры по команде: в прототипе это придуманные данные
+  var TEAM = [['№17', 7, 58], ['№9', 6, 51], ['№12', 5, 36], ['№31', 4, 39], ['№8', 3, 31], ['№22', 2, 22], ['№4', 1, 9]];
+  function teamRows() {
+    var rows = TEAM.map(function (x) { return { n: x[0], reg: x[1], focus: x[2] }; });
+    rows.push({ n: t('ТЫ', 'YOU'), reg: Math.min(7, S.days), focus: S.rec.focus || 0, me: true });
+    rows.sort(function (a, b) { return b.reg - a.reg || (b.me ? 1 : 0) - (a.me ? 1 : 0) || b.focus - a.focus; });
+    return rows;
+  }
+  function myPlace() { var r = teamRows(); for (var i = 0; i < r.length; i++) if (r[i].me) return i + 1; }
+
+  function home() {
+    var h = '<div class="hero"><canvas width="34" height="36" data-me></canvas><div class="grow">' + xpLine() + '</div></div>';
+    h += '<section class="panel panel--hot"><span class="tag">' + t('ТРЕНИРОВКА ДНЯ · 3 МИНУТЫ', 'DAILY TRAINING · 3 MINUTES') + '</span>' +
+      '<p class="lead">' + t('Фокус под помехами, сброс на время, одно решение на скамейке.', 'Focus under noise, a timed reset, one decision on the bench.') + '</p>' +
+      '<button class="btn" type="button" data-act="train">▶ ' + t('НАЧАТЬ', 'START') + '</button>' +
+      (S.days ? '<p class="note">' + t('В зачёт команды: ', 'Counted for the team: ') + S.days + '</p>' : '') + '</section>';
+    h += '<section class="panel"><span class="tag tag--red">' + t('СЕГОДНЯ ИГРА?', 'GAME TODAY?') + '</span><p>' + t('Две минуты до и минута после. Это про твою настоящую игру.', 'Two minutes before and one minute after. This is about your real game.') + '</p>' +
+      '<div class="two"><button class="btn btn--red" type="button" data-act="pre">' + t('ДО ИГРЫ', 'BEFORE') + '</button><button class="btn btn--red" type="button" data-act="post">' + t('ПОСЛЕ ИГРЫ', 'AFTER') + '</button></div>' +
+      (S.focus1 ? '<p class="note">' + t('Твой фокус 1%: ', 'Your 1% focus: ') + esc(S.focus1) + '</p>' : '') + '</section>';
+    h += '<section class="panel"><span class="tag tag--mute">' + t('КОМАНДА U17 · НЕДЕЛЯ 3', 'TEAM U17 · WEEK 3') + '</span><div class="row"><p class="grow">' + t('Ты на ', 'You are #') + myPlace() + t(' месте из ', ' of ') + (TEAM.length + 1) + '</p><b class="num">' + Math.min(7, S.days) + '/7</b></div>' +
+      '<div class="xpbar"><i style="width:' + Math.min(7, S.days) / 7 * 100 + '%"></i></div></section>';
+    page(t('СЕЗОН', 'SEASON'), h, 'home');
+    if (!S.seenHome) { S.seenHome = true; save(); openHelp('home'); paused = false; }
+  }
+  function modes() {
+    function node(m, ic, name, sub, val, hot) { return '<button class="node' + (hot ? ' node--hot' : '') + '" type="button" data-act="mode" data-m="' + m + '">' + icon(ic) + '<span class="grow"><b>' + name + '</b>' + sub + '</span>' + (val ? '<span class="num">' + val + '</span>' : '') + '</button>'; }
+    var r = S.rec;
+    page(t('РЕЖИМЫ', 'MODES'), '<h2 class="h2">' + t('КОРОТКИЕ УПРАЖНЕНИЯ', 'SHORT DRILLS') + '</h2>' +
+      node('focus', 'target', t('ФОКУС ПОД ПОМЕХАМИ', 'FOCUS UNDER NOISE'), r.focus ? t('Рекорд, секунд', 'Record, seconds') : t('Держи палец на шайбе', 'Keep your finger on the puck'), r.focus) +
+      node('reset', 'bolt', t('СБРОС НА ВРЕМЯ', 'TIMED RESET'), r.reset != null ? t('Лучшее из 5', 'Best of 5') : t('Пять эпизодов, шесть секунд на каждый', 'Five episodes, six seconds each'), r.reset != null ? r.reset + '/5' : '') +
+      '<h2 class="h2">' + t('БОЛЬШИЕ РЕЖИМЫ', 'BIG MODES') + '</h2>' +
+      node('bench', 'shield', t('СКАМЕЙКА', 'THE BENCH'), t('Период из шести смен. Решает голова', 'A period of six shifts. The head decides'), r.bench || '') +
+      node('match', 'flame', t('МАТЧ', 'THE MATCH'), t('60 секунд. Холодная голова, сброс, поток', '60 seconds. Cool head, reset, flow'), S.best.you ? S.best.you : '', true) +
+      '<div class="node node--locked">' + icon('lock') + '<span class="grow"><b>' + t('БОСС МЕСЯЦА', 'MONTH BOSS') + '</b>' + t('В полной версии', 'In the full version') + '</span></div>', 'modes');
+  }
+  function team() {
+    var rows = teamRows(), sum = rows.reduce(function (a, x) { return a + x.reg; }, 0), goal = rows.length * 6, top = rows.slice().sort(function (a, b) { return b.focus - a.focus; });
+    page(t('КОМАНДА', 'TEAM'), '<section class="panel panel--hot"><span class="tag">' + t('ЦЕЛЬ НЕДЕЛИ', 'WEEKLY GOAL') + '</span><p class="lead">' + goal + t(' тренировок на всю команду', ' trainings for the whole team') + '</p><div class="xpbar"><i style="width:' + Math.min(100, sum / goal * 100) + '%"></i></div><p class="note">' + sum + t(' из ', ' of ') + goal + '</p></section>' +
+      '<h2 class="h2">' + t('РЕГУЛЯРНОСТЬ', 'REGULARITY') + '</h2>' +
+      rows.map(function (x, i) { return '<div class="node' + (x.me ? ' node--hot' : '') + '"><span class="num">' + (i + 1) + ' · ' + x.n + '</span><span class="grow"><span class="xpbar"><i style="width:' + x.reg / 7 * 100 + '%;background:' + (x.reg >= 5 ? 'var(--green)' : x.reg >= 3 ? 'var(--yellow)' : 'var(--red)') + '"></i></span></span><span class="num">' + x.reg + '/7</span></div>'; }).join('') +
+      '<h2 class="h2">' + t('РЕКОРД НЕДЕЛИ · ФОКУС', 'RECORD OF THE WEEK · FOCUS') + '</h2>' +
+      top.slice(0, 3).concat(top.slice(3).filter(function (x) { return x.me; })).map(function (x) { return '<div class="node' + (x.me ? ' node--hot' : '') + '"><span class="num grow">' + x.n + '</span><span class="num">' + x.focus + t(' С', ' S') + '</span></div>'; }).join('') +
+      '<p class="note">' + t('Видны регулярность и рекорды. Личные ответы видит только сам игрок. В зачёт идут тренировка дня, любой режим и матч. В прототипе партнёры условные, а каждая такая активность считается за день.', 'Regularity and records are visible. Personal answers are seen only by the player. The daily training, any mode and a match all count. In the prototype teammates are made up and each of these counts as a day.') + '</p>', 'team');
+  }
+  function me() {
+    var r = S.rec, ups = UPG().filter(function (u) { return S.upg[u[0]]; }).map(function (u) { return u[1]; });
+    function kv(k, v) { return v || v === 0 ? '<dt>' + k + '</dt><dd>' + esc(v) + '</dd>' : ''; }
+    page(t('ИГРОК', 'PLAYER'), '<div class="hero"><canvas width="34" height="36" data-me></canvas><div class="grow">' + xpLine() + '</div></div>' +
+      '<section class="panel"><h2 class="h2">' + t('РЕКОРДЫ', 'RECORDS') + '</h2><dl class="kv">' + kv(t('МАТЧ', 'MATCH'), S.best.you) + kv(t('ПОТОК, С', 'FLOW, S'), S.best.flow) + kv(t('ФОКУС, С', 'FOCUS, S'), r.focus) + kv(t('СБРОС', 'RESET'), r.reset != null ? r.reset + ' / 5' : '') + kv(t('СКАМЕЙКА', 'BENCH'), r.bench) + kv(t('РАЗБОРЫ ИГР', 'GAME REVIEWS'), S.reviews) + '</dl></section>' +
+      (S.reset ? '<section class="panel"><h2 class="h2">' + t('МОЙ СБРОС', 'MY RESET') + '</h2><p class="quote">' + esc(S.reset.gesture) + ' · ' + t('выдох', 'exhale') + ' · ' + esc(S.reset.word) + '</p></section>' : '') +
+      (ups.length ? '<section class="panel"><h2 class="h2">' + t('УЛУЧШЕНИЯ', 'UPGRADES') + '</h2><p>' + ups.join(' · ') + '</p></section>' : '') +
+      (askWipe ? '<section class="panel"><p>' + t('Стереть прогресс на этом устройстве?', 'Erase progress on this device?') + '</p><button class="btn btn--ghost" type="button" data-act="wipe">' + t('СТЕРЕТЬ', 'ERASE') + '</button></section>'
+               : '<button class="btn btn--ghost" type="button" data-act="askwipe">' + t('НАЧАТЬ ЗАНОВО', 'START OVER') + '</button>'), 'me');
+  }
+
+  /* ----- тренировка дня: три коротких упражнения подряд ----- */
+  function startTrain(steps, daily) { T = { steps: steps, i: 0, res: {}, daily: daily, place: myPlace() }; runStep(); }
+  function runStep() { var m = T.steps[T.i]; if (m === 'focus') startFocus(); else if (m === 'reset') startReset(); else startBench(T.daily ? 1 : 6); }
+  function stepDone(key, val) { T.res[key] = val; T.i++; if (T.i < T.steps.length) { view = 'between'; between(); } else trainResult(); }
+  function between() {
+    var nx = T.steps[T.i], nm = nx === 'reset' ? t('СБРОС НА ВРЕМЯ', 'TIMED RESET') : t('РЕШЕНИЕ НА СКАМЕЙКЕ', 'A DECISION ON THE BENCH');
+    page(t('ТРЕНИРОВКА ДНЯ', 'DAILY TRAINING'), '<span class="tag">' + T.i + ' / ' + T.steps.length + '</span><h1 class="h1">' + t('ДАЛЬШЕ: ', 'NEXT: ') + nm + '</h1>' +
+      '<p class="lead">' + (nx === 'reset' ? t('Пять неприятных эпизодов. На каждый шесть секунд: движение, выдох, слово.', 'Five nasty episodes. Six seconds for each: the movement, the exhale, the word.') : t('Одна ситуация. Выбери, что делаешь, и посмотри, чем закончится следующая смена.', 'One situation. Choose what you do and see how the next shift ends.')) + '</p>' +
+      '<button class="btn" type="button" data-act="tnext">▶ ' + t('ПОЕХАЛИ', 'GO') + '</button>');
+  }
+  function trainResult() {
+    var r = T.res, xp = 20, rows = '', rec = [];
+    if (r.focus != null) { var fx = r.focus * 3; xp += fx; if (r.focus > (S.rec.focus || 0)) { S.rec.focus = r.focus; rec.push(t('ФОКУС', 'FOCUS')); } rows += '<span>' + t('Фокус', 'Focus') + '</span><i>' + r.focus + t(' с', ' s') + '</i><b>' + fx + '</b>'; }
+    if (r.reset != null) { var rx = r.reset * 10; xp += rx; if (S.rec.reset == null || r.reset > S.rec.reset) { if (S.rec.reset != null) rec.push(t('СБРОС', 'RESET')); S.rec.reset = r.reset; } rows += '<span>' + t('Сброс', 'Reset') + '</span><i>' + r.reset + ' / 5</i><b>' + rx + '</b>'; }
+    if (r.bench != null) { var bx = r.benchXp; xp += bx; if (!T.daily && (!S.rec.bench || r.benchDiff > S.rec.benchDiff)) { S.rec.bench = r.bench; S.rec.benchDiff = r.benchDiff; } rows += '<span>' + t('Скамейка', 'Bench') + '</span><i>' + r.bench + '</i><b>' + bx + '</b>'; }
+    rows += '<span>' + (T.daily ? t('Тренировка пройдена', 'Training finished') : t('Режим пройден', 'Mode finished')) + '</span><i></i><b>20</b>';
+    var from = S.xp, up = Math.floor((from + xp) / 200) > Math.floor(from / 200); S.xp += xp;
+    S.days++;
+    var place = myPlace(); save();
+    page(t('ИТОГ', 'RESULT'), (rec.length ? '<span class="tag">' + t('НОВЫЙ РЕКОРД: ', 'NEW RECORD: ') + rec.join(' · ') + '</span>' : '') +
+      '<h1 class="h1">' + (T.daily ? t('ТРЕНИРОВКА ДНЯ', 'DAILY TRAINING') : t('РЕЖИМ ПРОЙДЕН', 'MODE COMPLETE')) + '</h1>' +
+      '<section class="panel panel--hot"><div class="xprow"><span class="h2">' + t('УРОВЕНЬ ', 'LEVEL ') + lvl() + (up ? ' · ' + t('НОВЫЙ!', 'NEW!') : '') + '</span><b class="xpnum">+' + xp + ' XP</b></div>' +
+      '<div class="xpbar"><i id="xpfill" data-to="' + (S.xp % 200) / 2 + '" style="width:' + (up ? 0 : (from % 200) / 2) + '%"></i></div><div class="stats stats--xp">' + rows + '</div></section>' +
+      (true ? '<section class="panel"><p class="lead">' + (place < T.place ? t('В команде ты поднялся с ', 'In the team you moved up from #') + T.place + t(' места на ', ' to #') + place + '.' : t('В команде ты на ', 'In the team you are #') + place + t(' месте.', '.')) + '</p></section>' : '') +
+      '<button class="btn" type="button" data-act="tab" data-v="home">' + t('НА ГЛАВНУЮ', 'HOME') + '</button>');
+    var xf = document.getElementById('xpfill'); if (xf) setTimeout(function () { xf.style.width = xf.getAttribute('data-to') + '%'; SFX.xp(); }, 350);
+    view = 'tres'; T = null;
+  }
+
+  /* ----- фокус под помехами ----- */
+  var FH = 400;
+  function startFocus() {
+    view = 'drill';
+    app.innerHTML = hud(t('ФОКУС ПОД ПОМЕХАМИ', 'FOCUS UNDER NOISE')) +
+      '<div class="gut"><div class="board"><span class="board__s">' + t('СЕКУНД', 'SECONDS') + '</span><span class="board__t" id="sTime">0</span><span class="board__s"></span></div>' +
+      '<div class="head"><span>' + t('ФОКУС', 'FOCUS') + '</span><b><i id="sHead" style="width:100%"></i></b></div></div>' +
+      '<div class="rinkwrap gut" id="wrap"><canvas id="rink" width="' + W + '" height="' + FH + '"></canvas></div><div class="gut pad"><p class="note" style="text-align:center">' + t('Держи палец на шайбе. Помехи не трогай.', 'Keep your finger on the puck. Ignore the noise.') + '</p></div>';
+    cv = document.getElementById('rink'); cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false;
+    F = { t: 0, m: 1, down: false, px: -99, py: -99, ban: [], bt: 5, fakes: [], ft: 7, ph: 0, p: 0, x: W / 2, y: FH / 2, on: false, started: false, flash: 0, flT: 20 };
+    fitF();
+    function pos(e) { var r = cv.getBoundingClientRect(); F.px = (e.clientX - r.left) / r.width * W; F.py = (e.clientY - r.top) / r.height * FH; }
+    cv.addEventListener('pointerdown', function (e) { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {} F.down = true; pos(e); });
+    cv.addEventListener('pointermove', function (e) { if (F.down || e.pointerType === 'mouse') pos(e); if (e.pointerType === 'mouse') F.down = true; });
+    cv.addEventListener('pointerup', function (e) { if (e.pointerType !== 'mouse') F.down = false; }); cv.addEventListener('pointercancel', function () { F.down = false; });
+    prev = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loopF);
+  }
+  function fitF() { var w = document.getElementById('wrap'); if (!w || !cv) return; var cs = getComputedStyle(w), aw = w.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8, ah = w.clientHeight - 8, k = Math.max(0.4, Math.min(aw / W, ah / FH)); cv.style.width = Math.floor(W * k) + 'px'; cv.style.height = Math.floor(FH * k) + 'px'; }
+  function loopF(now) {
+    if (view !== 'drill' || !F) return;
+    if (paused) { prev = now; raf = requestAnimationFrame(loopF); return; }
+    var dt = Math.min(0.05, (now - prev) / 1000), f = F; prev = now;
+    var d0 = Math.hypot(f.px - f.x, f.py - f.y); if (!f.started && f.down && d0 < 40) f.started = true;
+    if (f.started) {
+      f.t += dt; var L = 1 + Math.floor(f.t / 6);
+      f.p += Math.min(1.7, 0.3 + f.t * 0.035) * dt; var amp = Math.min(1, 0.35 + f.t / 18); f.x = W / 2 + 112 * amp * Math.sin(f.p * 0.9); f.y = FH / 2 + 140 * amp * Math.sin(f.p * 0.67);
+      f.on = f.down && Math.hypot(f.px - f.x, f.py - f.y) < 44;
+      f.m = Math.max(0, Math.min(1, f.m + (f.on ? 0.22 : -0.5 * (1 + 0.08 * L)) * dt));
+      f.bt -= dt; if (f.bt <= 0) { f.bt = Math.max(0.45, 1.7 - 0.17 * L); var B = [t('БУУУ!', 'BOOO!'), '0:2', t('ТРЕНЕР СМОТРИТ', 'COACH IS WATCHING'), t('СМЕНИСЬ!', 'GET OFF!'), t('СКАУТЫ НА ТРИБУНЕ', 'SCOUTS IN THE STANDS'), t('ОПЯТЬ ТЫ', 'YOU AGAIN')]; f.ban.push({ x: W + 8, y: 20 + Math.random() * (FH - 50), v: 60 + Math.random() * 70 + L * 8, s: B[Math.floor(Math.random() * B.length)] }); }
+      f.ban.forEach(function (b) { b.x -= b.v * dt; }); f.ban = f.ban.filter(function (b) { return b.x > -190; });
+      f.ft -= dt; if (f.ft <= 0 && L >= 2) { f.ft = Math.max(1.2, 4 - 0.4 * L); var left = Math.random() < 0.5; f.fakes.push({ x: left ? -10 : W + 10, y: 30 + Math.random() * (FH - 60), vx: (left ? 1 : -1) * (90 + Math.random() * 80), vy: (Math.random() - 0.5) * 80 }); }
+      f.fakes.forEach(function (q) { q.x += q.vx * dt; q.y += q.vy * dt; }); f.fakes = f.fakes.filter(function (q) { return q.x > -20 && q.x < W + 20; });
+      if (L >= 4) { f.flT -= dt; if (f.flT <= 0) { f.flT = 3 + Math.random() * 3; f.flash = 0.25; } } if (f.flash > 0) f.flash -= dt;
+      if (f.m <= 0 || f.t >= 60) { var sc = Math.floor(f.t); cancelAnimationFrame(raf); F = null; SFX.end(); return stepDone('focus', sc); }
+    }
+    cx.setTransform(1, 0, 0, 1, 0, 0); R('#181425', 0, 0, W, FH); R('#dfe9f5', 8, 8, W - 16, FH - 16); R('#e43b44', 8, 70, W - 16, 3); R('#0099db', 8, FH - 120, W - 16, 4);
+    f.fakes.forEach(function (q) { R(OUT, q.x - 5, q.y - 4, 10, 8); R('#e43b44', q.x - 4, q.y - 3, 8, 5); });
+    var c = f.on ? '#2ce8f5' : '#feae34'; R(c, f.x - 40, f.y - 40, 80, 4); R(c, f.x - 40, f.y + 36, 80, 4); R(c, f.x - 40, f.y - 40, 4, 80); R(c, f.x + 36, f.y - 40, 4, 80); R(c, f.x - 56, f.y - 2, 12, 4); R(c, f.x + 44, f.y - 2, 12, 4); R(c, f.x - 2, f.y - 56, 4, 12); R(c, f.x - 2, f.y + 44, 4, 12);
+    R(OUT, f.x - 7, f.y - 5, 14, 10); R('#3a4466', f.x - 6, f.y - 4, 12, 6);
+    cx.font = '8px "Press Start 2P", monospace'; cx.textBaseline = 'top';
+    f.ban.forEach(function (b) { var w = cx.measureText(b.s).width + 12; R('#181425', b.x, b.y, w, 18); R('#e43b44', b.x, b.y, w, 2); cx.fillStyle = '#ffffff'; cx.fillText(b.s, Math.round(b.x) + 6, Math.round(b.y) + 6); });
+    if (f.m < 0.6) { var a = (0.6 - f.m) * 1.1, gr = cx.createRadialGradient(W / 2, FH / 2, 50, W / 2, FH / 2, 280); gr.addColorStop(0, 'rgba(158,40,53,0)'); gr.addColorStop(1, 'rgba(158,40,53,' + a.toFixed(2) + ')'); cx.fillStyle = gr; cx.fillRect(0, 0, W, FH); }
+    if (f.flash > 0) { cx.fillStyle = 'rgba(255,255,255,' + (f.flash * 2.4).toFixed(2) + ')'; cx.fillRect(0, 0, W, FH); }
+    if (!f.started) { cx.textAlign = 'center'; cx.fillStyle = '#3a4466'; cx.fillText(t('ПОСТАВЬ ПАЛЕЦ НА ШАЙБУ', 'PUT YOUR FINGER ON THE PUCK'), W / 2, FH / 2 + 40); cx.textAlign = 'left'; }
+    var el = document.getElementById('sTime'), hd = document.getElementById('sHead'); if (el) el.textContent = Math.floor(f.t); if (hd) { hd.style.width = Math.round(f.m * 100) + '%'; hd.style.background = f.m > 0.6 ? '#63c74d' : f.m > 0.3 ? '#fee761' : '#e43b44'; }
+    raf = requestAnimationFrame(loopF);
+  }
+
+  /* ----- сброс на время ----- */
+  function HITS() { return [t('ПЛОХАЯ СМЕНА. МИНУС ОДИН.', 'BAD SHIFT. MINUS ONE.'), t('ОШИБКА В СВОЕЙ ЗОНЕ. ГОЛ.', 'TURNOVER IN YOUR ZONE. GOAL.'), t('УДАЛЕНИЕ. ТРИБУНЫ СВИСТЯТ.', 'PENALTY. THE CROWD IS BOOING.'), t('НЕ ПОПАЛ В ПУСТЫЕ.', 'MISSED THE EMPTY NET.'), t('ТРЕНЕР ПОСАДИЛ НА ЛАВКУ.', 'COACH BENCHED YOU.')]; }
+  function startReset() {
+    var rs = S.reset || { gesture: GESTURES()[0], word: WORDS()[0] };
+    RD = { i: 0, n: 5, ok: 0, ph: 'a', left: 6, hold: 0, holding: false, msg: '', seq: rs, tick: null, order: HITS().sort(function () { return Math.random() - 0.5; }) };
+    view = 'rdrill'; resetRound();
+  }
+  function resetDraw() {
+    var d = RD, st = d.ph, live = st === 'a' || st === 'b' || st === 'c', done1 = st !== 'a', done2 = st === 'c' || st === 'ok';
+    var tip = st === 'a' ? t('ШАГ 1: НАЖМИ ДВИЖЕНИЕ', 'STEP 1: TAP THE MOVEMENT') : st === 'b' ? (d.early ? t('ОТПУСТИЛ РАНО: ДЕРЖИ ДО КОНЦА ПОЛОСЫ', 'RELEASED TOO EARLY: HOLD UNTIL THE BAR FILLS') : t('ШАГ 2: ДЕРЖИ КНОПКУ, ПОКА ПОЛОСА НЕ ЗАПОЛНИТСЯ', 'STEP 2: HOLD THE BUTTON UNTIL THE BAR FILLS')) : st === 'c' ? t('ШАГ 3: НАЖМИ СЛОВО', 'STEP 3: TAP THE WORD') : '';
+    page(t('СБРОС НА ВРЕМЯ', 'TIMED RESET'), '<div class="score">' + t('ЭПИЗОД ', 'EPISODE ') + Math.min(d.n, d.i + 1) + ' / ' + d.n + ' · ' + t('ЗАСЧИТАНО ', 'COUNTED ') + d.ok + '</div>' +
+      '<div class="hit' + (st === 'ok' ? ' ok' : '') + '" aria-live="polite">' + d.msg + '</div>' +
+      '<div class="timer' + (d.left <= 2 ? ' low' : '') + '" id="dtimer"><i style="width:' + (live ? d.left / 6 * 100 : 0) + '%"></i></div>' +
+      '<p class="score' + (d.early && st === 'b' ? ' score--warn' : '') + '" id="rtip">' + tip + '</p>' +
+      '<button class="btn' + (done1 ? ' is-done' : '') + '" type="button" data-act="r1"' + (st === 'a' ? '' : ' disabled') + '>' + (done1 ? '' : '1. ') + esc(d.seq.gesture) + '</button>' +
+      '<button class="btn reset' + (done2 ? ' is-done' : '') + '" type="button" id="rhold"' + (st === 'b' ? '' : ' disabled') + '><i id="rfill2" class="fillc"></i><span id="rhl">' + (done2 ? t('ВЫДОХ СДЕЛАН', 'EXHALE DONE') : '2. ' + t('ВЫДОХ: ДЕРЖИ', 'EXHALE: HOLD')) + '</span></button>' +
+      '<button class="btn' + (st === 'ok' ? ' is-done' : '') + '" type="button" data-act="r3"' + (st === 'c' ? '' : ' disabled') + '>' + (st === 'ok' ? '' : '3. ') + esc(d.seq.word) + '</button>');
+    var b = document.getElementById('rhold'); if (!b) return;
+    function down(e) { if (!RD || RD.ph !== 'b') return; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} RD.holding = true; RD.early = false; var tp2 = document.getElementById('rtip'); if (tp2) { tp2.className = 'score'; tp2.textContent = t('ДЕРЖИ...', 'HOLD...'); } }
+    function up() { if (!RD || !RD.holding) return; RD.holding = false; if (RD.ph === 'b') { RD.hold = 0; RD.early = true; SFX.bad(); var f = document.getElementById('rfill2'); if (f) f.style.width = '0'; var tp2 = document.getElementById('rtip'); if (tp2) { tp2.className = 'score score--warn'; tp2.textContent = t('ОТПУСТИЛ РАНО: ДЕРЖИ ДО КОНЦА ПОЛОСЫ', 'RELEASED TOO EARLY: HOLD UNTIL THE BAR FILLS'); } } }
+    b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
+  function resetRound() {
+    var d = RD; d.ph = 'a'; d.left = 6; d.hold = 0; d.holding = false; d.early = false; d.msg = d.order[d.i % d.order.length]; SFX.riv(); resetDraw();
+    clearInterval(d.tick); d.tick = setInterval(function () {
+      if (view !== 'rdrill' || !RD) return clearInterval(d.tick);
+      if (paused) return;
+      d.left = Math.max(0, d.left - 0.1);
+      if (d.holding && d.ph === 'b') { d.hold += 0.1; var f = document.getElementById('rfill2'); if (f) f.style.width = Math.min(100, d.hold / 1.2 * 100) + '%'; if (d.hold >= 1.2) { d.holding = false; d.ph = 'c'; SFX.tap(); resetDraw(); return; } }
+      var tm = document.getElementById('dtimer'); if (tm) { tm.firstChild.style.width = d.left / 6 * 100 + '%'; tm.className = 'timer' + (d.left <= 2 ? ' low' : ''); }
+      if (d.left <= 0) resetEnd(false);
+    }, 100);
+  }
+  function resetEnd(ok) {
+    var d = RD, used = (6 - d.left).toFixed(1).replace('.', S.lang === 'en' ? '.' : ','); clearInterval(d.tick); if (ok) { d.ok++; SFX.reset(); } else SFX.bad();
+    d.ph = ok ? 'ok' : 'fail'; d.msg = ok ? t('ЗАСЧИТАН · ', 'COUNTED · ') + used + t(' С', ' S') : t('ВРЕМЯ ВЫШЛО · НЕ ЗАСЧИТАН', 'TIME IS UP · NOT COUNTED'); resetDraw();
+    d.tick = setTimeout(function () { if (!RD) return; d.i++; if (d.i >= d.n) { var sc = d.ok; RD = null; stepDone('reset', sc); } else resetRound(); }, 1500);
+  }
+
+  /* ----- скамейка: ситуация, выбор, следующая смена ----- */
+  function SITS() {
+    var rs = S.reset || { gesture: GESTURES()[0], word: WORDS()[0] }, rsub = esc(rs.gesture) + ' · ' + t('выдох', 'exhale') + ' · «' + esc(rs.word) + '»';
+    return [
+      { q: t('Плохая смена, минус один. Тренер смотрит в твою сторону.', 'A bad shift, minus one. The coach is looking your way.'), o: [
+        [t('СБРОС', 'RESET'), rsub, 'for', t('Выходишь с холодной головой. Чистый выход из зоны, бросок, добивание. Гол.', 'You go out with a cool head. A clean breakout, a shot, a rebound. Goal.')],
+        [t('РАЗОБРАТЬ ЭПИЗОД', 'REVIEW THE PLAY'), t('Что я увидел поздно? Одна поправка.', 'What did I see too late? One fix.'), 'none', t('Поправка сработала: держишь середину. Смена ровная.', 'The fix works: you hold the middle. A steady shift.')],
+        [t('СЛОВО ПАРТНЁРУ', 'A WORD TO A TEAMMATE'), t('«Моя. Следующую забираем».', '"My fault. We take the next one."'), 'none', t('Партнёр кивает. Смена ровная, без моментов.', 'Your teammate nods. A steady shift, no chances.')],
+        [t('НАКРУТИТЬ СЕБЯ', 'WIND YOURSELF UP'), t('«Опять я. Сейчас посадят».', '"Me again. He will bench me."'), 'against', t('Выходишь с прошлой ошибкой в голове и опаздываешь к своему игроку. Вам забили.', 'You go out with the last mistake in your head and get to your man late. They score.')]] },
+      { q: t('Партнёр ошибся, вам забили. Он садится рядом и смотрит в пол.', 'Your teammate made a mistake and they scored. He sits next to you staring at the floor.'), o: [
+        [t('СЛОВО ПАРТНЁРУ', 'A WORD TO HIM'), t('«Забыли. Следующая наша».', '"Forget it. The next one is ours."'), 'for', t('Он поднимает голову. В следующей смене отдаёт тебе на пустой угол. Гол.', 'He lifts his head. Next shift he feeds you at the open corner. Goal.')],
+        [t('СБРОС', 'RESET'), rsub, 'none', t('Твоя голова холодная, а его нет. Смена ровная.', 'Your head is cool, his is not. A steady shift.')],
+        [t('ОБЪЯСНИТЬ ЕМУ ОШИБКУ', 'EXPLAIN HIS MISTAKE'), t('«Ты должен был играть в тело».', '"You should have played the body."'), 'against', t('Он закрывается и играет без тебя. Несогласованность, вам забили.', 'He shuts down and plays without you. A mix-up, they score.')],
+        [t('ПРОМОЛЧАТЬ', 'SAY NOTHING'), t('Не моя ошибка.', 'Not my mistake.'), 'none', t('Смена проходит тихо. Он так и не вернулся в игру.', 'The shift passes quietly. He never gets back into the game.')]] },
+      { q: t('Ты не попал в пустые ворота. Скамейка видела.', 'You missed an empty net. The bench saw it.'), o: [
+        [t('ПРОКРУТИТЬ МОМЕНТ ЕЩЁ РАЗ', 'REPLAY IT IN YOUR HEAD'), t('Как я мог не попасть?', 'How could I miss that?'), 'against', t('В следующей смене ты думаешь о том броске и теряешь шайбу. Вам забили.', 'Next shift you are still on that shot and lose the puck. They score.')],
+        [t('СБРОС', 'RESET'), rsub, 'for', t('Эпизод закрыт. Следующий момент ты реализуешь спокойно. Гол.', 'The episode is closed. You bury the next chance calmly. Goal.')],
+        [t('ПОШУТИТЬ', 'MAKE A JOKE'), t('«Вратаря пожалел».', '"I felt sorry for the goalie."'), 'none', t('Скамейка смеётся, напряжение ушло. Смена ровная.', 'The bench laughs, the tension is gone. A steady shift.')],
+        [t('ОДНА ПОПРАВКА', 'ONE FIX'), t('Клюшка была открыта. Закрыть.', 'The blade was open. Close it.'), 'none', t('Поправка в руках. Момента в этой смене не было.', 'The fix is in your hands. No chance came this shift.')]] },
+      { q: t('Три смены подряд тебя не выпускают.', 'You have been kept on the bench for three shifts in a row.'), o: [
+        [t('ОБИДЕТЬСЯ', 'TAKE OFFENCE'), t('«Ну и не надо».', '"Fine, do not then."'), 'against', t('Тебя выпускают, а ты холодный. Опоздал на подбор, вам забили.', 'You get sent out cold. Late to the loose puck, they score.')],
+        [t('СМОТРЕТЬ НА ТРЕНЕРА', 'STARE AT THE COACH'), t('Ждать, когда заметит.', 'Wait for him to notice.'), 'none', t('Он заметил взгляд, но не то, что ты готов. Смена ровная.', 'He noticed the look, not that you were ready. A steady shift.')],
+        [t('ДЕРЖАТЬ СЕБЯ ГОТОВЫМ', 'STAY READY'), t('Следить за игрой, своё слово, ноги в тонусе.', 'Follow the game, your word, legs awake.'), 'for', t('Тренер поворачивается, ты уже на ногах. Выходишь свежим и забиваешь.', 'The coach turns and you are already up. You go out fresh and score.')],
+        [t('СБРОС', 'RESET'), rsub, 'none', t('Голова холодная, но из игры ты выпал. Смена ровная.', 'Your head is cool, but you dropped out of the game. A steady shift.')]] },
+      { q: t('Ведёте в одну шайбу, осталось две минуты. Твоя смена следующая.', 'You lead by one with two minutes left. Your shift is next.'), o: [
+        [t('ДУМАТЬ О СЧЁТЕ', 'THINK ABOUT THE SCORE'), t('«Только бы не пропустить».', '"Just do not concede."'), 'against', t('Играешь от страха, отдаёшь шайбу в середину. Вам забили.', 'You play scared and give the puck away in the middle. They score.')],
+        [t('ЗАДАНИЕ НА СМЕНУ', 'A TASK FOR THE SHIFT'), t('Одно действие: выбросить и смениться.', 'One action: clear it and change.'), 'for', t('Простая смена. Перехват на синей, шайба в пустые. Гол.', 'A simple shift. A pick at the blue line, empty net. Goal.')],
+        [t('СБРОС', 'RESET'), rsub, 'none', t('Спокойно, но без плана. Смена ровная.', 'Calm, but without a plan. A steady shift.')],
+        [t('ПОДБОДРИТЬ СКАМЕЙКУ', 'FIRE UP THE BENCH'), t('«Две минуты, парни».', '"Two minutes, boys."'), 'none', t('Скамейка ожила. Смена ровная.', 'The bench comes alive. A steady shift.')]] },
+      { q: t('Тренер накричал на тебя при всех.', 'The coach yelled at you in front of everyone.'), o: [
+        [t('ОГРЫЗНУТЬСЯ', 'SNAP BACK'), t('«А что я должен был сделать?»', '"What was I supposed to do?"'), 'against', t('Следующую смену ты играешь назло и получаешь удаление. Вам забили.', 'You play the next shift out of spite and take a penalty. They score.')],
+        [t('ЗАКРЫТЬСЯ', 'SHUT DOWN'), t('Молчать и смотреть в лёд.', 'Go silent and stare at the ice.'), 'none', t('Играешь осторожно, лишь бы не ошибиться. Смена ровная.', 'You play it safe, just not to err. A steady shift.')],
+        [t('СБРОС', 'RESET'), rsub, 'none', t('Эмоция ушла. Что он просил, ты так и не услышал. Смена ровная.', 'The emotion is gone. You never heard what he asked for. A steady shift.')],
+        [t('ОТДЕЛИТЬ ФАКТ ОТ ТОНА', 'SPLIT FACT FROM TONE'), t('Что он просит? Играть ближе к своему.', 'What is he asking for? Play tighter on my man.'), 'for', t('Делаешь ровно то, что он просил. Отбор, выход два в один, гол.', 'You do exactly what he asked. A takeaway, a two-on-one, a goal.')]] }
+    ];
+  }
+  function startBench(n) { var all = SITS(), st = S.days % all.length, list = []; for (var i = 0; i < n; i++) list.push(all[(st + i) % all.length]); BN = { list: list, i: 0, you: 0, riv: 0, ch: null, xp: 0 }; view = 'bench'; benchDraw(); }
+  function benchDraw() {
+    var b = BN, s = b.list[b.i], many = b.list.length > 1, h = '';
+    if (many) h += '<div class="board"><span class="board__s">' + t('ТЫ', 'YOU') + '<b>' + b.you + '</b></span><span class="board__t">' + (b.i + 1) + ' / ' + b.list.length + '</span><span class="board__s"><b>' + b.riv + '</b>' + t('СОПЕРНИК', 'RIVAL') + '</span></div>';
+    h += '<div class="hero"><canvas width="34" height="36" data-me></canvas><p class="lead grow">' + s.q + '</p></div>';
+    if (b.ch == null) h += '<h2 class="h2">' + t('ЧТО ДЕЛАЕШЬ?', 'WHAT DO YOU DO?') + '</h2>' + s.o.map(function (o, k) { return '<button class="opt" type="button" data-act="bpick" data-k="' + k + '"><b>' + o[0] + '</b><span>' + o[1] + '</span></button>'; }).join('');
+    else { var o = s.o[b.ch];
+      h += '<div class="opt" aria-pressed="true"><b>' + o[0] + '</b><span>' + o[1] + '</span></div><h2 class="h2">' + t('СЛЕДУЮЩАЯ СМЕНА', 'THE NEXT SHIFT') + '</h2>' +
+        '<section class="panel' + (o[2] === 'for' ? ' panel--hot' : '') + '"><span class="tag' + (o[2] === 'against' ? ' tag--red' : o[2] === 'for' ? '' : ' tag--mute') + '">' + (o[2] === 'for' ? t('ГОЛ', 'GOAL') : o[2] === 'against' ? t('ПРОПУСТИЛИ', 'CONCEDED') : t('БЕЗ ГОЛОВ', 'NO GOALS')) + '</span><p class="lead">' + o[3] + '</p></section>' +
+        '<button class="btn" type="button" data-act="bnext">' + (b.i === b.list.length - 1 ? t('ГОТОВО', 'DONE') : t('ДАЛЬШЕ', 'NEXT') + ' ▶') + '</button>'; }
+    page(many ? t('СКАМЕЙКА', 'THE BENCH') : t('РЕШЕНИЕ НА СКАМЕЙКЕ', 'A DECISION ON THE BENCH'), h);
+  }
+
+  /* ----- настоящая игра: до и после ----- */
+  function pre() {
+    page(t('ДО ИГРЫ', 'BEFORE THE GAME'), '<span class="tag tag--red">' + t('НАСТОЯЩАЯ ИГРА · 2 МИНУТЫ', 'REAL GAME · 2 MINUTES') + '</span>' +
+      (S.reset ? '<p class="dim">' + t('Твой сброс, если понадобится:', 'Your reset, if you need it:') + '</p><p class="quote lead">' + esc(S.reset.gesture) + ' · ' + t('выдох', 'exhale') + ' · ' + esc(S.reset.word) + '</p>' : '') +
+      '<label class="f"><span>' + t('ЗАДАНИЕ НА ИГРУ: ОДНО ДЕЙСТВИЕ', 'TASK FOR THE GAME: ONE ACTION') + '</span><textarea class="in" id="f_task" data-f="task" rows="2" maxlength="90" placeholder="' + t('Не счёт и не результат. То, что зависит от тебя', 'Not the score and not the result. Something that depends on you') + '">' + esc(frm.task != null ? frm.task : (S.focus1 || '')) + '</textarea></label>' +
+      '<button class="btn" type="button" data-act="predone">' + t('ГОТОВ · +10 XP', 'READY · +10 XP') + '</button>');
+  }
+  function post() {
+    var fs = [['good', t('1. ЧТО Я СДЕЛАЛ ХОРОШО?', '1. WHAT DID I DO WELL?')], ['learned', t('2. ЧТО Я УЗНАЛ?', '2. WHAT DID I LEARN?')], ['focus', t('3. МОЙ ФОКУС 1% НА ЗАВТРА?', '3. MY 1% FOCUS FOR TOMORROW?')]];
+    page(t('ПОСЛЕ ИГРЫ', 'AFTER THE GAME'), '<span class="tag tag--red">' + t('НАСТОЯЩАЯ ИГРА · РАЗБОР', 'REAL GAME · REVIEW') + '</span><p class="lead">' + t('Счёт не спрашиваем. Очки дают за разбор.', 'We do not ask the score. Points are given for the review.') + '</p>' +
+      fs.map(function (f) { return '<label class="f"><span>' + f[1] + '</span><textarea class="in" id="f_' + f[0] + '" data-f="' + f[0] + '" rows="2" maxlength="120">' + esc(frm[f[0]] || '') + '</textarea></label>'; }).join('') +
+      '<button class="btn" type="button" id="postbtn" data-act="postdone"' + (frm.good && frm.learned && frm.focus ? '' : ' disabled') + '>' + t('ГОТОВО · +40 XP', 'DONE · +40 XP') + '</button>');
+  }
+  document.addEventListener('input', function (e) { var k = e.target.getAttribute && e.target.getAttribute('data-f'); if (!k) return; frm[k] = e.target.value; var b = document.getElementById('postbtn'); if (b) b.disabled = !((frm.good || '').trim() && (frm.learned || '').trim() && (frm.focus || '').trim()); });
+
+  function hubRender() {
+    if (view === 'home') return home(), true; if (view === 'modes') return modes(), true; if (view === 'team') return team(), true; if (view === 'me') return me(), true;
+    if (view === 'pre') return pre(), true; if (view === 'post') return post(), true; if (view === 'bench') return benchDraw(), true; if (view === 'between') return between(), true;
+    if (view === 'rdrill') return resetDraw(), true; if (view === 'drill' || view === 'tres') return true;
+    return false;
+  }
+  function hubAct(a, el) {
+    if (a === 'tab') { clearInterval(RD && RD.tick); RD = null; BN = null; T = null; frm = {}; askWipe = false; view = el.getAttribute('data-v'); SFX.tap(); render(); return true; }
+    if (a === 'train') { SFX.tap(); startTrain(['focus', 'reset', 'bench'], true); return true; }
+    if (a === 'tnext') { SFX.tap(); runStep(); return true; }
+    if (a === 'mode') { var m = el.getAttribute('data-m'); SFX.tap(); if (m === 'match') { S.n = (last() ? last().n : 0) + 1; view = 'intro'; render(); } else startTrain([m], false); return true; }
+    if (a === 'r1') { if (RD && RD.ph === 'a') { RD.ph = 'b'; SFX.tap(); resetDraw(); } return true; }
+    if (a === 'r3') { if (RD && RD.ph === 'c') resetEnd(true); return true; }
+    if (a === 'bpick') { var o = BN.list[BN.i].o[+el.getAttribute('data-k')]; BN.ch = +el.getAttribute('data-k'); if (o[2] === 'for') { BN.you++; BN.xp += 20; SFX.goal(1); } else if (o[2] === 'against') { BN.riv++; SFX.riv(); } else { BN.xp += 10; SFX.tap(); } benchDraw(); return true; }
+    if (a === 'bnext') { BN.i++; BN.ch = null; if (BN.i >= BN.list.length) { var b = BN; BN = null; T.res.benchXp = b.xp; T.res.benchDiff = b.you - b.riv; stepDone('bench', b.list.length > 1 ? b.you + ':' + b.riv : (b.you ? t('гол', 'goal') : b.riv ? t('пропустили', 'conceded') : t('ровно', 'steady'))); } else benchDraw(); return true; }
+    if (a === 'pre' || a === 'post') { frm = {}; view = a; SFX.tap(); render(); return true; }
+    if (a === 'predone') { if ((frm.task || '').trim()) S.focus1 = frm.task.trim(); S.xp += 10; save(); SFX.xp(); view = 'home'; render(); return true; }
+    if (a === 'postdone') { S.focus1 = frm.focus.trim(); S.reviews++; S.xp += 40; save(); SFX.xp(); frm = {}; view = 'home'; render(); return true; }
+    if (a === 'hub') { S.hub = true; save(); view = 'home'; render(); return true; }
+    if (a === 'help') { SFX.tap(); openHelp(view); return true; }
+    if (a === 'helpok') { var hq = document.getElementById('ask'); if (hq) hq.parentNode.removeChild(hq); paused = false; prev = performance.now(); SFX.tap(); return true; }
+    if (a === 'tutskip' || a === 'tutdone') { S.tut = true; save(); SFX.tap(); cancelAnimationFrame(raf); startMatch(); return true; }
+    if (a === 'quit') { if (document.getElementById('ask')) return true; paused = true; SFX.tap(); var q = document.createElement('div'); q.id = 'ask'; q.className = 'ask gut';
+      q.innerHTML = '<section class="panel panel--hot" role="alertdialog" aria-label="' + t('Точно выйти?', 'Quit for sure?') + '"><p class="lead">' + t('Точно выйти?', 'Quit for sure?') + '</p><p class="note">' + t('Эта попытка не сохранится.', 'This attempt will not be saved.') + '</p><div class="two"><button class="btn btn--red" type="button" data-act="quityes">' + t('ВЫЙТИ', 'QUIT') + '</button><button class="btn btn--ghost" type="button" data-act="quitno">' + t('ОСТАТЬСЯ', 'STAY') + '</button></div></section>';
+      app.appendChild(q); return true; }
+    if (a === 'quitno') { var qq = document.getElementById('ask'); if (qq) qq.parentNode.removeChild(qq); paused = false; prev = performance.now(); SFX.tap(); return true; }
+    if (a === 'quityes') { paused = false; cancelAnimationFrame(raf); if (RD) clearInterval(RD.tick); if (G) G.over = true; G = null; F = null; RD = null; BN = null; T = null; view = S.hub ? 'home' : 'intro'; SFX.tap(); render(); return true; }
+    return false;
+  }
+
+  /* =====================================================================
+     ПОДСКАЗКИ: кнопка «?» на каждом экране и разминка перед первым матчем
+     ===================================================================== */
+  function helpFor(v) {
+    var H = {
+      play: [t('КАК ИГРАТЬ В МАТЧ', 'HOW TO PLAY THE MATCH'), [
+        [t('ВЕДИ', 'DRAG'), t('Палец по льду: игрок едет за ним.', 'Finger on the ice: the player follows it.')],
+        [t('БРОСОК', 'SHOT'), t('Короткий тап по льду или смахни вверх.', 'A quick tap on the ice or a flick up.')],
+        [t('ЛИНИЯ', 'LINE'), t('Пунктир показывает, куда пойдёт шайба. Зелёный: линия открыта. Красный: на ней вратарь или она мимо ворот.', 'The dashed line shows where the puck will go. Green: the lane is open. Red: the goalie is in it or it misses the net.')],
+        [t('ГОЛОВА', 'HEAD'), t('Шкала сверху. Промахи и голы соперника греют её. В жёлтой и красной зоне бросок уводит, вратарь быстрее.', 'The meter on top. Misses and rival goals heat it up. In the yellow and red zones the shot drifts and the goalie is faster.')],
+        [t('СБРОС', 'RESET'), t('Красная кнопка внизу. Держи, пока кольцо не сомкнётся. Голова остывает, шесть секунд бросок идёт точно.', 'The red button below. Hold until the ring closes. Your head cools down and for six seconds the shot is true.')],
+        [t('ПОТОК', 'FLOW'), t('Три кружка у счёта. Три гола подряд: игра замедляется, гол идёт за два.', 'Three dots by the score. Three goals in a row: the game slows down and a goal counts double.')]]],
+      home: [t('ГЛАВНЫЙ ЭКРАН', 'HOME SCREEN'), [
+        [t('ТРЕНИРОВКА ДНЯ', 'DAILY TRAINING'), t('Три коротких упражнения подряд, около трёх минут. Начинай с неё.', 'Three short drills in a row, about three minutes. Start here.')],
+        [t('СЕГОДНЯ ИГРА?', 'GAME TODAY?'), t('Это про твою настоящую игру. До: одно задание на матч. После: три вопроса.', 'This is about your real game. Before: one task for the match. After: three questions.')],
+        [t('КОМАНДА', 'TEAM'), t('Твоё место по регулярности. В зачёт идут тренировка дня, режимы и матчи.', 'Your place by regularity. The daily training, modes and matches all count.')],
+        [t('ВКЛАДКИ ВНИЗУ', 'TABS BELOW'), t('Режимы: каждое упражнение и матч отдельно. Команда: таблица. Игрок: рекорды и твой сброс.', 'Modes: every drill and the match on their own. Team: the table. Player: records and your reset.')]]],
+      modes: [t('РЕЖИМЫ', 'MODES'), [
+        [t('ФОКУС', 'FOCUS'), t('Держи палец на шайбе, пока трибуны и чужие шайбы отвлекают. Счёт: секунды.', 'Keep your finger on the puck while the crowd and stray pucks distract you. Score: seconds.')],
+        [t('СБРОС НА ВРЕМЯ', 'TIMED RESET'), t('Пять неприятных эпизодов. На каждый шесть секунд: движение, выдох, слово.', 'Five nasty episodes. Six seconds for each: the movement, the exhale, the word.')],
+        [t('СКАМЕЙКА', 'THE BENCH'), t('Шесть смен. Между сменами выбираешь, что делать с головой, и видишь, чем кончилась следующая смена.', 'Six shifts. Between shifts you choose what to do with your head and see how the next shift ends.')],
+        [t('МАТЧ', 'THE MATCH'), t('60 секунд на льду. Здесь нужно всё сразу.', '60 seconds on the ice. Everything comes together here.')],
+        [t('ЦИФРА СПРАВА', 'NUMBER ON THE RIGHT'), t('Твой рекорд в этом режиме.', 'Your record in this mode.')]]],
+      team: [t('КОМАНДА', 'TEAM'), [
+        [t('ЦЕЛЬ НЕДЕЛИ', 'WEEKLY GOAL'), t('Общая на всех. Каждая твоя тренировка, режим или матч двигает полосу.', 'Shared by everyone. Every training, mode or match of yours moves the bar.')],
+        [t('РЕГУЛЯРНОСТЬ', 'REGULARITY'), t('Сколько дней из семи игрок занимался. По ней считается место.', 'How many days out of seven a player trained. Places are ranked by it.')],
+        [t('РЕКОРД НЕДЕЛИ', 'RECORD OF THE WEEK'), t('Лучшие секунды в упражнении на фокус.', 'The best seconds in the focus drill.')],
+        [t('ЧТО ВИДЯТ ДРУГИЕ', 'WHAT OTHERS SEE'), t('Только регулярность и рекорды. Твои ответы не видит никто.', 'Only regularity and records. Nobody sees your answers.')]]],
+      me: [t('ИГРОК', 'PLAYER'), [
+        [t('УРОВЕНЬ', 'LEVEL'), t('Растёт от опыта. Гол 10, сброс 15, секунда в потоке 5. За работу с головой дают больше, чем за голы.', 'Grows with experience. A goal is 10, a reset 15, a second in flow 5. Head work earns more than goals.')],
+        [t('РЕКОРДЫ', 'RECORDS'), t('Лучшие результаты по каждому режиму.', 'Your best results in every mode.')],
+        [t('МОЙ СБРОС', 'MY RESET'), t('Движение, выдох и слово, которые ты собрал. Пробуй их на настоящей тренировке.', 'The movement, the exhale and the word you built. Try them at a real practice.')],
+        [t('НАЧАТЬ ЗАНОВО', 'START OVER'), t('Стирает весь прогресс на этом телефоне.', 'Erases all progress on this phone.')]]],
+      drill: [t('ФОКУС ПОД ПОМЕХАМИ', 'FOCUS UNDER NOISE'), [
+        [t('ЧТО ДЕЛАТЬ', 'WHAT TO DO'), t('Поставь палец на шайбу и веди его за ней. Рамка голубая: ты на шайбе.', 'Put your finger on the puck and follow it. A cyan frame means you are on the puck.')],
+        [t('ПОМЕХИ', 'NOISE'), t('Надписи и красные шайбы только отвлекают. Трогать их не надо.', 'The banners and red pucks only distract. Do not touch them.')],
+        [t('ШКАЛА ФОКУСА', 'FOCUS METER'), t('Падает, когда палец не на шайбе. Упала до нуля: упражнение закончено.', 'It drops when your finger is off the puck. At zero the drill ends.')],
+        [t('СЧЁТ', 'SCORE'), t('Сколько секунд продержался. Шайба постепенно ускоряется.', 'How many seconds you lasted. The puck speeds up gradually.')]]],
+      rdrill: [t('СБРОС НА ВРЕМЯ', 'TIMED RESET'), [
+        [t('ЧТО ДЕЛАТЬ', 'WHAT TO DO'), t('Три кнопки по порядку: нажми движение, держи выдох до конца полосы, нажми слово.', 'Three buttons in order: tap the movement, hold the exhale until the bar fills, tap the word.')],
+        [t('ВРЕМЯ', 'TIME'), t('На каждый эпизод шесть секунд. Успел: засчитан.', 'Six seconds for each episode. Make it in time and it counts.')],
+        [t('ЗАЧЕМ', 'WHY'), t('Чтобы сброс стал привычкой и получался быстро, когда на льду что-то пошло не так.', 'So the reset becomes a habit and comes fast when something goes wrong on the ice.')]]],
+      bench: [t('СКАМЕЙКА', 'THE BENCH'), [
+        [t('ЧТО ДЕЛАТЬ', 'WHAT TO DO'), t('Прочитай ситуацию и выбери, как поступишь. Сразу увидишь, чем закончилась следующая смена.', 'Read the situation and choose what you do. You see right away how the next shift ends.')],
+        [t('ЛУЧШИЙ ОТВЕТ', 'THE BEST ANSWER'), t('Не всегда сброс. Иногда нужнее слово партнёру или простое задание на смену.', 'Not always the reset. Sometimes a word to a teammate or a simple task for the shift matters more.')],
+        [t('СЧЁТ', 'SCORE'), t('Хороший выбор: твоя команда забивает. Плохой: вам забивают.', 'A good choice: your team scores. A bad one: they score.')]]],
+      result: [t('ИТОГ МАТЧА', 'MATCH RESULT'), [
+        [t('ОПЫТ', 'EXPERIENCE'), t('Гол 10, сброс 15, секунда в потоке 5, доигранный матч 30.', 'A goal is 10, a reset 15, a second in flow 5, a finished match 30.')],
+        [t('С ГОРЯЧЕЙ ГОЛОВОЙ', 'WITH A HOT HEAD'), t('Сколько секунд шкала была в красной зоне. Чем меньше, тем лучше.', 'How many seconds the meter was in the red zone. The less, the better.')],
+        [t('СБРОСОВ', 'RESETS'), t('Сколько раз ты остудил голову кнопкой.', 'How many times you cooled your head with the button.')],
+        [t('В ПОТОКЕ', 'IN FLOW'), t('Сколько секунд длился поток после трёх голов подряд.', 'How many seconds flow lasted after three goals in a row.')]]]
+    };
+    var any = [t('ПОДСКАЗКА', 'HELP'), [
+      [t('ЧТО ЭТО', 'WHAT THIS IS'), t('Игра, которая тренирует голову. Навыки здесь работают как правила матча.', 'A game that trains your head. Skills work here as the rules of the match.')],
+      [t('КНОПКА «?»', 'THE "?" BUTTON'), t('Есть на каждом экране и объясняет именно его.', 'It is on every screen and explains that screen.')]]];
+    return H[v] || (v === 'tres' || v === 'between' ? H.modes : v === 'intro' ? H.play : any);
+  }
+  function openHelp(v) {
+    if (document.getElementById('ask')) return; paused = true;
+    var h = helpFor(v), q = document.createElement('div'); q.id = 'ask'; q.className = 'ask gut';
+    q.innerHTML = '<section class="panel panel--hot helpbox" role="dialog" aria-label="' + h[0] + '"><h2 class="h2">' + h[0] + '</h2><div class="keys">' +
+      h[1].map(function (r) { return '<b>' + r[0] + '</b><span>' + r[1] + '</span>'; }).join('') + '</div><button class="btn" type="button" data-act="helpok">' + t('ПОНЯТНО', 'GOT IT') + '</button></section>';
+    app.appendChild(q);
+  }
+
+  // разминка: четыре шага перед первым матчем. Таймер и соперник стоят, шаг закрывается действием игрока
+  function tutText() {
+    var g = G, k = g.tut;
+    if (k === 0) return [t('ВЕДИ ПАЛЬЦЕМ ПО ЛЬДУ', 'DRAG YOUR FINGER ON THE ICE'), t('Игрок едет за пальцем. Прокатись влево и вправо.', 'The player follows your finger. Skate left and right.')];
+    if (k === 1) return [t('БРОСОК: КОРОТКИЙ ТАП', 'SHOT: A QUICK TAP'), g.tutMiss >= 2 ? t('Линия красная: на ней вратарь. Дождись зелёной и тапни.', 'The line is red: the goalie is in it. Wait for green and tap.') : t('Пунктир показывает бросок. Зелёный: открыто. Забей один гол.', 'The dashed line shows the shot. Green: it is open. Score one goal.')];
+    if (k === 2) return [t('ГОЛОВА НАГРЕЛАСЬ', 'YOUR HEAD HEATED UP'), t('Шкала сверху пожелтела: бросок уводит. Держи красную кнопку внизу, пока кольцо не сомкнётся.', 'The meter on top turned yellow: the shot drifts. Hold the red button below until the ring closes.')];
+    return [t('ГОЛОВА ХОЛОДНАЯ', 'YOUR HEAD IS COOL'), t('Шесть секунд бросок идёт точно. Три гола подряд включают поток: гол за два. Готов к матчу?', 'For six seconds the shot is true. Three goals in a row switch on flow: a goal counts double. Ready for the match?')];
+  }
+  function tutDraw() {
+    var c = document.getElementById('coach'); if (!c || !G || G.tut == null) return; var x = tutText(), key = G.tut + '|' + (G.tutMiss >= 2) + '|' + S.lang;
+    if (c.getAttribute('data-k') === key) return; c.setAttribute('data-k', key);
+    c.innerHTML = '<div class="coach__top"><span class="tag">' + t('РАЗМИНКА ', 'WARM-UP ') + (G.tut + 1) + ' / 4</span><button class="coach__skip" type="button" data-act="tutskip">' + t('ПРОПУСТИТЬ', 'SKIP') + '</button></div><b>' + x[0] + '</b><p>' + x[1] + '</p>' +
+      (G.tut === 3 ? '<button class="btn" type="button" data-act="tutdone">▶ ' + t('НАЧАТЬ МАТЧ', 'START THE MATCH') + '</button>' : '');
+    c.className = 'coach' + (G.tut === 3 ? ' coach--mid' : '');
+  }
+  function tutStep(dt) {
+    var g = G;
+    if (g.tut === 0) { g.tutMove += Math.abs(g.px - g.tutPx); g.tutPx = g.px; if (g.tutMove > 90) { g.tut = 1; SFX.tap(); } }
+    else if (g.tut === 1) { if (g.goals >= 1) { g.tut = 2; g.tilt = 0.5; g.wasY = true; } }
+    else if (g.tut === 2) { if (g.resets >= 1) { g.tut = 3; } else g.tilt = Math.max(g.tilt, 0.5); }
+    g.clock = 3.6; tutDraw();
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-act]') : null; if (!el || el.disabled) return;
+    var a = el.getAttribute('data-act');
+    if (hubAct(a, el)) return;
+    if (a === 'lang') { S.lang = S.lang === 'en' ? 'ru' : 'en'; save(); if (view === 'play' || view === 'drill' || view === 'tres') { el.textContent = S.lang === 'en' ? 'RU' : 'EN'; } else render(); return; }
+    if (a === 'sound') { S.sound = !S.sound; save(); el.setAttribute('aria-pressed', String(S.sound)); SFX.tap(); return; }
+    if (a === 'play') { SFX.tap(); startMatch(); return; }
+    if (a === 'go') { SFX.tap(); pick = {}; view = el.getAttribute('data-v'); render(); return; }
+    if (a === 'pick') { pick[el.getAttribute('data-k')] = el.getAttribute('data-v'); SFX.tap(); var y = document.getElementById('stage').scrollTop; render(); document.getElementById('stage').scrollTop = y; return; }
+    if (a === 'crafted') { S.reset = { gesture: pick.gesture, word: pick.word }; S.n = 2; save(); SFX.reset(); view = 'intro'; render(); return; }
+    if (a === 'reflected') { S.upg[pick.upg] = true; S.seen = pick.when; S.n = last().n + 1; S.hub = true; save(); SFX.flow(); view = 'home'; render(); return; }
+    if (a === 'next') { S.n = last().n + 1; save(); view = 'intro'; render(); return; }
+    if (a === 'askwipe') { askWipe = true; render(); return; }
+    if (a === 'wipe') { var l = S.lang, s = S.sound; S = blank(); S.lang = l; S.sound = s; askWipe = false; save(); view = 'intro'; render(); return; }
+  });
+
+  window.__season = { f: function () { return F ? { x: F.x, y: F.y } : null; }, g: function () { return G; }, s: function () { return S; }, dur: function (v) { DUR = v; } };
+  // незаконченный шаг после перезагрузки: возвращаем на итог последнего матча
+  if (S.hub) { view = 'home'; S.tut = true; }
+  else if (S.hist.length && last().n === S.n && !(S.n === 1 && S.reset)) view = 'result';
+  render();
+})();
+</script>
