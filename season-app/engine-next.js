@@ -20,6 +20,7 @@
     spr.ch = id === 2 ? mk({ jersey: '#f77622', jerseyDark: '#b86f50', trim: '#181425', beard: null, letter: null }) : spr.def;
     rebuildMatchDom();
     var pe = (S.pre && S.pre[id]) || {}; G.heat = pe.heat || 0; G.breathK = pe.breathK || 1;
+    if (id > 4) { var fm = S.form == null ? 1 : S.form; G.breathK *= 1.07 - 0.07 * fm; G.passK = S.room >= 2 ? 0.85 : S.room === 0 ? 1.1 : 1; if (S.trust >= 2 && S.values.length) G.core = true; G.shortEnd = S.trust === 0; }
     if (M.bench1) return benchFirst();
     setSeg(0); if (G.core) say('СТЕРЖЕНЬ ЗАРЯЖЕН', '#2ce8f5', 2.4, 'ДВА БЫСТРЫХ ТАПА ЛЕВЫМ ПАЛЬЦЕМ'); run();
   }
@@ -54,14 +55,14 @@
   function setSeg(i) {
     var g = G; g.seg = i; g.t = 0; g.rivI = 0; g.mg = (M.segG && M.segG[Math.min(i, 2)]) || M.g; g.segShots = 0; g.nz = 4; g.noise = 0; g.rate = i === 3 ? 1 / 40 : (M.riv[i] || []).length / 33 * tv('rateK'); if (i === 0) g.press = M.id === 3 ? 0.85 : 0;
     var nd = M.defs[Math.min(i, 2)]; g.defs = nd === 0 ? [] : nd === 1 ? [{ x: 40, y: 196, v: 60 }] : [{ x: 40, y: 196, v: 64 }, { x: 240, y: 146, v: -78 }];
-    var sl = SEG === 35 ? tv('segT') : SEG; g.segLen = i === 3 ? 20 : M.id === 4 && i === 2 && !g.finalSeg ? Math.round(sl / 2) : sl; g.ch = null; marks(); g.puck = { s: 'in', t: 0.6 }; g.breath = 0; g.breathing = false; g.wasFull = false; g.over = 0; g.px = 160; g.py = 320; g.playSeg++; PL = PR = null;
+    var sl = SEG === 35 ? tv('segT') : SEG; g.segLen = i === 3 ? 20 : M.id === 4 && i === 2 && !g.finalSeg ? Math.round(sl / 2) : M.id > 4 && i === 2 && g.shortEnd ? Math.round(sl * 0.75) : sl; g.ch = null; marks(); g.puck = { s: 'in', t: 0.6 }; g.breath = 0; g.breathing = false; g.wasFull = false; g.over = 0; g.px = 160; g.py = 320; g.playSeg++; PL = PR = null;
   }
   function fit() { var w = document.getElementById('wrap'); if (!w || !cv) return; var cs = getComputedStyle(w), aw = w.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8, ah = w.clientHeight - parseFloat(cs.paddingBottom) - 8, k = Math.max(0.4, Math.min(aw / W, ah / H)); cv.style.width = Math.floor(W * k) + 'px'; cv.style.height = Math.floor(H * k) + 'px'; }
   window.addEventListener('resize', fit);
   function say(m, c, d, sub) { G.msg = m; G.msgC = c || '#fff'; G.msgT = d || 1.2; G.sub = sub || ''; }
   function burst(x, y, n, cols) { for (var i = 0; i < n; i++) G.parts.push({ x: x, y: y, vx: (Math.random() - 0.5) * 240, vy: -60 - Math.random() * 220, l: 0.6 + Math.random() * 0.6, c: cols[i % cols.length] }); }
   SFX.pass = function () { beep([[520, 0.04, 'triangle'], [820, 0.06, 'triangle']], 0.09); };
-  function nextPuck(d) { G.mate = { x: Math.random() < 0.5 ? 30 : 290, y: 255 + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') }; G.ch = null; }
+  function nextPuck(d) { G.mate = { x: Math.random() < 0.5 ? 30 : 290, y: 255 + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') * (G.passK || 1) }; G.ch = null; }
   function coach(title, text) { var c = els.coach; if (!title) { c.hidden = true; return; } if (c.getAttribute('data-k') !== title) { c.setAttribute('data-k', title); c.innerHTML = '<b>' + title + '</b><p>' + text + '</p>'; } c.hidden = false; }
   function heatUp(v, why) { var g = G; g.heat = Math.min(1, g.heat + v); g.shake = 0.25; log(M.id, 'heat', { by: why, heat: +g.heat.toFixed(2) }); }
   // буллиты: темп соперника объявлен заранее, как и красные метки
@@ -323,7 +324,7 @@
       cooledAll: g.rivGoals.every(function (x) { return x.cooled; }), rivGoals: g.rivGoals.length };
     var s1 = r.cooledAll, s2 = r.shots > 0 && r.narrow / r.shots >= 0.5, s3 = !!m.s3(r), n = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
     if (SIM) { SIM.result = { you: r.you, riv: r.riv, stars: n, hot: r.hot, shots: r.shots, narrow: r.narrow, goals: r.goals, how: g.endHow }; G = null; return; }
-    S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
+    var first = !S.done[m.id]; S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
     G = null; view = 'result';
     function star(on, text) { return '<div class="star' + (on ? ' on' : '') + '"><i>★</i><span>' + text + '</span></div>'; }
     var win = r.you > r.riv;
@@ -337,6 +338,7 @@
   }
   function after(id) {
     pick = {};
+    if (S.last && S.last.id === id && !S.last.seen) { S.last.seen = true; save(); return world(id); }
     if (id === 1 && !S.life[1]) return life(1, home);
     if (id === 3 && !S.fix) return review(0, home);
     if (id === 4 && !S.life[4]) return life(4, home);
@@ -357,6 +359,34 @@
     cv.addEventListener('pointercancel', function (e) { up(e, true); });
     cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   }
+  /* ---------- мир между матчами: форма, доверие, раздевалка, репутация ---------- */
+  // Меняется от решений и от того, как сыгран матч (только первое прохождение). Действует на матчи с пятого.
+  function worldAfter(m, r, n, g) {
+    if (S.form == null) { S.form = 1; S.rep = 0; }
+    var d = [], win = r.you > r.riv;
+    function ch(k, name, v, why) { var o = S[k] || 0, nv = Math.max(0, Math.min(3, o + v)); if (nv !== o) { S[k] = nv; d.push(name + (v > 0 ? ' +1: ' : ' −1: ') + why); } }
+    if (n >= 2) ch('form', 'Форма', 1, 'две звезды и больше, играл головой'); else if (n === 0) ch('form', 'Форма', -1, 'ни одной звезды за голову');
+    if (win && (n === 3 || g.endHow)) ch('rep', 'Репутация', 1, g.endHow ? 'победа в концовке, о тебе заговорили' : 'победа на три звезды'); else if (!win && n === 0) ch('rep', 'Репутация', -1, 'поражение без единой звезды');
+    if (n === 3) ch('trust', 'Доверие', 1, 'тренер видел холодную голову весь матч'); else if (r.hot >= 20) ch('trust', 'Доверие', -1, 'тренер видел, как ты кипел');
+    S.last = { id: m.id, d: d, seen: false };
+  }
+  function worldLines() {
+    var fm = S.form == null ? 1 : S.form;
+    return ['Форма: выдох ' + (fm >= 2 ? 'быстрее обычного' : fm === 0 ? 'медленнее обычного' : 'обычный'),
+      'Раздевалка: пас ' + (S.room >= 2 ? 'быстрее обычного' : S.room === 0 ? 'медленнее обычного' : 'обычный'),
+      'Доверие: ' + (S.trust >= 2 ? 'стержень заряжен на старте' : S.trust === 0 ? 'в концовке тебе дадут меньше времени' : 'обычная смена'),
+      'Репутация: решит, куда ты попадёшь в конце пути'];
+  }
+  function worldBrief(m) { return m.id > 4 ? '<section class="panel"><h2 class="h2">С ЧЕМ ТЫ ВЫХОДИШЬ</h2>' + worldLines().slice(0, 3).map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</section>' : ''; }
+  function world(id) {
+    view = 'world'; var d = (S.last && S.last.d) || [];
+    screen('МЕЖДУ МАТЧАМИ', '<span class="tag">МЕЖДУ МАТЧАМИ</span><h1 class="h1">ЧТО ИЗМЕНИЛОСЬ</h1>' +
+      (d.length ? d.map(function (l) { return '<p class="line">' + l + '</p>'; }).join('') : '<p class="lead">Без перемен: всё осталось как было.</p>') +
+      '<section class="panel"><div class="meters"><span>ФОРМА</span>' + pips(S.form == null ? 1 : S.form) + '<span>ДОВЕРИЕ</span>' + pips(S.trust || 0) + '<span>РАЗДЕВАЛКА</span>' + pips(S.room || 0) + '<span>РЕПУТАЦИЯ</span>' + pips(S.rep || 0) + '</div></section>' +
+      '<section class="panel"><h2 class="h2">В СЛЕДУЮЩЕМ МАТЧЕ</h2>' + worldLines().map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</section>',
+      '<button class="btn" type="button" data-act="after" data-m="' + id + '">ДАЛЬШЕ ▶</button>');
+  }
+
   /* ---------- матчи 5-7: черновик. Названия команд вымышленные и не проверены ---------- */
   var PROVOK = { gain: 0.3, shotGain: 0, cool: 0.06, speed: 1 }, HOT = { gain: 0.6, shotGain: 0, cool: 0.035, speed: 1 };
   function preSet(id, o) { S.pre = S.pre || {}; S.pre[id] = o; }
@@ -374,8 +404,8 @@
     star3: 'Ни одного броска с горячей головой', s3: function (r) { return r.shots > 0 && r.hotShots === 0; },
     life: { h: 'ОДНА МИКРОПРИВЫЧКА', t: 'Выбери одну маленькую привычку на неделю и привяжи её к тому, что уже делаешь каждый день. Одну, а не три.' },
     pre: function (done) { decide(6, 'evening', 'Вечер перед игрой. Завтра сильный соперник.', [
-      { label: 'ЛОЖУСЬ ВОВРЕМЯ', dots: [['Голова', 2]], vals: ['Дисциплина', 'Ответственность', 'Трудолюбие'], apply: function () { preSet(6, { heat: 0, breathK: 0.9 }); return ['Холодный старт', 'Выдох чуть быстрее весь матч']; } },
-      { label: 'ДОИГРЫВАЮ В ПРИСТАВКУ ДО НОЧИ', dots: [['Голова', 2]], vals: ['Радость игры'], apply: function () { preSet(6, { heat: 0.35, breathK: 1.2 }); return ['Тёплый старт', 'Выдох длиннее весь матч: герой не выспался']; } },
+      { label: 'ЛОЖУСЬ ВОВРЕМЯ', dots: [['Голова', 2]], vals: ['Дисциплина', 'Ответственность', 'Трудолюбие'], apply: function () { preSet(6, { heat: 0, breathK: 0.95 }); S.form = Math.min(3, (S.form == null ? 1 : S.form) + 1); return ['Холодный старт', 'Форма +1: выдох быстрее']; } },
+      { label: 'ДОИГРЫВАЮ В ПРИСТАВКУ ДО НОЧИ', dots: [['Голова', 2]], vals: ['Радость игры'], apply: function () { preSet(6, { heat: 0.35, breathK: 1.1 }); S.form = Math.max(0, (S.form == null ? 1 : S.form) - 1); return ['Тёплый старт', 'Форма −1: герой не выспался, выдох длиннее']; } },
       { label: 'ДО ПОЛУНОЧИ РАЗБИРАЮ СВОИ ОШИБКИ', dots: [['Голова', 1], ['Доверие', 1]], vals: ['Упорство', 'Честность'], apply: function () { preSet(6, { heat: 0.2, breathK: 1.1 }); S.trust = Math.min(3, S.trust + 1); return ['Доверие +1: утром тренер увидел твои вопросы', 'Но голова тёплая и выдох длиннее']; } }], done, 'МАТЧ 6 · НАКАНУНЕ'); } });
   MATCHES.push({ id: 7, name: 'ДЕРБИ', team: 'Южный Порт', rival: 'Провокатор и Горячий',
     about: 'Главный матч месяца. Три отрезка, три разных условия, и никто не подсказывает. В воротах по очереди Провокатор и Горячий.',
@@ -411,7 +441,7 @@
   };
   function simRun(id, bot, cfg) {
     var keepS = S, keepView = view, keepG = G, keepM = M; SIM = { ix: 0, iy: 0, man: false, m: {}, log: {}, result: null, cx: cfg && cfg.cx, cy: cfg && cfg.cy };
-    S = blank(); S.sound = false; S.role = 'F'; S.num = '9'; S.values = ['Упорство', 'Ответственность', 'Радость игры']; S.core = id >= 2; S.taught = true; S.done = { 1: true }; S.fix = id === 4; S.pre = {}; S.reset = { g: 'x', w: 'Здесь' };
+    S = blank(); S.sound = false; S.role = 'F'; S.num = '9'; S.values = ['Упорство', 'Ответственность', 'Радость игры']; S.core = id >= 2; S.taught = true; S.done = { 1: true }; S.fix = id === 4; S.pre = {}; S.reset = { g: 'x', w: 'Здесь' }; if (id > 4) { S.trust = 1; S.room = 1; S.form = 1; S.rep = 0; }
     if (cfg) for (var k in cfg) if (k in S) S[k] = cfg[k];
     var f = BOTS[bot], dt = 1 / 30, n = 0; startMatch(id);
     while (!SIM.result && G && n++ < 40000) {

@@ -11,5 +11,8 @@ rep("var si = Math.random() < 0.5 ? 0 : 1,","var si = Math.floor(Math.random() *
 rep("Четыре матча пройдены. Дальше в полной версии: дерби и первый месяц до конца.","Все готовые матчи пройдены. Продолжение в работе.")
 rep(": '<span class=\"tag tag--mute\">В НАСТОЯЩЕЙ ЖИЗНИ</span><h1 class=\"h1\">ДЕНЬ, КОГДА МАЛО ИГРАЛ</h1>",": MATCHES[id - 1].life ? '<span class=\"tag tag--mute\">В НАСТОЯЩЕЙ ЖИЗНИ</span><h1 class=\"h1\">' + MATCHES[id - 1].life.h + '</h1><p class=\"lead\">' + MATCHES[id - 1].life.t + '</p>' : '<span class=\"tag tag--mute\">В НАСТОЯЩЕЙ ЖИЗНИ</span><h1 class=\"h1\">ДЕНЬ, КОГДА МАЛО ИГРАЛ</h1>")
 rep("case 'quit': x = 'вышел из матча'; break;","case 'quit': x = 'вышел из матча'; break;\n      case 'word': x = 'сказал своё слово, шум ушёл'; break;")
+rep("    screen(m.name, '<span class=\"tag\">МАТЧ","    extra += worldBrief(m);\n    screen(m.name, '<span class=\"tag\">МАТЧ")
+rep("'<span>РАЗДЕВАЛКА</span>' + pips(S.room) +","'<span>РАЗДЕВАЛКА</span>' + pips(S.room) + (S.form != null ? '<span>ФОРМА</span>' + pips(S.form) + '<span>РЕПУТАЦИЯ</span>' + pips(S.rep || 0) : '') +")
+rep("var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1 };","var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1, world: 1 };")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)

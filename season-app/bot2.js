@@ -20,6 +20,7 @@ const {chromium}=require('playwright');const D=__dirname;const MODE=process.argv
    else {await p.waitForTimeout(200);if(st.heat>0.5)await once('hot');}
    await p.mouse.up();shots++;await p.waitForTimeout(250);continue;}
   if(await has('.final')){const t=await p.locator('.tag').first().textContent();console.log(t,'|',(await p.locator('.final').textContent()).trim(),'| stars',await p.locator('.star.on').count(),'|',(await p.locator('.stats').textContent()));await shot('result-'+t.slice(5,6));await click('[data-act="after"]');continue;}
+  if(!(await has('.final'))&&await has('[data-act="after"]')){await once('world');await click('[data-act="after"]');continue;}
   if(await has('[data-act="choose"]')){await once('decide-'+guard);await click('[data-act="choose"][data-i="0"]');await once('decided-'+guard);continue;}
   if(await has('[data-act="decided"]')){await click('[data-act="decided"]');continue;}
   if(await has('[data-act="pre1done"]')){await click('[data-v="F"]');await p.fill('[data-inp="num"]','4x5');await shot('pre1');await click('[data-act="pre1done"]');continue;}
