@@ -20,6 +20,7 @@
     spr.ch = id === 2 ? mk({ jersey: '#f77622', jerseyDark: '#b86f50', trim: '#181425', beard: null, letter: null }) : spr.def;
     rebuildMatchDom();
     var pe = (S.pre && S.pre[id]) || {}; G.heat = pe.heat || 0; G.breathK = pe.breathK || 1;
+    if (M.tired) G.breathK *= 1.15; if (M.startHeat) G.heat = Math.max(G.heat, M.startHeat);
     if (id > 4) { var fm = S.form == null ? 1 : S.form; G.breathK *= 1.07 - 0.07 * fm; G.passK = S.room >= 2 ? 0.85 : S.room === 0 ? 1.1 : 1; if (S.trust >= 2 && S.values.length) G.core = true; G.shortEnd = S.trust === 0; }
     if (M.bench1) return benchFirst();
     setSeg(0); if (G.core) say('СТЕРЖЕНЬ ЗАРЯЖЕН', '#2ce8f5', 2.4, 'ДВА БЫСТРЫХ ТАПА ЛЕВЫМ ПАЛЬЦЕМ'); run();
@@ -55,14 +56,18 @@
   function setSeg(i) {
     var g = G; g.seg = i; g.t = 0; g.rivI = 0; g.mg = (M.segG && M.segG[Math.min(i, 2)]) || M.g; g.segShots = 0; g.nz = 4; g.noise = 0; g.rate = i === 3 ? 1 / 40 : (M.riv[i] || []).length / 33 * tv('rateK'); if (i === 0) g.press = M.id === 3 ? 0.85 : 0;
     var nd = M.defs[Math.min(i, 2)]; g.defs = nd === 0 ? [] : nd === 1 ? [{ x: 40, y: 196, v: 60 }] : [{ x: 40, y: 196, v: 64 }, { x: 240, y: 146, v: -78 }];
-    var sl = SEG === 35 ? tv('segT') : SEG; g.segLen = i === 3 ? 20 : M.id === 4 && i === 2 && !g.finalSeg ? Math.round(sl / 2) : M.id > 4 && i === 2 && g.shortEnd ? Math.round(sl * 0.75) : sl; g.ch = null; marks(); g.puck = { s: 'in', t: 0.6 }; g.breath = 0; g.breathing = false; g.wasFull = false; g.over = 0; g.px = 160; g.py = 320; g.playSeg++; PL = PR = null;
+    var sl = SEG === 35 ? tv('segT') : SEG; g.segLen = i === 3 ? 20 : M.id === 4 && i === 2 && !g.finalSeg ? Math.round(sl / 2) : M.id > 4 && i === 2 && g.shortEnd ? Math.round(sl * 0.75) : sl;
+    g.sit = M.sit ? M.sit[Math.min(i, 2)] : ''; if (g.sit === 'pp') g.defs = g.defs.slice(0, Math.max(0, g.defs.length - 1)); if (g.sit === 'pk') g.rate *= 1.3;
+    g.empty = !!M.emptyNet && i === 2 && g.you > g.riv; if (g.empty) g.rate *= 1.6;
+    if (g.sit || g.empty) { g.msg = g.empty ? 'ПУСТЫЕ ВОРОТА' : g.sit === 'pp' ? 'БОЛЬШИНСТВО' : 'МЕНЬШИНСТВО'; g.msgC = '#fee761'; g.msgT = 2.4; g.sub = g.empty ? 'СОПЕРНИК СНЯЛ ВРАТАРЯ И ДАВИТ СИЛЬНЕЕ' : g.sit === 'pp' ? 'У НИХ НА ОДНОГО МЕНЬШЕ: ПАС БЫСТРЕЕ' : 'ВАС МЕНЬШЕ: ШАЙБА РЕДКО, ДАВЛЕНИЕ ВЫШЕ'; }
+    g.ch = null; marks(); g.puck = { s: 'in', t: 0.6 }; g.breath = 0; g.breathing = false; g.wasFull = false; g.over = 0; g.px = 160; g.py = 320; g.playSeg++; PL = PR = null;
   }
   function fit() { var w = document.getElementById('wrap'); if (!w || !cv) return; var cs = getComputedStyle(w), aw = w.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8, ah = w.clientHeight - parseFloat(cs.paddingBottom) - 8, k = Math.max(0.4, Math.min(aw / W, ah / H)); cv.style.width = Math.floor(W * k) + 'px'; cv.style.height = Math.floor(H * k) + 'px'; }
   window.addEventListener('resize', fit);
   function say(m, c, d, sub) { G.msg = m; G.msgC = c || '#fff'; G.msgT = d || 1.2; G.sub = M.blind ? '' : (sub || ''); }
   function burst(x, y, n, cols) { for (var i = 0; i < n; i++) G.parts.push({ x: x, y: y, vx: (Math.random() - 0.5) * 240, vy: -60 - Math.random() * 220, l: 0.6 + Math.random() * 0.6, c: cols[i % cols.length] }); }
   SFX.pass = function () { beep([[520, 0.04, 'triangle'], [820, 0.06, 'triangle']], 0.09); };
-  function nextPuck(d) { G.mate = { x: Math.random() < 0.5 ? 30 : 290, y: 255 + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') * (G.passK || 1) * (G.flow > 0 ? 0.7 : 1) * (1 + 0.6 * (G.mheat || 0)) }; G.ch = null; }
+  function nextPuck(d) { G.mate = { x: Math.random() < 0.5 ? 30 : 290, y: 255 + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') * (G.passK || 1) * (G.flow > 0 ? 0.7 : 1) * (1 + 0.6 * (G.mheat || 0)) * (G.sit === 'pp' ? 0.85 : G.sit === 'pk' ? 1.45 : 1) }; G.ch = null; }
   function coach(title, text) { var c = els.coach; if (!title) { c.hidden = true; return; } if (c.getAttribute('data-k') !== title) { c.setAttribute('data-k', title); c.innerHTML = '<b>' + title + '</b><p>' + text + '</p>'; } c.hidden = false; }
   function heatUp(v, why) { var g = G; g.heat = Math.min(1, g.heat + v); g.shake = 0.25; log(M.id, 'heat', { by: why, heat: +g.heat.toFixed(2) }); }
   // буллиты: темп соперника объявлен заранее, как и красные метки
@@ -94,7 +99,7 @@
       first: !!(g.rivGoals.length && g.firstAfter === null), press: !!(g.ch && Math.hypot(g.ch.x - g.px, g.ch.y - g.py) < 80) || g.clock < 3 };
     if (withBreath) { if (++g.breathRow >= 3) { g.breathRow = 0; deed('disc'); } } else g.breathRow = 0;
     g.shots++; if (withBreath) g.breathShots++; if (spx <= 14) g.narrow++; g.trail = [];
-    if (g.heat >= 0.66) g.hotShots++; if (g.segShots++ === 0) g.segFirst[g.seg] = withBreath;
+    if (g.heat >= 0.66) g.hotShots++; if (g.segShots++ === 0) g.segFirst[g.seg] = withBreath; if (g.shots === 0) g.firstShotBreath = withBreath;
     if (g.rivGoals.length && g.firstAfter === null) { g.firstAfter = withBreath; g.firstAfterBreath = withBreath; }
     log(M.id, 'shot', { width: Math.round(spx * 2), breath: +b.toFixed(2), top: top, heat: +g.heat.toFixed(2), aimed: A.armed, slap: slap, far: far });
     g.breath = 0; g.over = 0; g.wasFull = false; g.breathing = false; breathSound(false); SFX.shot();
@@ -102,7 +107,7 @@
     if (g.lesson === 1) { if (withBreath) g.lesson = 2; else if (++g.l1 >= 6) g.lesson = 2; }
   }
   function miss(text, why, soft, kind) {
-    var g = G; g.streak = 0; g.missRow++; g.topRow = 0; g.flow = 0; if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') g.losses++; if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') g.safe = true;
+    var g = G; g.streak = 0; g.missRow++; g.topRow = 0; g.flow = 0; if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') { g.losses++; if (g.seg >= 2) g.lossesEnd = (g.lossesEnd || 0) + 1; } if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') g.safe = true;
     if ((kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') && g.lesson >= 9 && !g.so) g.press = Math.min(0.99, g.press + tv('push')); heatUp(kind === 'badpass' ? 0.05 : soft || kind === 'poke' || kind === 'steal' || kind === 'icept' ? 0.1 : 0.22, kind); if (kind === 'badpass') g.safe = true; log(M.id, 'miss', { kind: kind });
     say(text, soft ? '#fee761' : '#e43b44', 1.7, why); if (soft) SFX.post(); else SFX.bad(); nextPuck(soft ? 1.6 : 1.9); if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.2, sc: false }; }
   }
@@ -196,7 +201,7 @@
     if (dg) { PR = null; breathSound(false); return dg === 'poke' ? miss('ПОТЕРЯ', 'ВРАТАРЬ ВЫБИЛ ШАЙБУ: НЕ ЛЕЗЬ В ЕГО ЗОНУ', false, 'poke') : miss('ПОТЕРЯ', 'СЛИШКОМ БЛИЗКО К ЗАЩИТНИКУ: ОБЪЕЗЖАЙ', false, 'steal'); }
     if (p.s === 'in' && p.t < 0.45 && p.t > 0 && !g.so && !g.safe && g.lesson >= 9) { var ik = 1 - p.t / 0.45, st2 = stick(), ipx = g.mate.x + 20 + (st2[0] - g.mate.x - 20) * ik, ipy = g.mate.y + 20 + (st2[1] - g.mate.y - 20) * ik; if (hitDef(ipx, ipy)) return miss('ПЕРЕХВАТ', 'ЗАЩИТНИК ПЕРЕХВАТИЛ ПАС: ОТКРОЙСЯ ПАРТНЁРУ', false, 'icept'); }
     if (p.s === 'in' && M.mateHead && p.t < 0.45 && !p.rolled && !g.so) { p.rolled = true; if (g.mheat >= 0.5 && !g.safe && Math.random() < 0.4 * g.mheat) return miss('ПАС НЕТОЧНЫЙ', 'ПАРТНЁР КИПИТ: ЕГО ПАС НЕ ДОШЁЛ', true, 'badpass'); }
-    if (p.s === 'in') { p.t -= dt; if (p.t <= 0 && !danger()) { g.puck = { s: 'ready' }; g.recvAge = 0; if (g.safe) { g.safe = false; g.grace = 1.25; } g.recv = 0.35; SFX.pass(); buzz(10); g.clock = g.so ? 6 : CLOCK; if (M.chase && M.chase[g.seg]) { var sp1 = [[58, 150], [262, 150], [58, 350], [262, 350], [160, 135], [160, 355], [40, 250], [280, 250]].filter(function (q) { return Math.hypot(q[0] - g.px, q[1] - g.py) > 120; }), sq = sp1[Math.floor(Math.random() * sp1.length)] || [58, 150]; g.ch = { x: sq[0], y: sq[1], v: M.chase[g.seg] }; } } }
+    if (p.s === 'in') { p.t -= dt; if (p.t <= 0 && !danger()) { g.puck = { s: 'ready' }; g.recvAge = 0; if (g.safe) { g.safe = false; g.grace = 1.25; } g.recv = 0.35; SFX.pass(); buzz(10); g.clock = g.so ? 6 : CLOCK; if (M.chase && M.chase[g.seg] && g.sit !== 'pp') { var sp1 = [[58, 150], [262, 150], [58, 350], [262, 350], [160, 135], [160, 355], [40, 250], [280, 250]].filter(function (q) { return Math.hypot(q[0] - g.px, q[1] - g.py) > 120; }), sq = sp1[Math.floor(Math.random() * sp1.length)] || [58, 150]; g.ch = { x: sq[0], y: sq[1], v: M.chase[g.seg] * (g.sit === 'pk' ? 1.12 : 1) }; } } }
     else if (p.s === 'ready') { if (g.lesson >= 9) g.clock -= dt; if (g.clock <= 0) { PR = null; breathSound(false); miss('ПОТЕРЯ', 'ПОЗДНО: ВРЕМЯ НА БРОСОК ВЫШЛО', false, 'late'); } }
     else if (p.s === 'fly') {
       for (var q = 0; q < 4 && p.y > GOAL_Y; q++) { p.y += p.vy * dt / 4; p.x += p.vx * dt / 4; if (p.skip > 0) p.skip -= dt / 4; else if (hitDef(p.x, p.y)) { if (p.pierce > 0) { p.pierce--; p.skip = 0.1; var pv = Math.hypot(p.vx, p.vy) || 1; p.vx *= FLY * 0.85 / pv; p.vy *= FLY * 0.85 / pv; p.top = false; } else return miss('БЛОК', 'ЗАЩИТНИК БЫЛ НА ЛИНИИ БРОСКА', false, 'block'); } }
@@ -204,7 +209,7 @@
       if (p.x < 8 || p.x > W - 8) return miss('МИМО', p.wide ? 'ЛИНИЯ БЫЛА ШИРОКОЙ: ЗАМРИ ПЕРЕД БРОСКОМ' : 'ЛИНИЯ СМОТРЕЛА МИМО ВОРОТ', false, 'wide');
       if (p.y <= GOAL_Y) {
         // «девятка» идёт в угол: вратарь берёт её, только если стоит прямо на линии
-        var inNet = p.x > NET_L + 2 && p.x < NET_R - 2, seen = !!p.slap && p.from > 262 && g.gheat < 0.33 && !(S.role === 'D' && T.dSlap), saved = Math.abs(p.x - (g.gx + GW / 2)) < saveHalf(p.top, p.from, seen) - (p.one ? 8 : 0);
+        var inNet = p.x > NET_L + 2 && p.x < NET_R - 2, seen = !!p.slap && p.from > 262 && g.gheat < 0.33 && !(S.role === 'D' && T.dSlap), saved = !g.empty && Math.abs(p.x - (g.gx + GW / 2)) < saveHalf(p.top, p.from, seen) - (p.one ? 8 : 0);
         if (inNet && !saved) {
           if (!g.so) g.you++; g.press = Math.max(0, g.press - tv('goalPush')); g.goals++; g.streak++; if (p.breath) g.breathGoals++; g.gheat = Math.min(1, g.gheat + G.mg.gain); log(M.id, 'goal', { top: !!p.top, breath: !!p.breath });
           g.stop = p.top ? 0.16 : 0.1; g.jump = 0.5; g.net = 0.5; buzz(p.top ? [20, 30, 60] : 30);
@@ -265,13 +270,13 @@
       var col = M.blind ? '200,205,215' : top ? '44,232,245' : g.heat >= 0.66 ? '228,59,68' : g.heat >= 0.33 ? '254,174,52' : '99,199,77', al = PR ? 1 : 0.35;
       cx.fillStyle = 'rgba(' + col + ',' + ((top ? 0.55 : 0.28) * al) + ')'; cx.beginPath(); cx.moveTo(s[0] - 2, s[1]); cx.lineTo(x1, GOAL_Y + 2); cx.lineTo(x2, GOAL_Y + 2); cx.lineTo(s[0] + 2, s[1]); cx.closePath(); cx.fill();
       cx.strokeStyle = 'rgba(' + col + ',' + (0.95 * al) + ')'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(s[0], s[1]); cx.lineTo(x1, GOAL_Y + 2); cx.moveTo(s[0], s[1]); cx.lineTo(x2, GOAL_Y + 2); cx.stroke();
-      if (PR) { var blocked = Math.abs(xc - (g.gx + GW / 2)) < saveHalf(top, s[1], false) || xc < NET_L + 2 || xc > NET_R - 2; R(blocked ? '#e43b44' : '#ffffff', x1 - 1, GOAL_Y - 1, Math.max(3, x2 - x1 + 2), 3);
+      if (PR) { var blocked = (!g.empty && Math.abs(xc - (g.gx + GW / 2)) < saveHalf(top, s[1], false)) || xc < NET_L + 2 || xc > NET_R - 2; R(blocked ? '#e43b44' : '#ffffff', x1 - 1, GOAL_Y - 1, Math.max(3, x2 - x1 + 2), 3);
         if (g.breath > 0.03) { cx.strokeStyle = top ? '#2ce8f5' : '#ffffff'; cx.lineWidth = top ? 5 : 3; cx.beginPath(); cx.arc(s[0], s[1], 28 - 21 * Math.min(1, g.breath), 0, 6.3); cx.stroke(); } }
       // поправка из разбора: где вратарь окажется к моменту броска
       if (g.ghost && g.playSeg === 2) { var fx = g.gx + g.gdir * (g.gspeed || 0) * (dy / FLY); if (fx < NET_L) fx = NET_L + (NET_L - fx); if (fx > NET_R - GW) fx = (NET_R - GW) - (fx - (NET_R - GW)); cx.strokeStyle = 'rgba(44,232,245,.9)'; cx.lineWidth = 2; cx.strokeRect(Math.round(fx), 66, GW, 30); cx.fillStyle = '#0b7c8a'; cx.fillText('БУДЕТ ТУТ', Math.round(fx) + GW / 2, 122); }
     }
     var gh = g.gheat, gj = gh > 0.3 ? Math.round((Math.random() - 0.5) * gh * 5) : 0, gxx = g.gx + gj;
-    var gout = p.s === 'ready' ? Math.round(outK(s[1]) * 10) : 0; cx.save(); cx.translate(0, gout);
+    var gout = p.s === 'ready' ? Math.round(outK(s[1]) * 10) : 0; cx.save(); cx.translate(0, g.empty ? -600 : gout);
     var gc = gh >= 0.66 ? '#9e2835' : gh >= 0.33 ? '#b86f50' : '#3b55b8';
     // клюшка и блин (слева), ловушка (справа), щитки, маска с решёткой
     R(OUT, gxx - 4, 80, 4, 22); R('#b86f50', gxx - 3, 81, 2, 20); R(OUT, gxx - 4, 98, 20, 5); R('#b86f50', gxx - 3, 99, 18, 3);
@@ -327,11 +332,11 @@
   }
   function finish() {
     var g = G, m = M; cancelAnimationFrame(raf); breathSound(false);
-    var r = { flows: g.flows, oneGoals: g.oneGoals, mateHot: g.mateHot, losses: g.losses, trig: g.trig, hotShots: g.hotShots, firstAll: [0, 1, 2].every(function (i) { return g.segFirst[i] === true; }), you: g.you, riv: g.riv, shots: g.shots, goals: g.goals, breathShots: g.breathShots, breathGoals: g.breathGoals, narrow: g.narrow, tops: g.tops, hot: Math.round(g.hot), coreHot: g.coreHot, firstAfterBreath: g.firstAfterBreath,
+    var r = { firstShotBreath: !!g.firstShotBreath, lossesEnd: g.lossesEnd || 0, flows: g.flows, oneGoals: g.oneGoals, mateHot: g.mateHot, losses: g.losses, trig: g.trig, hotShots: g.hotShots, firstAll: [0, 1, 2].every(function (i) { return g.segFirst[i] === true; }), you: g.you, riv: g.riv, shots: g.shots, goals: g.goals, breathShots: g.breathShots, breathGoals: g.breathGoals, narrow: g.narrow, tops: g.tops, hot: Math.round(g.hot), coreHot: g.coreHot, firstAfterBreath: g.firstAfterBreath,
       cooledAll: g.rivGoals.every(function (x) { return x.cooled; }), rivGoals: g.rivGoals.length };
     var s1 = r.cooledAll, s2 = r.shots > 0 && r.narrow / r.shots >= 0.5, s3 = !!m.s3(r), n = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
     if (SIM) { SIM.result = { you: r.you, riv: r.riv, stars: n, hot: r.hot, shots: r.shots, narrow: r.narrow, goals: r.goals, how: g.endHow }; G = null; return; }
-    var first = !S.done[m.id]; S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = r.you > r.riv ? 1 : 0; } if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
+    var first = !S.done[m.id]; S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = r.you > r.riv ? 1 : 0; } if (m.record) S.rec = Math.max(S.rec || 0, r.tops); if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
     G = null; view = 'result';
     function star(on, text) { return '<div class="star' + (on ? ' on' : '') + '"><i>★</i><span>' + text + '</span></div>'; }
     var win = r.you > r.riv;
@@ -459,6 +464,25 @@
     g: MIRROR, pickG: function () { var r = S.res || {}; return r[10] === 0 ? { g: MIRROR, name: 'Зеркало' } : r[9] === 0 || r[11] === 0 ? { g: CLOCK3, name: 'Часы' } : r[8] === 0 || r[6] === 0 ? { g: WALL, name: 'Стена' } : { g: MIRROR, name: 'Зеркало' }; },
     noise: [1, 0, 1], riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [34, 38, 42], tune: { topR: 17, rateK: 0.58, push: 0.22, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.22, chaseM: null },
     star3: 'Показал скаутам поток или гол в касание', s3: function (r) { return r.flows >= 1 || r.oneGoals >= 1; } });
+  /* ---------- обычные матчи первого пути: соперник + ситуация + условие. Играются по выбору, сюжет не держат ---------- */
+  function pool(id, name, team, rival, about, g, o) { var m = { id: id, pool: true, name: name, team: team, rival: rival, about: about, g: g, flow: true, oneT: true, riv: [[14, 30], [12, 26], [10, 24]], defs: [2, 2, 2], chase: [34, 38, 42],
+    tune: { topR: 16, rateK: 0.6, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.25, chaseM: null }, star3: o.star3, s3: o.s3 }; for (var k in o) if (k !== 'tune') m[k] = o[k]; if (o.tune) for (k in o.tune) m.tune[k] = o.tune[k]; MATCHES.push(m); }
+  pool(13, 'ЛИШНИЙ ИГРОК', 'Кометы', 'Горячий', 'Весь матч в большинстве: у соперника на одного меньше, пас идёт быстрее, никто не идёт на тебя. Время забивать.', HOT,
+    { sit: ['pp', 'pp', 'pp'], star3: 'Шесть голов с выдохом', s3: function (r) { return r.breathGoals >= 6; }, tune: { rateK: 1.1, paceK: 1.9, segT: 28 } });
+  pool(14, 'ВЧЕТВЕРОМ', 'Ледокол', 'Стена', 'Весь матч в меньшинстве: шайба приходит редко, соперник давит. Каждая потеря стоит дорого.', WALL,
+    { sit: ['pk', 'pk', 'pk'], star3: 'Не больше двух потерь', s3: function (r) { return r.losses <= 2; }, tune: { rateK: 0.42 } });
+  pool(15, 'ВТОРОЙ ДЕНЬ', 'Прибой', 'Провокатор', 'Второй матч за два дня, и снова на выезде. Герой устал: выдох длиннее. Трибуны гудят.', PROVOK,
+    { tired: true, noise: [1, 1, 1], star3: 'Половина голов с выдохом', s3: function (r) { return r.goals > 0 && r.breathGoals * 2 >= r.goals; } });
+  pool(16, 'НА СЛЕДУЮЩИЙ ДЕНЬ', 'Полюс', 'Часы', 'Матч на следующий день после поражения. Голова тёплая с первой секунды: вчерашняя игра ещё с тобой.', CLOCK1,
+    { segG: [CLOCK1, CLOCK1, CLOCK3], startHeat: 0.45, star3: 'Первый бросок матча был с выдохом', s3: function (r) { return r.firstShotBreath; }, tune: { rateK: 0.7 } });
+  pool(17, 'ШЕСТОЙ ПОЛЕВОЙ', 'Вьюга', 'Горячий', 'Если ведёшь перед концовкой, соперник снимает вратаря: ворота пустые, но его давление растёт в полтора раза. Потеря равна голу.', HOT,
+    { emptyNet: true, star3: 'Ни одной потери в концовке', s3: function (r) { return r.lossesEnd === 0; }, tune: { rateK: 0.7 } });
+  pool(18, 'ЧУЖОЙ ЛЁД', 'Утёс', 'Зеркало', 'Выезд к вратарю, который идёт за твоим прицелом. Трибуны гудят в первом и последнем отрезке.', MIRROR,
+    { noise: [1, 0, 1], chase: [32, 36, 40], star3: 'Трижды убрал шум своим словом', s3: function (r) { return r.trig >= 3; } });
+  pool(19, 'ШТРАФНОЙ ДЕНЬ', 'Кедры', 'Стена', 'Отрезок в большинстве, отрезок в меньшинстве, отрезок на равных. Каждый раз другая игра.', WALL,
+    { sit: ['pp', 'pk', ''], chase: [38, 42, 46], star3: 'Остудил голову после каждой пропущенной', s3: function (r) { return r.cooledAll; }, tune: { rateK: 0.85, paceK: 1.4 } });
+  pool(20, 'ТРЕНИРОВКА: РЕКОРД', 'Свои', 'Новичок', 'Тренировка без соперника и без защитников. Сколько идеальных бросков ты сделаешь за минуту? Рекорд сохраняется.', { gain: 0.34, shotGain: 0.14, cool: 0.07, speed: 0.8 },
+    { record: true, riv: [[], [], []], defs: [0, 0, 0], chase: [0, 0, 0], star3: 'Восемь идеальных бросков', s3: function (r) { return r.tops >= 8; }, tune: { segT: 20, paceK: 1, rateK: 0 } });
   // итог пути: карьера идёт дальше при любом исходе, меняется только куда
   function pathEnd() {
     var st = 0, w = 0, k; for (k in S.stars) st += S.stars[k]; for (k in (S.res || {})) w += S.res[k];

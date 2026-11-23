@@ -16,5 +16,7 @@ rep("'<span>РАЗДЕВАЛКА</span>' + pips(S.room) +","'<span>РАЗДЕВ�
 rep("var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1 };","var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1, world: 1 };")
 rep("icept: 'защитник перехватил пас' }","icept: 'защитник перехватил пас', badpass: 'пас партнёра не дошёл' }")
 rep("case 'word': x = 'сказал своё слово, шум ушёл'; break;","case 'word': x = 'сказал своё слово, шум ушёл'; break;\n      case 'path_end': x = 'ИТОГ ПУТИ, баллов ' + r.sc; break;")
+rep("if (!S.done[MATCHES[i].id]) return MATCHES[i].id;","if (!S.done[MATCHES[i].id] && !MATCHES[i].pool) return MATCHES[i].id;")
+rep("var done = S.done[m.id], open = m.id === nx,","if (m.id === 13) h += '<h2 class=\"h2\">ОБЫЧНЫЕ МАТЧИ: ИГРАЙ ЛЮБЫЕ' + (S.done[7] ? '' : ' ПОСЛЕ ДЕРБИ') + '</h2>' + (S.rec ? '<p class=\"note\">Рекорд тренировки: идеальных бросков ' + S.rec + '</p>' : '');\n      var done = S.done[m.id], open = m.pool ? !!S.done[7] && !done : m.id === nx,")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)
