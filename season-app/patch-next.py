@@ -26,5 +26,8 @@ rep("var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1, worl
 rep("if (m.id === 13) h +=","if (m.id === 22) h += '<span class=\"tag tag--red\">ПУТЬ 2 · ГЕРОЙ · ЧЕРНОВИК, ШЕСТЬ МАТЧЕЙ ИЗ ДВЕНАДЦАТИ</span>';\n      if (m.id === 13) h +=")
 rep("icept: 'перехват паса', rival_goal","icept: 'перехват паса', noise: 'шум трибун', badpass: 'пас не дошёл', rival_goal")
 rep("+ (r.far ? ', издалека' : ''); break;","+ (r.far ? ', издалека' : '') + (r.one ? ', в касание' : ''); break;\n      case 'flow': x = 'ПОТОК: три идеальных гола подряд'; break;\n      case 'sit': x = 'ситуация: ' + ({ pp: 'большинство', pk: 'меньшинство', empty: 'пустые ворота' }[r.s] || r.s); break;\n      case 'world': x = 'мир изменился: ' + r.d; break;\n      case 'series': x = 'серия ' + r.w + ':' + r.l + (r.over ? ', решена' : ''); break;")
+rep("save(); log(d.mid, 'decision',","S.dec = S.dec || {}; S.dec[d.mid + ':' + d.key] = o.label; save(); log(d.mid, 'decision',")
+rep("<button class=\"btn btn--ghost\" type=\"button\" data-act=\"settings\">НАСТРОЙКИ</button>');","<button class=\"btn btn--ghost\" type=\"button\" data-act=\"stars\">МОИ ЗВЁЗДЫ И РЕШЕНИЯ</button><button class=\"btn btn--ghost\" type=\"button\" data-act=\"settings\">НАСТРОЙКИ</button>');")
+rep("    if (a === 'settings') return settings();","    if (a === 'stars') return starsScreen();\n    if (a === 'settings') return settings();")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)

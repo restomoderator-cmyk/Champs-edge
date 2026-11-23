@@ -174,6 +174,7 @@
     if (g.flow > 0) g.flow -= dt; g.recvAge += dt; if (M.mateHead) { g.mheat = Math.max(0, g.mheat - 0.02 * dt); if (g.mheat >= 0.5) g.mateHot += dt; }
     if (g.shield > 0) g.shield -= dt; if (g.noise > 0) g.noise -= dt;
     if (M.noise && M.noise[Math.min(g.seg, 2)] && !g.so && !g.soPend) { g.nz -= dt; if (g.nz <= 0 && g.noise <= 0 && g.shield <= 0) { tipOnce('noise'); g.noise = 3.5; g.nz = 6 + Math.random() * 3; heatUp(0.08, 'noise'); say('ТРИБУНЫ ГУДЯТ', '#e43b44', 1.5, 'ТАП ЛЕВЫМ ПАЛЬЦЕМ: ТВОЁ СЛОВО'); SFX.riv(); } }
+    if (g.heat >= 0.66 && g.core) { g.hotRun = (g.hotRun || 0) + dt; if (g.hotRun > 8 && !g.nudged) { g.nudged = true; g.nudge = 5; } } else g.hotRun = 0; if (g.nudge > 0) g.nudge -= dt;
     if (g.heat >= 0.66) g.hot += dt;
     g.rivGoals.forEach(function (r) { if (!r.cooled && g.heat < 0.33 && g.T - r.at <= 10) r.cooled = true; });
     g.gheat = Math.max(0, g.gheat - G.mg.cool * dt);
@@ -324,6 +325,7 @@
     if (M.id >= 2 && S.values.length && !g.core && g.pause <= 0 && !M.noHints) { var hv = S.values[Math.floor(g.T / 3.5) % S.values.length]; cx.font = '8px "Press Start 2P", monospace'; cx.textAlign = 'center'; var hy = g.strip ? 372 : 444; R('rgba(24,20,37,.82)', 8, hy, W - 16, 18); cx.fillStyle = '#2ce8f5'; cx.fillText('ЗАРЯД: ' + shortOf(hv), W / 2, hy + 5, W - 24); }
     if (g.flow > 0) { cx.strokeStyle = 'rgba(44,232,245,' + (0.6 + 0.3 * Math.sin(g.T * 10)).toFixed(2) + ')'; cx.lineWidth = 6; cx.strokeRect(3, 3, W - 6, H - 6); }
     if (g.noise > 0) { var na = 0.1 + 0.07 * Math.sin(g.T * 14); cx.fillStyle = 'rgba(228,59,68,' + na.toFixed(2) + ')'; cx.fillRect(0, 0, W, 26); cx.fillRect(0, 0, 12, H); cx.fillRect(W - 12, 0, 12, H); }
+    if (g.nudge > 0 && g.core && g.pause <= 0) { cx.font = '8px "Press Start 2P", monospace'; cx.textAlign = 'center'; R(OUT, 12, 58, 172, 20); R(Math.floor(g.T * 4) % 2 ? '#2ce8f5' : '#ffffff', 14, 60, 168, 16); cx.fillStyle = '#181425'; cx.fillText('ГОЛОВА ГОРИТ: ТАП-ТАП', 98, 64); }
     if (g.flash > 0) { cx.fillStyle = 'rgba(255,255,255,' + (g.flash * 1.4).toFixed(2) + ')'; cx.fillRect(0, 0, W, H); }
     cx.textAlign = 'center';
     if (g.msgT > 0 && g.pause <= 0) { cx.font = '14px "Press Start 2P", monospace'; cx.fillStyle = OUT; cx.fillText(g.msg, W / 2 + 2, 152); cx.fillStyle = g.msgC; cx.fillText(g.msg, W / 2, 150);
@@ -352,6 +354,7 @@
       cooledAll: g.rivGoals.every(function (x) { return x.cooled; }), rivGoals: g.rivGoals.length };
     var s1 = r.cooledAll, s2 = r.shots > 0 && r.narrow / r.shots >= 0.5, s3 = !!m.s3(r), n = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
     if (SIM) { SIM.result = { you: r.you, riv: r.riv, stars: n, hot: r.hot, shots: r.shots, narrow: r.narrow, goals: r.goals, how: g.endHow }; G = null; return; }
+    S.st3 = S.st3 || {}; var o3 = S.st3[m.id] || [0, 0, 0]; S.st3[m.id] = [o3[0] || (s1 ? 1 : 0), o3[1] || (s2 ? 1 : 0), o3[2] || (s3 ? 1 : 0)];
     var se = null, serOpen = false;
     if (m.series) { S.ser = S.ser || {}; se = S.ser[m.id] || { w: (m.seriesStart || [0, 0])[0], l: (m.seriesStart || [0, 0])[1], g: 0 }; se.g = (se.g || 0) + 1; if (r.you > r.riv) se.w++; else se.l++; se.over = se.w >= m.series || se.l >= m.series; S.ser[m.id] = se; serOpen = !se.over; log(m.id, 'series', { w: se.w, l: se.l, over: se.over }); }
     var first = !S.done[m.id] && !serOpen; if (!serOpen) S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = (se ? se.w >= m.series : r.you > r.riv) ? 1 : 0; if (g.hN) { S.hab = S.hab || {}; S.hab[m.id] = [+(g.hSide / g.hN).toFixed(2), +(g.hB / g.hN).toFixed(2), Math.round(g.hY / g.hN)]; } } if (m.record) S.rec = Math.max(S.rec || 0, r.tops); if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
@@ -419,6 +422,18 @@
       '<button class="btn" type="button" data-act="after" data-m="' + id + '">ДАЛЬШЕ ▶</button>');
   }
 
+  // экран «мои звёзды и развилки»: что взято, что осталось, какие решения приняты
+  function starsScreen() {
+    view = 'stars'; var h = '<span class="tag">МОИ ЗВЁЗДЫ И РЕШЕНИЯ</span>', any = false;
+    MATCHES.forEach(function (m) {
+      if (!S.done[m.id]) return; any = true; var t = (S.st3 || {})[m.id], n = S.stars[m.id] || 0, dk = S.dec || {}, ds = [];
+      for (var k in dk) if (k.indexOf(m.id + ':') === 0) ds.push(dk[k]);
+      function row(on, text) { return '<div class="star' + (on ? ' on' : '') + '"><i>★</i><span>' + text + '</span></div>'; }
+      h += '<section class="panel"><h2 class="h2">' + m.id + ' · ' + m.name + '</h2>' + (t ? row(t[0], 'Остудил голову после каждой пропущенной') + row(t[1], 'Половина бросков с узкой линией') + row(t[2], m.star3) : '<p class="note">Звёзд: ' + n + ' из 3. Какие именно, покажет следующая игра в этом матче.</p>') +
+        ds.map(function (d) { return '<p class="line">' + d + '</p>'; }).join('') + '</section>';
+    });
+    screen('ЗВЁЗДЫ', any ? h + '<p class="note">Серые звёзды можно взять, переиграв матч. Решения при переигровке остаются прежними.</p>' : h + '<p class="lead">Пока пусто. Сыграй первый матч.</p>', '<button class="btn" type="button" data-act="home">НАЗАД</button>');
+  }
   function settings() {
     view = 'settings';
     function tg(k, on, a, b) { return '<button class="opt" type="button" data-act="tgl" data-k="' + k + '"><b>' + (on ? a : b) + '</b></button>'; }
