@@ -8,9 +8,9 @@
   var G = null, M = null, cv, cx, raf = 0, prev = 0, spr = {}, els = {}, PL = null, PR = null, KEYS = {}, lastL = 0;
   function mk(path) { var c = document.createElement('canvas'); c.width = 34; c.height = 36; drawHockeyPlayer(c.getContext('2d'), 2, 3, path, 0, false); return c; }
   function startMatch(id) {
-    M = MATCHES[id - 1]; PL = PR = null; if (tv('chaseM')) M.chase = tv('chaseM');
+    M = MATCHES[id - 1]; PL = PR = null; if (M.pickG) { var pg = M.pickG(); M.g = pg.g; M.rival = pg.name; } if (tv('chaseM')) M.chase = tv('chaseM');
     G = { seg: 0, t: 0, T: 0, you: 0, riv: 0, px: 160, py: 320, vx: 0, vy: 0, ax: 1, ay: 0, gx: 138, gdir: 1, gfreeze: 0, gspeed: 0,
-      heat: 0, mg: M.g, noise: 0, nz: 4, shield: 0, trig: 0, hotShots: 0, segShots: 0, segFirst: [], breathK: 1, gheat: 0, breath: 0, over: 0, breathing: false, wasFull: false, core: S.core && id >= 2, coreHot: false,
+      heat: 0, mg: M.g, topRow: 0, flow: 0, flows: 0, recvAge: 9, oneGoals: 0, mheat: 0, mateHot: 0, losses: 0, noise: 0, nz: 4, shield: 0, trig: 0, hotShots: 0, segShots: 0, segFirst: [], breathK: 1, gheat: 0, breath: 0, over: 0, breathing: false, wasFull: false, core: S.core && id >= 2, coreHot: false,
       puck: { s: 'in', t: 0.5 }, clock: 0, defs: [], ch: null, rivAt: [], rivI: 0, msg: '', sub: '', msgT: 0, msgC: '#fff', parts: [], trail: [], stop: 0, jump: 0, net: 0, flash: 0, shake: 0,
       shots: 0, goals: 0, breathShots: 0, breathGoals: 0, narrow: 0, tops: 0, hot: 0, streak: 0, pause: 0, pauseText: null, done: false, nextSeg: null, afterPause: null,
       rivGoals: [], firstAfter: null, firstAfterBreath: false, lesson: id === 1 && !S.taught ? 0 : 9, l1: 0, l2: 0, leftSec: 0, falseTaps: 0, missRow: 0, breathRow: 0, segLen: SEG, safe: false, grace: 0, l3: 0, strip: id === 1 && !S.done[1], press: 0, rate: 0, mate: { x: 30, y: 300 }, recv: 0, so: null, soPend: null, endHow: '', fast: false, ghost: id === 4 && S.fix, playSeg: 0, finalSeg: true };
@@ -59,10 +59,10 @@
   }
   function fit() { var w = document.getElementById('wrap'); if (!w || !cv) return; var cs = getComputedStyle(w), aw = w.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8, ah = w.clientHeight - parseFloat(cs.paddingBottom) - 8, k = Math.max(0.4, Math.min(aw / W, ah / H)); cv.style.width = Math.floor(W * k) + 'px'; cv.style.height = Math.floor(H * k) + 'px'; }
   window.addEventListener('resize', fit);
-  function say(m, c, d, sub) { G.msg = m; G.msgC = c || '#fff'; G.msgT = d || 1.2; G.sub = sub || ''; }
+  function say(m, c, d, sub) { G.msg = m; G.msgC = c || '#fff'; G.msgT = d || 1.2; G.sub = M.blind ? '' : (sub || ''); }
   function burst(x, y, n, cols) { for (var i = 0; i < n; i++) G.parts.push({ x: x, y: y, vx: (Math.random() - 0.5) * 240, vy: -60 - Math.random() * 220, l: 0.6 + Math.random() * 0.6, c: cols[i % cols.length] }); }
   SFX.pass = function () { beep([[520, 0.04, 'triangle'], [820, 0.06, 'triangle']], 0.09); };
-  function nextPuck(d) { G.mate = { x: Math.random() < 0.5 ? 30 : 290, y: 255 + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') * (G.passK || 1) }; G.ch = null; }
+  function nextPuck(d) { G.mate = { x: Math.random() < 0.5 ? 30 : 290, y: 255 + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') * (G.passK || 1) * (G.flow > 0 ? 0.7 : 1) * (1 + 0.6 * (G.mheat || 0)) }; G.ch = null; }
   function coach(title, text) { var c = els.coach; if (!title) { c.hidden = true; return; } if (c.getAttribute('data-k') !== title) { c.setAttribute('data-k', title); c.innerHTML = '<b>' + title + '</b><p>' + text + '</p>'; } c.hidden = false; }
   function heatUp(v, why) { var g = G; g.heat = Math.min(1, g.heat + v); g.shake = 0.25; log(M.id, 'heat', { by: why, heat: +g.heat.toFixed(2) }); }
   // буллиты: темп соперника объявлен заранее, как и красные метки
@@ -72,7 +72,7 @@
     g.pause = 2.4; g.pauseText = [sc ? 'ТЫ ЗАБИЛ' : 'НЕ ЗАБИЛ', 'Соперник: ' + (r ? 'гол' : 'сейв твоего вратаря') + '. Буллиты ' + so.you + ':' + so.riv];
     if (so.n >= 3 && so.you !== so.riv) { if (so.you > so.riv) g.you++; else g.riv++; g.endHow = ' ПО БУЛЛИТАМ'; g.done = true; } else g.afterPause = soShot;
   }
-  function breathT() { var y = stick()[1]; return G.breathK * (0.45 + 0.45 * Math.max(0, Math.min(1, (y - 150) / 112))); }
+  function breathT() { var y = stick()[1]; return (G.flow > 0 ? 0.6 : 1) * G.breathK * (0.45 + 0.45 * Math.max(0, Math.min(1, (y - 150) / 112))); }
   function outK(y) { return Math.max(0, Math.min(1, (262 - y) / 112)); }
   function saveHalf(top, y, seen) { return top ? tv('topR') + 10 * outK(y) : GW / 2 + 3 + 18 * outK(y) + (seen ? T.seenAdd : 0); }
   function topW() { return S.role === 'F' ? 1.0 : T.dTop; }
@@ -87,10 +87,10 @@
   function isTop() { return G.wasFull && G.over <= topW(); }
   function shoot(slap) {
     var g = G, p = g.puck; if (p.s !== 'ready' || g.pause > 0) return;
-    var s = stick(), A = aim(); slap = !!slap && !A.armed; var far = S.role === 'D' && s[1] > 262, fs = slap ? 1.5 : far ? T.dFar : 1; g.lastSlap = slap;
+    var s = stick(), A = aim(); slap = !!slap && !A.armed; var one = !!M.oneT && !slap && A.armed && g.recvAge < 0.45; var far = S.role === 'D' && s[1] > 262, fs = slap || one ? 1.5 : far ? T.dFar : 1; g.lastSlap = slap;
     var b = slap ? 0 : Math.min(1, g.breath), withBreath = b >= 0.5, top = !slap && isTop(), sp = top ? 0 : slap ? T.slapSp + g.heat * 0.5 : spreadA(), ang = A.a + (Math.random() * 2 - 1) * sp;
     var dist = (s[1] - GOAL_Y) / Math.cos(A.a), spx = Math.tan(sp) * dist;
-    g.puck = { s: 'fly', x: s[0], y: s[1], vx: Math.sin(ang) * FLY * (top ? T.topV : fs), vy: -Math.cos(ang) * FLY * (top ? T.topV : fs), pierce: far && !slap ? T.pierce : 0, skip: 0, slap: slap, from: s[1], top: top, breath: withBreath, wide: spx > 22,
+    g.puck = { s: 'fly', x: s[0], y: s[1], vx: Math.sin(ang) * FLY * (top ? T.topV : fs), vy: -Math.cos(ang) * FLY * (top ? T.topV : fs), one: one, pierce: far && !slap ? T.pierce : 0, skip: 0, slap: slap, from: s[1], top: top, breath: withBreath, wide: spx > 22,
       first: !!(g.rivGoals.length && g.firstAfter === null), press: !!(g.ch && Math.hypot(g.ch.x - g.px, g.ch.y - g.py) < 80) || g.clock < 3 };
     if (withBreath) { if (++g.breathRow >= 3) { g.breathRow = 0; deed('disc'); } } else g.breathRow = 0;
     g.shots++; if (withBreath) g.breathShots++; if (spx <= 14) g.narrow++; g.trail = [];
@@ -102,8 +102,8 @@
     if (g.lesson === 1) { if (withBreath) g.lesson = 2; else if (++g.l1 >= 6) g.lesson = 2; }
   }
   function miss(text, why, soft, kind) {
-    var g = G; g.streak = 0; g.missRow++; if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') g.safe = true;
-    if ((kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') && g.lesson >= 9 && !g.so) g.press = Math.min(0.99, g.press + tv('push')); heatUp(soft || kind === 'poke' || kind === 'steal' || kind === 'icept' ? 0.1 : 0.22, kind); log(M.id, 'miss', { kind: kind });
+    var g = G; g.streak = 0; g.missRow++; g.topRow = 0; g.flow = 0; if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') g.losses++; if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') g.safe = true;
+    if ((kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') && g.lesson >= 9 && !g.so) g.press = Math.min(0.99, g.press + tv('push')); heatUp(kind === 'badpass' ? 0.05 : soft || kind === 'poke' || kind === 'steal' || kind === 'icept' ? 0.1 : 0.22, kind); if (kind === 'badpass') g.safe = true; log(M.id, 'miss', { kind: kind });
     say(text, soft ? '#fee761' : '#e43b44', 1.7, why); if (soft) SFX.post(); else SFX.bad(); nextPuck(soft ? 1.6 : 1.9); if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.2, sc: false }; }
   }
   // стержень: два быстрых тапа левым пальцем. При холодной голове не тратится
@@ -151,8 +151,9 @@
       else { g.nextSeg = g.seg + 1; g.pause = 1.0; g.pauseText = ['СКАМЕЙКА', '']; }
       return; }
     if (!teaching && !g.so && !g.soPend) g.press += g.rate * dt;
-    if (g.press >= 1 && !g.so && !g.soPend) { g.press = 0; g.riv++; g.rivGoals.push({ at: g.T, cooled: false }); g.firstAfter = null; heatUp(0.3, 'rival_goal'); log(M.id, 'rival_goal'); say('СОПЕРНИК ЗАБИЛ', '#e43b44', 1.6, 'ГОЛОВА НАГРЕЛАСЬ: ЛИНИЯ ШИРЕ'); SFX.riv();
+    if (g.press >= 1 && !g.so && !g.soPend) { g.press = 0; g.flow = 0; g.topRow = 0; if (M.mateHead) g.mheat = Math.min(1, g.mheat + 0.4); g.riv++; g.rivGoals.push({ at: g.T, cooled: false }); g.firstAfter = null; heatUp(0.3, 'rival_goal'); log(M.id, 'rival_goal'); say('СОПЕРНИК ЗАБИЛ', '#e43b44', 1.6, 'ГОЛОВА НАГРЕЛАСЬ: ЛИНИЯ ШИРЕ'); SFX.riv();
       if (g.seg === 3) { PR = null; breathSound(false); g.puck = { s: 'wait' }; g.soPend = { t: 1.4, end: true, lose: true }; return; } }
+    if (g.flow > 0) g.flow -= dt; g.recvAge += dt; if (M.mateHead) { g.mheat = Math.max(0, g.mheat - 0.02 * dt); if (g.mheat >= 0.5) g.mateHot += dt; }
     if (g.shield > 0) g.shield -= dt; if (g.noise > 0) g.noise -= dt;
     if (M.noise && M.noise[Math.min(g.seg, 2)] && !g.so && !g.soPend) { g.nz -= dt; if (g.nz <= 0 && g.noise <= 0 && g.shield <= 0) { g.noise = 3.5; g.nz = 6 + Math.random() * 3; heatUp(0.08, 'noise'); say('ТРИБУНЫ ГУДЯТ', '#e43b44', 1.5, 'ТАП ЛЕВЫМ ПАЛЬЦЕМ: ТВОЁ СЛОВО'); SFX.riv(); } }
     if (g.heat >= 0.66) g.hot += dt;
@@ -185,7 +186,7 @@
     breathSound(g.breathing);
     var gs = 92 * G.mg.speed * tv('gsp') * (1 - 0.45 * g.gheat) * (M.id === 1 && g.seg === 0 ? 0.8 : 1);
     if (g.gheat > 0.3 && g.gfreeze <= 0 && Math.random() < g.gheat * 1.6 * dt) g.gfreeze = 0.35 + Math.random() * 0.3;
-    if (g.gfreeze > 0) g.gfreeze -= dt; else g.gx += g.gdir * gs * dt;
+    if (g.gfreeze > 0) g.gfreeze -= dt; else if (g.mg.mirror && PR && p.s === 'ready' && aim().armed) { var st3 = stick(), mtx = Math.max(NET_L, Math.min(NET_R - GW, st3[0] + Math.tan(aim().a) * (st3[1] - GOAL_Y) - GW / 2)), mdx = mtx - g.gx; g.gx += (mdx > 0 ? 1 : -1) * Math.min(Math.abs(mdx), gs * 0.7 * dt); } else g.gx += g.gdir * gs * dt;
     g.gspeed = g.gfreeze > 0 ? 0 : gs;
     if (g.gx < NET_L) { g.gx = NET_L; g.gdir = 1; } if (g.gx > NET_R - GW) { g.gx = NET_R - GW; g.gdir = -1; }
     g.defs.forEach(function (d) { d.x += d.v * dt; if (d.x < 16) { d.x = 16; d.v = -d.v; } if (d.x > W - 50) { d.x = W - 50; d.v = -d.v; } });
@@ -194,7 +195,8 @@
     var dg = p.s === 'ready' && !teaching ? danger() : '';
     if (dg) { PR = null; breathSound(false); return dg === 'poke' ? miss('ПОТЕРЯ', 'ВРАТАРЬ ВЫБИЛ ШАЙБУ: НЕ ЛЕЗЬ В ЕГО ЗОНУ', false, 'poke') : miss('ПОТЕРЯ', 'СЛИШКОМ БЛИЗКО К ЗАЩИТНИКУ: ОБЪЕЗЖАЙ', false, 'steal'); }
     if (p.s === 'in' && p.t < 0.45 && p.t > 0 && !g.so && !g.safe && g.lesson >= 9) { var ik = 1 - p.t / 0.45, st2 = stick(), ipx = g.mate.x + 20 + (st2[0] - g.mate.x - 20) * ik, ipy = g.mate.y + 20 + (st2[1] - g.mate.y - 20) * ik; if (hitDef(ipx, ipy)) return miss('ПЕРЕХВАТ', 'ЗАЩИТНИК ПЕРЕХВАТИЛ ПАС: ОТКРОЙСЯ ПАРТНЁРУ', false, 'icept'); }
-    if (p.s === 'in') { p.t -= dt; if (p.t <= 0 && !danger()) { g.puck = { s: 'ready' }; if (g.safe) { g.safe = false; g.grace = 1.25; } g.recv = 0.35; SFX.pass(); buzz(10); g.clock = g.so ? 6 : CLOCK; if (M.chase && M.chase[g.seg]) { var sp1 = [[58, 150], [262, 150], [58, 350], [262, 350], [160, 135], [160, 355], [40, 250], [280, 250]].filter(function (q) { return Math.hypot(q[0] - g.px, q[1] - g.py) > 120; }), sq = sp1[Math.floor(Math.random() * sp1.length)] || [58, 150]; g.ch = { x: sq[0], y: sq[1], v: M.chase[g.seg] }; } } }
+    if (p.s === 'in' && M.mateHead && p.t < 0.45 && !p.rolled && !g.so) { p.rolled = true; if (g.mheat >= 0.5 && !g.safe && Math.random() < 0.4 * g.mheat) return miss('ПАС НЕТОЧНЫЙ', 'ПАРТНЁР КИПИТ: ЕГО ПАС НЕ ДОШЁЛ', true, 'badpass'); }
+    if (p.s === 'in') { p.t -= dt; if (p.t <= 0 && !danger()) { g.puck = { s: 'ready' }; g.recvAge = 0; if (g.safe) { g.safe = false; g.grace = 1.25; } g.recv = 0.35; SFX.pass(); buzz(10); g.clock = g.so ? 6 : CLOCK; if (M.chase && M.chase[g.seg]) { var sp1 = [[58, 150], [262, 150], [58, 350], [262, 350], [160, 135], [160, 355], [40, 250], [280, 250]].filter(function (q) { return Math.hypot(q[0] - g.px, q[1] - g.py) > 120; }), sq = sp1[Math.floor(Math.random() * sp1.length)] || [58, 150]; g.ch = { x: sq[0], y: sq[1], v: M.chase[g.seg] }; } } }
     else if (p.s === 'ready') { if (g.lesson >= 9) g.clock -= dt; if (g.clock <= 0) { PR = null; breathSound(false); miss('ПОТЕРЯ', 'ПОЗДНО: ВРЕМЯ НА БРОСОК ВЫШЛО', false, 'late'); } }
     else if (p.s === 'fly') {
       for (var q = 0; q < 4 && p.y > GOAL_Y; q++) { p.y += p.vy * dt / 4; p.x += p.vx * dt / 4; if (p.skip > 0) p.skip -= dt / 4; else if (hitDef(p.x, p.y)) { if (p.pierce > 0) { p.pierce--; p.skip = 0.1; var pv = Math.hypot(p.vx, p.vy) || 1; p.vx *= FLY * 0.85 / pv; p.vy *= FLY * 0.85 / pv; p.top = false; } else return miss('БЛОК', 'ЗАЩИТНИК БЫЛ НА ЛИНИИ БРОСКА', false, 'block'); } }
@@ -202,13 +204,16 @@
       if (p.x < 8 || p.x > W - 8) return miss('МИМО', p.wide ? 'ЛИНИЯ БЫЛА ШИРОКОЙ: ЗАМРИ ПЕРЕД БРОСКОМ' : 'ЛИНИЯ СМОТРЕЛА МИМО ВОРОТ', false, 'wide');
       if (p.y <= GOAL_Y) {
         // «девятка» идёт в угол: вратарь берёт её, только если стоит прямо на линии
-        var inNet = p.x > NET_L + 2 && p.x < NET_R - 2, seen = !!p.slap && p.from > 262 && g.gheat < 0.33 && !(S.role === 'D' && T.dSlap), saved = Math.abs(p.x - (g.gx + GW / 2)) < saveHalf(p.top, p.from, seen);
+        var inNet = p.x > NET_L + 2 && p.x < NET_R - 2, seen = !!p.slap && p.from > 262 && g.gheat < 0.33 && !(S.role === 'D' && T.dSlap), saved = Math.abs(p.x - (g.gx + GW / 2)) < saveHalf(p.top, p.from, seen) - (p.one ? 8 : 0);
         if (inNet && !saved) {
           if (!g.so) g.you++; g.press = Math.max(0, g.press - tv('goalPush')); g.goals++; g.streak++; if (p.breath) g.breathGoals++; g.gheat = Math.min(1, g.gheat + G.mg.gain); log(M.id, 'goal', { top: !!p.top, breath: !!p.breath });
           g.stop = p.top ? 0.16 : 0.1; g.jump = 0.5; g.net = 0.5; buzz(p.top ? [20, 30, 60] : 30);
+          if (p.top) g.topRow++; else g.topRow = 0; if (p.one) g.oneGoals++; if (M.mateHead) g.mheat = Math.max(0, g.mheat - 0.3);
           if (p.top) { g.tops++; burst(p.x, 70, 30, ['#2ce8f5', '#ffffff', '#fee761']); g.flash = 0.3; say(Math.min(p.x - NET_L, NET_R - p.x) < 18 ? 'ДЕВЯТКА!' : Math.abs(p.x - (g.gx + GW / 2)) < GW / 2 + 4 ? 'НАД ПЛЕЧОМ!' : p.x < g.gx ? 'НАД БЛИНОМ!' : 'НАД ЛОВУШКОЙ!', '#2ce8f5', 1.5, 'ВЫДОХНУЛ И ПОПАЛ'); SFX.top(); }
           else { burst(p.x, 70, 16, ['#fee761', '#feae34', '#ffffff']); say('ГОЛ', '#63c74d', 1.2, p.breath ? 'С ВЫДОХОМ' : ''); SFX.goal(g.streak); }
           if (g.missRow >= 2 && p.breath) deed('grit'); if (p.press) deed('brave'); if (p.first) deed('resp'); if (g.streak >= 2) deed('joy'); g.missRow = 0;
+          if (p.one && !p.top) say('В КАСАНИЕ!', '#fee761', 1.4, 'ПОКА ВРАТАРЬ НЕ ВСТАЛ');
+          if (M.flow && g.topRow >= 3 && !(g.flow > 0)) { g.flow = 8; g.flows++; g.topRow = 0; say('ПОТОК', '#2ce8f5', 1.8, 'ВОСЕМЬ СЕКУНД: ВЫДОХ И ПАС БЫСТРЕЕ'); SFX.core(); }
           nextPuck(T.goalT); if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, sc: true }; } else if (g.seg === 3) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, end: true }; }
         } else { if (inNet) g.gheat = Math.min(1, g.gheat + G.mg.shotGain);
           if (saved && inNet) miss('СЕЙВ', seen ? 'ХОЛОДНЫЙ ВРАТАРЬ ВИДИТ ЩЕЛЧОК ИЗДАЛЕКА' : !p.top && p.from < 230 ? 'ВБЛИЗИ ВРАТАРЬ ВЫХОДИТ: НУЖЕН ТОЧНЫЙ ВЫДОХ' : p.top ? 'БРОСИЛ ПРЯМО ВО ВРАТАРЯ: ЦЕЛЬСЯ В УГОЛ' : g.gheat < 0.33 ? 'ВРАТАРЬ ХОЛОДНЫЙ: ОН УСПЕЛ' : 'ВРАТАРЬ БЫЛ НА ЛИНИИ', false, 'save');
@@ -257,7 +262,7 @@
       var A = aim(), top = isTop(), sp = top ? 0.006 : spreadA(), dy = s[1] - GOAL_Y - 2;
       var hot = g.heat * (1 - 0.85 * Math.min(1, g.breath)), jit = hot > 0.2 ? (Math.random() - 0.5) * hot * 0.05 : 0;
       var x1 = s[0] + Math.tan(A.a - sp + jit) * dy, x2 = s[0] + Math.tan(A.a + sp + jit) * dy, xc = s[0] + Math.tan(A.a) * dy;
-      var col = top ? '44,232,245' : g.heat >= 0.66 ? '228,59,68' : g.heat >= 0.33 ? '254,174,52' : '99,199,77', al = PR ? 1 : 0.35;
+      var col = M.blind ? '200,205,215' : top ? '44,232,245' : g.heat >= 0.66 ? '228,59,68' : g.heat >= 0.33 ? '254,174,52' : '99,199,77', al = PR ? 1 : 0.35;
       cx.fillStyle = 'rgba(' + col + ',' + ((top ? 0.55 : 0.28) * al) + ')'; cx.beginPath(); cx.moveTo(s[0] - 2, s[1]); cx.lineTo(x1, GOAL_Y + 2); cx.lineTo(x2, GOAL_Y + 2); cx.lineTo(s[0] + 2, s[1]); cx.closePath(); cx.fill();
       cx.strokeStyle = 'rgba(' + col + ',' + (0.95 * al) + ')'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(s[0], s[1]); cx.lineTo(x1, GOAL_Y + 2); cx.moveTo(s[0], s[1]); cx.lineTo(x2, GOAL_Y + 2); cx.stroke();
       if (PR) { var blocked = Math.abs(xc - (g.gx + GW / 2)) < saveHalf(top, s[1], false) || xc < NET_L + 2 || xc > NET_R - 2; R(blocked ? '#e43b44' : '#ffffff', x1 - 1, GOAL_Y - 1, Math.max(3, x2 - x1 + 2), 3);
@@ -281,7 +286,8 @@
     if (g.ch) cx.drawImage(spr.ch, Math.round(g.ch.x - 25), Math.round(g.ch.y - 27), 51, 54);
     if (p.s === 'fly') { g.trail.forEach(function (q, k) { R(p.top ? '#2ce8f5' : '#8b9bb4', q[0] - 2, q[1], 4, 4 + k); }); R(OUT, p.x - 4, p.y - 3, 8, 6); R('#3a4466', p.x - 3, p.y - 2, 6, 3); }
     g.parts.forEach(function (q) { R(q.c, q.x, q.y, 3, 3); });
-    if (!g.so) { cx.globalAlpha = 0.8; cx.drawImage(spr.me, Math.round(g.mate.x - 25), Math.round(g.mate.y - 27), 51, 54); cx.globalAlpha = 1; }
+    if (!g.so) { cx.globalAlpha = 0.8; cx.drawImage(spr.me, Math.round(g.mate.x - 25), Math.round(g.mate.y - 27), 51, 54); cx.globalAlpha = 1;
+      if (M.mateHead) { R(OUT, g.mate.x - 18, g.mate.y - 38, 36, 6); R(g.mheat >= 0.66 ? '#e43b44' : g.mheat >= 0.33 ? '#feae34' : '#63c74d', g.mate.x - 17, g.mate.y - 37, Math.max(2, 34 * Math.max(0.08, g.mheat)), 4); } }
     if (p.s === 'in' && p.t < 0.45 && !g.so) { var pk = Math.max(0, Math.min(1, 1 - p.t / 0.45)), mx = g.mate.x + 20, my = g.mate.y + 20, qx = mx + (s[0] - mx) * pk, qy = my + (s[1] - my) * pk;
       cx.strokeStyle = 'rgba(58,68,102,.45)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(mx, my); cx.lineTo(qx, qy); cx.stroke(); R(OUT, qx - 5, qy - 3, 10, 6); R('#3a4466', qx - 4, qy - 2, 8, 3); }
     cx.drawImage(spr.me, Math.round(g.px - 25), Math.round(g.py - 27 - jy), 51, 54);
@@ -295,6 +301,7 @@
     cx.setTransform(1, 0, 0, 1, 0, 0);
     if (M.id >= 2 && S.values.length) { var hotc = g.core && g.heat >= 0.33; R(OUT, 12, 12, 82, 42); R(hotc ? (Math.floor(g.T * 4) % 2 ? '#2ce8f5' : '#ffffff') : g.core ? '#1b6f7a' : '#3a4466', 14, 14, 78, 38); cx.font = '8px "Press Start 2P", monospace'; cx.textAlign = 'center'; cx.fillStyle = hotc ? '#181425' : g.core ? '#c0cbdc' : '#8b9bb4'; cx.fillText('СТЕРЖЕНЬ', 53, 21); cx.fillText(hotc ? 'ТАП-ТАП' : g.core ? 'ГОТОВ' : 'ПУСТ', 53, 36); }
     if (M.id >= 2 && S.values.length && !g.core && g.pause <= 0 && !M.noHints) { var hv = S.values[Math.floor(g.T / 3.5) % S.values.length]; cx.font = '8px "Press Start 2P", monospace'; cx.textAlign = 'center'; var hy = g.strip ? 372 : 444; R('rgba(24,20,37,.82)', 8, hy, W - 16, 18); cx.fillStyle = '#2ce8f5'; cx.fillText('ЗАРЯД: ' + shortOf(hv), W / 2, hy + 5, W - 24); }
+    if (g.flow > 0) { cx.strokeStyle = 'rgba(44,232,245,' + (0.6 + 0.3 * Math.sin(g.T * 10)).toFixed(2) + ')'; cx.lineWidth = 6; cx.strokeRect(3, 3, W - 6, H - 6); }
     if (g.noise > 0) { var na = 0.1 + 0.07 * Math.sin(g.T * 14); cx.fillStyle = 'rgba(228,59,68,' + na.toFixed(2) + ')'; cx.fillRect(0, 0, W, 26); cx.fillRect(0, 0, 12, H); cx.fillRect(W - 12, 0, 12, H); }
     if (g.flash > 0) { cx.fillStyle = 'rgba(255,255,255,' + (g.flash * 1.4).toFixed(2) + ')'; cx.fillRect(0, 0, W, H); }
     cx.textAlign = 'center';
@@ -320,11 +327,11 @@
   }
   function finish() {
     var g = G, m = M; cancelAnimationFrame(raf); breathSound(false);
-    var r = { trig: g.trig, hotShots: g.hotShots, firstAll: [0, 1, 2].every(function (i) { return g.segFirst[i] === true; }), you: g.you, riv: g.riv, shots: g.shots, goals: g.goals, breathShots: g.breathShots, breathGoals: g.breathGoals, narrow: g.narrow, tops: g.tops, hot: Math.round(g.hot), coreHot: g.coreHot, firstAfterBreath: g.firstAfterBreath,
+    var r = { flows: g.flows, oneGoals: g.oneGoals, mateHot: g.mateHot, losses: g.losses, trig: g.trig, hotShots: g.hotShots, firstAll: [0, 1, 2].every(function (i) { return g.segFirst[i] === true; }), you: g.you, riv: g.riv, shots: g.shots, goals: g.goals, breathShots: g.breathShots, breathGoals: g.breathGoals, narrow: g.narrow, tops: g.tops, hot: Math.round(g.hot), coreHot: g.coreHot, firstAfterBreath: g.firstAfterBreath,
       cooledAll: g.rivGoals.every(function (x) { return x.cooled; }), rivGoals: g.rivGoals.length };
     var s1 = r.cooledAll, s2 = r.shots > 0 && r.narrow / r.shots >= 0.5, s3 = !!m.s3(r), n = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
     if (SIM) { SIM.result = { you: r.you, riv: r.riv, stars: n, hot: r.hot, shots: r.shots, narrow: r.narrow, goals: r.goals, how: g.endHow }; G = null; return; }
-    var first = !S.done[m.id]; S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
+    var first = !S.done[m.id]; S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = r.you > r.riv ? 1 : 0; } if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
     G = null; view = 'result';
     function star(on, text) { return '<div class="star' + (on ? ' on' : '') + '"><i>★</i><span>' + text + '</span></div>'; }
     var win = r.you > r.riv;
@@ -342,7 +349,8 @@
     if (id === 1 && !S.life[1]) return life(1, home);
     if (id === 3 && !S.fix) return review(0, home);
     if (id === 4 && !S.life[4]) return life(4, home);
-    if (id > 4 && MATCHES[id - 1].life && !S.life[id]) return life(id, home);
+    if (id > 4 && MATCHES[id - 1].life && !S.life[id]) return life(id, function () { after(id); });
+    if (MATCHES[id - 1].pathEnd && !S.path1) return pathEnd();
     home();
   }
   // левая половина льда: палец ведёт игрока, два быстрых тапа включают стержень. Правая: оттяжка, выдох, бросок
@@ -415,6 +423,56 @@
       { label: '«ЗАБУДЬ. СЛЕДУЮЩАЯ СМЕНА НАША»', dots: [['Раздевалка', 2]], vals: ['Верность команде', 'Уважение', 'Спокойствие', 'Смирение'], apply: function () { S.room = Math.min(3, S.room + 1); G.fast = true; return ['Раздевалка +1', 'Партнёр ожил: пас идёт быстрее']; } },
       { label: '«СОБЕРИСЬ УЖЕ»', dots: [['Раздевалка', 1]], vals: ['Честность', 'Смелость'], apply: function () { S.room = Math.max(0, S.room - 1); return ['Раздевалка −1: он услышал упрёк', 'Пас идёт как раньше']; } }]; } } } });
 
+  /* ---------- матчи 8-12: черновик, сюжетный конец пути «Талант» ---------- */
+  var WALL = { gain: 0.1, shotGain: 0, cool: 0.16, speed: 1.05 }, CLOCK1 = { gain: 0.2, shotGain: 0, cool: 0.1, speed: 1 }, CLOCK3 = { gain: 0.15, shotGain: 0, cool: 0.12, speed: 1.3 }, MIRROR = { gain: 0.25, shotGain: 0, cool: 0.08, speed: 1, mirror: true };
+  MATCHES.push({ id: 8, name: 'В ЗОНЕ', team: 'Маяк', rival: 'Стена', flow: true,
+    about: 'Новое: поток. Три идеальных гола подряд, и на восемь секунд выдох и пас становятся быстрее. Любой промах или гол соперника его обрывает.',
+    g: WALL, riv: [[14, 30], [12, 26], [10, 22, 32]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 15, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
+    star3: 'Вошёл в поток', s3: function (r) { return r.flows >= 1; },
+    life: { h: 'ТВОЙ ЛУЧШИЙ МАТЧ', t: 'Вспомни свой лучший матч и что ты делал за час до него. Три вещи. Это начало твоего ритуала.' },
+    pre: function (done) { function opt(label, vals) { return { label: label, dots: [['Голова', 1]], vals: vals, apply: function () { preSet(8, { heat: 0, breathK: 0.95 }); S.ritual = label; return ['Это теперь твой ритуал перед игрой', 'Холодный старт']; } }; }
+      decide(8, 'ritual', 'Что ты делаешь перед игрой, когда всё получается? Собери свой ритуал.', [opt('ОДНА И ТА ЖЕ РАЗМИНКА', ['Дисциплина', 'Трудолюбие']), opt('НАУШНИКИ И ТИШИНА', ['Спокойствие', 'Радость игры']), opt('ТРИ МЕДЛЕННЫХ ВЫДОХА У БОРТА', ['Смирение', 'Упорство'])], done, 'МАТЧ 8 · ПЕРЕД ИГРОЙ'); } });
+  MATCHES.push({ id: 9, name: 'ПОСЛЕДНЯЯ МИНУТА', team: 'Полюс', rival: 'Часы', flow: true, oneT: true,
+    about: 'Новое: бросок в касание. Оттяни палец заранее и отпусти сразу, как принял пас: вратарь не успеет встать. Работает только с холодной головой. Вратарь ровный весь матч и прибавляет в концовке.',
+    g: CLOCK1, segG: [CLOCK1, CLOCK1, CLOCK3], riv: [[14, 30], [12, 26], [8, 18, 28]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 16, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
+    star3: 'Забил в касание', s3: function (r) { return r.oneGoals >= 1; },
+    dec: { 2: { key: 'ask', q: 'Счёт на табло, осталась концовка. Тренер смотрит на скамейку.', opts: function () { return [
+      { label: 'ПРОШУСЬ НА ЛЁД', dots: [['Давление', 2]], vals: ['Смелость', 'Ответственность', 'Упорство'], apply: function () { G.press = Math.min(0.99, G.press + 0.3); return ['Ты на льду с первой секунды концовки', 'Соперник это видит: его давление выше']; } },
+      { label: 'ЖДУ РЕШЕНИЯ ТРЕНЕРА', dots: [['Голова', 2]], vals: ['Смирение', 'Спокойствие', 'Уважение'], apply: function () { G.heat = Math.max(0, G.heat - 0.3); G.shortEnd = true; return ['Голова холоднее', 'Тренер выпустил тебя не сразу: концовка короче']; } }]; } } } });
+  MATCHES.push({ id: 10, name: 'ПАРТНЁР ОШИБСЯ', team: 'Утёс', rival: 'Зеркало', flow: true, oneT: true, mateHead: true,
+    about: 'Над партнёром теперь видна его голова. Когда она горячая, его пас идёт дольше и может не дойти. Остужают её твой гол и твоё слово на скамейке. Вратарь идёт за твоим прицелом: смени прицел перед броском.',
+    g: MIRROR, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [33, 37, 41], tune: { topR: 16, rateK: 0.6, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.25, chaseM: null },
+    star3: 'Партнёр кипел меньше десяти секунд', s3: function (r) { return r.mateHot < 10; },
+    life: { h: 'ЧЕСТНОЕ СЛОВО', t: 'Скажи одному партнёру одно честное и заботливое слово после его ошибки. Не совет, а поддержку.' },
+    dec: { 1: { key: 'mate', q: 'Партнёр отдал шайбу сопернику, и вам забили. Он бьёт клюшкой о борт.', opts: function () { return [
+      { label: '«ДЫШИ. РАЗБЕРЁМ ПОСЛЕ ИГРЫ»', dots: [['Раздевалка', 2]], vals: ['Спокойствие', 'Верность команде', 'Уважение', 'Смирение'], apply: function () { G.mheat = Math.max(0, G.mheat - 0.5); S.room = Math.min(3, S.room + 1); return ['Голова партнёра остыла', 'Раздевалка +1']; } },
+      { label: '«ПРОСТО ОТДАВАЙ МНЕ»', dots: [['Раздевалка', 1]], vals: ['Смелость', 'Упорство'], apply: function () { G.mheat = Math.min(1, G.mheat + 0.25); S.room = Math.max(0, S.room - 1); return ['Партнёр закипел сильнее: его пас станет хуже', 'Раздевалка −1']; } }]; } } } });
+  MATCHES.push({ id: 11, name: 'БЕЗ ПОДСКАЗОК', team: 'Туман', rival: 'Часы', flow: true, oneT: true, blind: true, noHints: true,
+    about: 'Проверка всего, что ты собрал. Линия броска без цвета, пояснений к промахам нет. Голову придётся чувствовать самому.',
+    g: CLOCK1, segG: [CLOCK1, CLOCK1, CLOCK3], riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 16, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
+    star3: 'Починил выбранное слабое звено', s3: function (r) { var f = (S.pre && S.pre[11] && S.pre[11].focus) || 'cool'; return f === 'cool' ? r.cooledAll : f === 'hot' ? r.shots > 0 && r.hotShots === 0 : r.losses <= 2; },
+    life: { h: 'ДВА СТОЛБЦА', t: 'Раздели лист пополам. Слева: что в твоей игре живёт само. Справа: что держится на силе воли. Выбери одно из правого столбца на эту неделю.' },
+    pre: function (done) { function opt(label, f, vals, line) { return { label: label, dots: [['Голова', 1]], vals: vals, apply: function () { preSet(11, { focus: f }); MATCHES[10].star3 = line; return ['Третья звезда этого матча: ' + line.toLowerCase()]; } }; }
+      decide(11, 'fix', 'Что в твоей игре чаще всего ломается? Выбери одно звено и чини его в этом матче.', [opt('ВЫДОХ ПОСЛЕ ПРОПУЩЕННОЙ', 'cool', ['Спокойствие', 'Дисциплина'], 'Остудил голову после каждой пропущенной'), opt('БРОСКИ В СПЕШКЕ', 'hot', ['Упорство', 'Смирение'], 'Ни одного броска с горячей головой'), opt('ПОТЕРИ ШАЙБЫ', 'loss', ['Ответственность', 'Трудолюбие'], 'Не больше двух потерь за матч')], done, 'МАТЧ 11 · ПЕРЕД ИГРОЙ'); } });
+  MATCHES.push({ id: 12, name: 'ПРОСМОТР', team: 'Северная Звезда', rival: 'Главный соперник', flow: true, oneT: true, mateHead: true, pathEnd: true,
+    about: 'Плей-офф, последний матч пути. На трибуне скауты. В воротах тот, кого ты ещё не обыгрывал. Всё, что собрано, пригодится.',
+    g: MIRROR, pickG: function () { var r = S.res || {}; return r[10] === 0 ? { g: MIRROR, name: 'Зеркало' } : r[9] === 0 || r[11] === 0 ? { g: CLOCK3, name: 'Часы' } : r[8] === 0 || r[6] === 0 ? { g: WALL, name: 'Стена' } : { g: MIRROR, name: 'Зеркало' }; },
+    noise: [1, 0, 1], riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [34, 38, 42], tune: { topR: 17, rateK: 0.58, push: 0.22, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.22, chaseM: null },
+    star3: 'Показал скаутам поток или гол в касание', s3: function (r) { return r.flows >= 1 || r.oneGoals >= 1; } });
+  // итог пути: карьера идёт дальше при любом исходе, меняется только куда
+  function pathEnd() {
+    var st = 0, w = 0, k; for (k in S.stars) st += S.stars[k]; for (k in (S.res || {})) w += S.res[k];
+    var sc = (S.rep || 0) * 2 + (S.trust || 0) + ((S.res || {})[12] ? 2 : 0) + st / 8;
+    var o = sc >= 9 ? ['ДРАФТ: ТЕБЯ ВЫБРАЛИ РАНО', 'Клуб, который давно следил за тобой, называет твоё имя одним из первых. Впереди взрослая лига и совсем другой лёд.']
+      : sc >= 6 ? ['КОНТРАКТ', 'Тебя не выбрали в первых рядах, но клуб предлагает контракт. Место в составе придётся забирать самому.']
+      : sc >= 3 ? ['ПРИГЛАШЕНИЕ НА ПРОСМОТР', 'Скауты записали твой номер. Летом ты едешь в лагерь, где за место спорят сорок человек.']
+      : ['ЕЩЁ СЕЗОН ЗДЕСЬ', 'Этой весной телефон молчит. Тренер говорит: тебя запомнили, приходи сильнее. Карьера продолжается.'];
+    S.path1 = { o: o[0], sc: Math.round(sc) }; save(); log(12, 'path_end', { sc: Math.round(sc) }); view = 'world';
+    screen('ИТОГ ПУТИ', '<span class="tag">ПУТЬ 1 · ТАЛАНТ · ИТОГ</span><h1 class="h1">' + o[0] + '</h1><p class="lead">' + o[1] + '</p>' +
+      '<section class="panel"><div class="stats"><span>Побед</span><b>' + w + ' из 12</b><span>Звёзд за голову</span><b>' + st + ' из 36</b></div></section>' +
+      '<section class="panel"><h2 class="h2">ЧТО РЕШИЛО</h2><div class="meters"><span>РЕПУТАЦИЯ</span>' + pips(S.rep || 0) + '<span>ДОВЕРИЕ</span>' + pips(S.trust || 0) + '</div><p>И то, как ты сыграл просмотр. Счёт матчей на исход почти не влиял: скауты смотрели на голову.</p></section>',
+      '<button class="btn" type="button" data-act="home">ДАЛЬШЕ ▶</button>');
+  }
   window.__seasonMatches = MATCHES;
 
   /* ---------- боты-тестировщики: матч считается без экрана и без ожидания ---------- */

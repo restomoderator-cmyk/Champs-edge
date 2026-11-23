@@ -9,8 +9,9 @@ ck('матч 1: у отличника 10-14 голов',R.aceF[0].you>=10&&R.ace
 ck('матч 1: новичок выигрывает от 50%',R.novice[0].win>=50,Math.round(R.novice[0].win)+'%');
 for(let i=0;i<4;i++){const d=Math.abs(R.aceD[i].you-R.aceF[i].you)/R.aceF[i].you*100;ck(`матч ${i+1}: защитник и нападающий в пределах 12% по голам`,d<=12,d.toFixed(0)+'%');}
 for(let i=0;i<4;i++)ck(`матч ${i+1}: побед у отличника около ${W[i]}% (допуск 7)`,Math.abs(R.aceF[i].win-W[i])<=7,Math.round(R.aceF[i].win)+'%');
-const LATE={5:[70,90],6:[65,88],7:[50,70]};for(const id in LATE)if(R.aceF[id-1]){ck(`матч ${id}: побед у отличника от ${LATE[id][0]} до ${LATE[id][1]}%`,R.aceF[id-1].win>=LATE[id][0]&&R.aceF[id-1].win<=LATE[id][1],Math.round(R.aceF[id-1].win)+'%');ck(`матч ${id}: паникёр хуже отличника от 10 пунктов`,R.aceF[id-1].win-R.panic[id-1].win>=10,Math.round(R.panic[id-1].win)+'%');}
+const LATE={5:[70,90],6:[65,88],7:[50,70],8:[60,85],9:[55,82],10:[50,78],11:[52,78],12:[42,68]};for(const id in LATE)if(R.aceF[id-1]){ck(`матч ${id}: побед у отличника от ${LATE[id][0]} до ${LATE[id][1]}%`,R.aceF[id-1].win>=LATE[id][0]&&R.aceF[id-1].win<=LATE[id][1],Math.round(R.aceF[id-1].win)+'%');ck(`матч ${id}: паникёр хуже отличника от 10 пунктов`,R.aceF[id-1].win-R.panic[id-1].win>=10,Math.round(R.panic[id-1].win)+'%');}
 if(R.aceF[6])ck('дерби (матч 7) труднее матчей 5 и 6 для отличника',R.aceF[6].win<R.aceF[4].win&&R.aceF[6].win<R.aceF[5].win,'');
+if(R.aceF[11])ck('финал пути (матч 12) не легче матчей 8-11 для отличника',[7,8,9,10].every(i=>R.aceF[11].win<=R.aceF[i].win+4),'');
 ck('паникёр нигде не лучше отличника',R.panic.every((m,i)=>m.win<=R.aceF[i].win+3),R.panic.map(m=>Math.round(m.win)).join('/'));
 ck('паникёр заметно хуже отличника в матче 3 или 4 (от 10 пунктов)',R.aceF[2].win-R.panic[2].win>=10||R.aceF[3].win-R.panic[3].win>=10,'');
 for(const k of ['c250','c200','c165'])ck(`засадник (${k}) нигде не выигрывает чаще отличника`,R[k].every((m,i)=>m.win<=R.aceF[i].win+5),R[k].map(m=>Math.round(m.win)).join('/'));

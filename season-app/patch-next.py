@@ -14,5 +14,7 @@ rep("case 'quit': x = 'вышел из матча'; break;","case 'quit': x = '�
 rep("    screen(m.name, '<span class=\"tag\">МАТЧ","    extra += worldBrief(m);\n    screen(m.name, '<span class=\"tag\">МАТЧ")
 rep("'<span>РАЗДЕВАЛКА</span>' + pips(S.room) +","'<span>РАЗДЕВАЛКА</span>' + pips(S.room) + (S.form != null ? '<span>ФОРМА</span>' + pips(S.form) + '<span>РЕПУТАЦИЯ</span>' + pips(S.rep || 0) : '') +")
 rep("var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1 };","var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1, world: 1 };")
+rep("icept: 'защитник перехватил пас' }","icept: 'защитник перехватил пас', badpass: 'пас партнёра не дошёл' }")
+rep("case 'word': x = 'сказал своё слово, шум ушёл'; break;","case 'word': x = 'сказал своё слово, шум ушёл'; break;\n      case 'path_end': x = 'ИТОГ ПУТИ, баллов ' + r.sc; break;")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)
