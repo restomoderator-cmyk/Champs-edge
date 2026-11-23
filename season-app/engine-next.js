@@ -10,7 +10,7 @@
   function startMatch(id) {
     M = MATCHES[id - 1]; PL = PR = null; if (M.pickG) { var pg = M.pickG(); M.g = pg.g; M.rival = pg.name; } if (tv('chaseM')) M.chase = tv('chaseM');
     G = { seg: 0, t: 0, T: 0, you: 0, riv: 0, px: 160, py: 320, vx: 0, vy: 0, ax: 1, ay: 0, gx: 138, gdir: 1, gfreeze: 0, gspeed: 0,
-      heat: 0, mg: M.g, topRow: 0, flow: 0, flows: 0, recvAge: 9, oneGoals: 0, mheat: 0, mateHot: 0, losses: 0, noise: 0, nz: 4, shield: 0, trig: 0, hotShots: 0, segShots: 0, segFirst: [], breathK: 1, gheat: 0, breath: 0, over: 0, breathing: false, wasFull: false, core: S.core && id >= 2, coreHot: false,
+      heat: 0, mg: M.g, tip: null, tipQ: [], hN: 0, hSide: 0, hB: 0, hY: 0, topRow: 0, flow: 0, flows: 0, recvAge: 9, oneGoals: 0, mheat: 0, mateHot: 0, losses: 0, noise: 0, nz: 4, shield: 0, trig: 0, hotShots: 0, segShots: 0, segFirst: [], breathK: 1, gheat: 0, breath: 0, over: 0, breathing: false, wasFull: false, core: S.core && id >= 2, coreHot: false,
       puck: { s: 'in', t: 0.5 }, clock: 0, defs: [], ch: null, rivAt: [], rivI: 0, msg: '', sub: '', msgT: 0, msgC: '#fff', parts: [], trail: [], stop: 0, jump: 0, net: 0, flash: 0, shake: 0,
       shots: 0, goals: 0, breathShots: 0, breathGoals: 0, narrow: 0, tops: 0, hot: 0, streak: 0, pause: 0, pauseText: null, done: false, nextSeg: null, afterPause: null,
       rivGoals: [], firstAfter: null, firstAfterBreath: false, lesson: id === 1 && !S.taught ? 0 : 9, l1: 0, l2: 0, leftSec: 0, falseTaps: 0, missRow: 0, breathRow: 0, segLen: SEG, safe: false, grace: 0, l3: 0, strip: id === 1 && !S.done[1], press: 0, rate: 0, mate: { x: 30, y: 300 }, recv: 0, so: null, soPend: null, endHow: '', fast: false, ghost: id === 4 && S.fix, playSeg: 0, finalSeg: true };
@@ -23,7 +23,7 @@
     if (M.tired) G.breathK *= 1.15; if (M.startHeat) G.heat = Math.max(G.heat, M.startHeat);
     if (id > 4) { var fm = S.form == null ? 1 : S.form; G.breathK *= 1.07 - 0.07 * fm; G.passK = S.room >= 2 ? 0.85 : S.room === 0 ? 1.1 : 1; if (S.trust >= 2 && S.values.length) G.core = true; G.shortEnd = S.trust === 0; }
     if (M.bench1) return benchFirst();
-    setSeg(0); if (G.core) say('СТЕРЖЕНЬ ЗАРЯЖЕН', '#2ce8f5', 2.4, 'ДВА БЫСТРЫХ ТАПА ЛЕВЫМ ПАЛЬЦЕМ'); run();
+    setSeg(0); matchTips(); if (G.core) say('СТЕРЖЕНЬ ЗАРЯЖЕН', '#2ce8f5', 2.4, 'ДВА БЫСТРЫХ ТАПА ЛЕВЫМ ПАЛЬЦЕМ'); run();
   }
   function run() { if (SIM) { view = 'play'; return; } view = 'play'; prev = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); }
   function quit() { cancelAnimationFrame(raf); breathSound(false); PL = PR = null; if (G) G.breathing = false; view = 'quit';
@@ -38,7 +38,7 @@
         apply: function () { S.room = Math.min(3, S.room + 1); return ['Раздевалка +1: партнёры слышали твой голос со скамейки', 'Доверие без изменений: тренер этого не заметил']; } }
     ], function (i, spirit) {
       G.finalSeg = S.trust >= 1; G.fast = S.room >= 1; if (spirit) G.core = true;
-      rebuildMatchDom(); setSeg(1); G.playSeg = 1; G.pause = 2.8;
+      rebuildMatchDom(); setSeg(1); matchTips(); G.playSeg = 1; G.pause = 2.8;
       G.pauseText = ['ТВОЙ ВЫХОД', (G.finalSeg ? 'Тренер доверяет: в концовке у тебя полная смена. ' : 'Доверия мало: в концовке тебе дадут только половину смены. ') + (G.fast ? 'Партнёры ищут тебя пасом.' : '')]; run();
     }, 'МАТЧ 4 · СКАМЕЙКА');
   }
@@ -64,11 +64,13 @@
   }
   function fit() { var w = document.getElementById('wrap'); if (!w || !cv) return; var cs = getComputedStyle(w), aw = w.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8, ah = w.clientHeight - parseFloat(cs.paddingBottom) - 8, k = Math.max(0.4, Math.min(aw / W, ah / H)); cv.style.width = Math.floor(W * k) + 'px'; cv.style.height = Math.floor(H * k) + 'px'; }
   window.addEventListener('resize', fit);
-  function say(m, c, d, sub) { G.msg = m; G.msgC = c || '#fff'; G.msgT = d || 1.2; G.sub = M.blind ? '' : (sub || ''); }
+  var HP = [['левым', 'правым'], ['левый', 'правый'], ['Левый', 'Правый'], ['ЛЕВЫМ', 'ПРАВЫМ'], ['ЛЕВЫЙ', 'ПРАВЫЙ'], ['слева', 'справа'], ['Слева', 'Справа'], ['СЛЕВА', 'СПРАВА']];
+  function hands(t) { if (!S.lefty || !t) return t; t = String(t); HP.forEach(function (p, i) { t = t.split(p[0]).join('\u0001' + i + '\u0001').split(p[1]).join('\u0002' + i + '\u0002'); }); HP.forEach(function (p, i) { t = t.split('\u0001' + i + '\u0001').join(p[1]).split('\u0002' + i + '\u0002').join(p[0]); }); return t; }
+  function say(m, c, d, sub) { m = hands(m); sub = hands(sub); G.msg = m; G.msgC = c || '#fff'; G.msgT = d || 1.2; G.sub = M.blind ? '' : (sub || ''); }
   function burst(x, y, n, cols) { for (var i = 0; i < n; i++) G.parts.push({ x: x, y: y, vx: (Math.random() - 0.5) * 240, vy: -60 - Math.random() * 220, l: 0.6 + Math.random() * 0.6, c: cols[i % cols.length] }); }
   SFX.pass = function () { beep([[520, 0.04, 'triangle'], [820, 0.06, 'triangle']], 0.09); };
   function nextPuck(d) { G.mate = { x: Math.random() < 0.5 ? 30 : 290, y: 255 + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') * (G.passK || 1) * (G.flow > 0 ? 0.7 : 1) * (1 + 0.6 * (G.mheat || 0)) * (G.sit === 'pp' ? 0.85 : G.sit === 'pk' ? 1.45 : 1) }; G.ch = null; }
-  function coach(title, text) { var c = els.coach; if (!title) { c.hidden = true; return; } if (c.getAttribute('data-k') !== title) { c.setAttribute('data-k', title); c.innerHTML = '<b>' + title + '</b><p>' + text + '</p>'; } c.hidden = false; }
+  function coach(title, text) { var c = els.coach; if (!title) { c.hidden = true; return; } title = hands(title); text = hands(text); if (c.getAttribute('data-k') !== title) { c.setAttribute('data-k', title); c.innerHTML = '<b>' + title + '</b><p>' + text + '</p>'; } c.hidden = false; }
   function heatUp(v, why) { var g = G; g.heat = Math.min(1, g.heat + v); g.shake = 0.25; log(M.id, 'heat', { by: why, heat: +g.heat.toFixed(2) }); }
   // буллиты: темп соперника объявлен заранее, как и красные метки
   function soShot() { var g = G; g.px = 160; g.py = 330; g.vx = 0; g.vy = 0; g.ax = 1; g.ay = 0; g.puck = { s: 'in', t: 0.8 }; marks(); }
@@ -99,6 +101,7 @@
       first: !!(g.rivGoals.length && g.firstAfter === null), press: !!(g.ch && Math.hypot(g.ch.x - g.px, g.ch.y - g.py) < 80) || g.clock < 3 };
     if (withBreath) { if (++g.breathRow >= 3) { g.breathRow = 0; deed('disc'); } } else g.breathRow = 0;
     g.shots++; if (withBreath) g.breathShots++; if (spx <= 14) g.narrow++; g.trail = [];
+    g.hN++; g.hSide += s[0] + Math.tan(A.a) * (s[1] - GOAL_Y) < 160 ? -1 : 1; g.hB += b; g.hY += s[1];
     if (g.heat >= 0.66) g.hotShots++; if (g.segShots++ === 0) g.segFirst[g.seg] = withBreath; if (g.shots === 0) g.firstShotBreath = withBreath;
     if (g.rivGoals.length && g.firstAfter === null) { g.firstAfter = withBreath; g.firstAfterBreath = withBreath; }
     log(M.id, 'shot', { width: Math.round(spx * 2), breath: +b.toFixed(2), top: top, heat: +g.heat.toFixed(2), aimed: A.armed, slap: slap, far: far });
@@ -127,9 +130,16 @@
   function danger() { var g = G; var st = stick(); if (st[1] < 137 && st[0] > 102 && st[0] < 218) return 'poke'; if (!(g.grace > 0)) for (var i = 0; i < g.defs.length; i++) if (Math.hypot(g.px - (g.defs[i].x + 25), g.py - (g.defs[i].y + 15)) < 30) return 'def'; return ''; }
   function hitDef(x, y) { var g = G, c = g.ch; for (var i = 0; i < g.defs.length; i++) { var d = g.defs[i]; if (x > d.x + 6 && x < d.x + 42 && y > d.y - 8 && y < d.y + 40) return true; } return !!c && x > c.x - 20 && x < c.x + 18 && y > c.y - 24 && y < c.y + 24; }
   // своё слово: короткий тап левым пальцем убирает шум трибун и на несколько секунд не даёт ему вернуться
+  var TIPS = { flow: ['ПОТОК', 'Три идеальных гола подряд, и на восемь секунд выдох и пас быстрее. Промах его обрывает.'],
+    oneT: ['БРОСОК В КАСАНИЕ', 'Оттяни палец броска ещё до паса и отпусти сразу, как принял шайбу. Только с холодной головой.'],
+    mate: ['ГОЛОВА ПАРТНЁРА', 'Полоска над партнёром. Когда она красная, его пас может не дойти. Твой гол её остужает.'],
+    mirror: ['ВРАТАРЬ-ЗЕРКАЛО', 'Он идёт за твоим прицелом, пока ты держишь палец. Сдвинь прицел перед самым броском.'],
+    noise: ['ШУМ ТРИБУН', 'Линия дрожит. Короткий тап пальцем, которым ведёшь игрока: твоё слово уберёт шум.'] };
+  function tipOnce(k) { if (!G || M.noHints || SIM) return; S.tips = S.tips || {}; if (S.tips[k]) return; S.tips[k] = 1; save(); G.tipQ.push({ a: TIPS[k][0], b: TIPS[k][1], t: 6 }); }
+  function matchTips() { if (M.flow) tipOnce('flow'); if (M.oneT) tipOnce('oneT'); if (M.mateHead) tipOnce('mate'); if (G.mg && G.mg.mirror) tipOnce('mirror'); }
   function useWord() {
     var g = G; if (!g || g.pause > 0 || !(g.noise > 0)) return;
-    g.noise = 0; g.shield = 4.5; g.trig++; log(M.id, 'word'); say(String(S.reset && S.reset.w ? S.reset.w : 'Здесь').toUpperCase() + '!', '#2ce8f5', 1.2, 'ШУМ УШЁЛ'); SFX.full(); buzz(15);
+    g.noise = 0; g.shield = 4.5; g.trig++; if (g.tip && g.tip.a === TIPS.noise[0]) g.tip.t = 0; log(M.id, 'word'); say(String(S.reset && S.reset.w ? S.reset.w : 'Здесь').toUpperCase() + '!', '#2ce8f5', 1.2, 'ШУМ УШЁЛ'); SFX.full(); buzz(15);
   }
   function useCore() {
     var g = G; if (!g || g.pause > 0 || M.id < 2 || !S.values.length) return;
@@ -160,7 +170,7 @@
       if (g.seg === 3) { PR = null; breathSound(false); g.puck = { s: 'wait' }; g.soPend = { t: 1.4, end: true, lose: true }; return; } }
     if (g.flow > 0) g.flow -= dt; g.recvAge += dt; if (M.mateHead) { g.mheat = Math.max(0, g.mheat - 0.02 * dt); if (g.mheat >= 0.5) g.mateHot += dt; }
     if (g.shield > 0) g.shield -= dt; if (g.noise > 0) g.noise -= dt;
-    if (M.noise && M.noise[Math.min(g.seg, 2)] && !g.so && !g.soPend) { g.nz -= dt; if (g.nz <= 0 && g.noise <= 0 && g.shield <= 0) { g.noise = 3.5; g.nz = 6 + Math.random() * 3; heatUp(0.08, 'noise'); say('ТРИБУНЫ ГУДЯТ', '#e43b44', 1.5, 'ТАП ЛЕВЫМ ПАЛЬЦЕМ: ТВОЁ СЛОВО'); SFX.riv(); } }
+    if (M.noise && M.noise[Math.min(g.seg, 2)] && !g.so && !g.soPend) { g.nz -= dt; if (g.nz <= 0 && g.noise <= 0 && g.shield <= 0) { tipOnce('noise'); g.noise = 3.5; g.nz = 6 + Math.random() * 3; heatUp(0.08, 'noise'); say('ТРИБУНЫ ГУДЯТ', '#e43b44', 1.5, 'ТАП ЛЕВЫМ ПАЛЬЦЕМ: ТВОЁ СЛОВО'); SFX.riv(); } }
     if (g.heat >= 0.66) g.hot += dt;
     g.rivGoals.forEach(function (r) { if (!r.cooled && g.heat < 0.33 && g.T - r.at <= 10) r.cooled = true; });
     g.gheat = Math.max(0, g.gheat - G.mg.cool * dt);
@@ -230,6 +240,8 @@
     else if (g.lesson === 1) coach('ЗАМРИ ПЕРЕД БРОСКОМ', 'Потяни и подержи палец ровно секунду. Это выдох: линия сузится, голова остынет. Потом отпусти.');
     else if (g.lesson === 2) { coach('ЛЕВЫЙ ПАЛЕЦ ВЕДЁТ', 'Води левым пальцем слева внизу: игрок едет за ним по всей зоне, хоть к самым воротам. Отпустил: катится сам.'); g.l2 += dt; if (g.l2 > 9) g.lesson = 3; }
     else if (g.lesson === 3) { coach('ЩЕЛЧОК', 'Быстрый тап правым пальцем: сильный бросок без прицела. Летит быстро, но широко. Для моментов, когда защитник уже рядом.'); g.l3 += dt; if (g.l3 > 9) { g.lesson = 9; S.taught = true; save(); } }
+    else if (g.tip && g.tip.t > 0 && g.pause <= 0) { coach(g.tip.a, g.tip.b); g.tip.t -= dt; }
+    else if (g.tipQ && g.tipQ.length && g.pause <= 0) { g.tip = g.tipQ.shift(); }
     else coach(null);
   }
   // пауза между отрезками: одно решение, которое меняет следующий отрезок
@@ -254,10 +266,10 @@
     R('#dfe9f5', 8, 8, W - 16, H - 16); R('#e43b44', 8, 80, W - 16, 3); R('#0099db', 8, 240, W - 16, 4); R('#bcd3ee', 102, 83, 116, 54); R('#e43b44', 102, 135, 116, 2); R('#e43b44', 102, 83, 2, 54); R('#e43b44', 216, 83, 2, 54);
     // нижняя полоса с подсказками только в первом матче; дальше это место для катания
     if (g.strip) {
-    cx.fillStyle = 'rgba(0,153,219,.12)'; cx.fillRect(8, ZONE, W / 2 - 9, H - ZONE - 8); cx.fillStyle = 'rgba(254,174,52,.14)'; cx.fillRect(W / 2 + 1, ZONE, W / 2 - 9, H - ZONE - 8);
+    cx.fillStyle = S.lefty ? 'rgba(254,174,52,.14)' : 'rgba(0,153,219,.12)'; cx.fillRect(8, ZONE, W / 2 - 9, H - ZONE - 8); cx.fillStyle = S.lefty ? 'rgba(0,153,219,.12)' : 'rgba(254,174,52,.14)'; cx.fillRect(W / 2 + 1, ZONE, W / 2 - 9, H - ZONE - 8); var mvx = S.lefty ? 236 : 84, amx = S.lefty ? 84 : 236;
     cx.font = '8px "Press Start 2P", monospace'; cx.textAlign = 'center'; cx.fillStyle = '#5a6988';
-    if (!PL) { cx.fillText('ЛЕВЫЙ ПАЛЕЦ', 84, 414); cx.fillText('ВЕДЁТ', 84, 428); }
-    if (!PR) { cx.fillText('ПРАВЫЙ ПАЛЕЦ', 236, 414); cx.fillText('ТЯНИ И ДЕРЖИ', 236, 428); }
+    if (!PL) { cx.fillText(hands('ЛЕВЫЙ ПАЛЕЦ'), mvx, 414); cx.fillText('ВЕДЁТ', mvx, 428); }
+    if (!PR) { cx.fillText(hands('ПРАВЫЙ ПАЛЕЦ'), amx, 414); cx.fillText('ТЯНИ И ДЕРЖИ', amx, 428); }
     }
     R(OUT, NET_L - 4, 44, NET_R - NET_L + 8, 38); R('#ffffff', NET_L, 48, NET_R - NET_L, 32);
     for (var i = NET_L + 8; i < NET_R; i += 10) R('#c0cbdc', i + nk, 48 - Math.abs(nk), 1, 32);
@@ -313,7 +325,7 @@
     if (g.msgT > 0 && g.pause <= 0) { cx.font = '14px "Press Start 2P", monospace'; cx.fillStyle = OUT; cx.fillText(g.msg, W / 2 + 2, 152); cx.fillStyle = g.msgC; cx.fillText(g.msg, W / 2, 150);
       if (g.sub) { cx.font = '8px "Press Start 2P", monospace'; var sw = Math.min(W - 8, cx.measureText(g.sub).width + 14); R('#181425', W / 2 - sw / 2, 172, sw, 18); cx.fillStyle = '#ffffff'; cx.fillText(g.sub, W / 2, 177, W - 16); } }
     if (g.pause > 0 && g.pauseText) { cx.fillStyle = 'rgba(24,20,37,.88)'; cx.fillRect(0, 0, W, H); cx.font = '14px "Press Start 2P", monospace'; cx.fillStyle = '#fee761'; cx.fillText(g.pauseText[0], W / 2, 190);
-      cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; wrap(g.pauseText[1], W / 2, 224, 280, 15); }
+      cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; wrap(hands(g.pauseText[1]), W / 2, 224, 280, 15); }
     cx.textAlign = 'left';
     var left = Math.max(0, Math.ceil(g.segLen - g.t)), tm = '0:' + ('0' + left).slice(-2);
     if (els.time.textContent !== tm) els.time.textContent = tm;
@@ -336,12 +348,12 @@
       cooledAll: g.rivGoals.every(function (x) { return x.cooled; }), rivGoals: g.rivGoals.length };
     var s1 = r.cooledAll, s2 = r.shots > 0 && r.narrow / r.shots >= 0.5, s3 = !!m.s3(r), n = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
     if (SIM) { SIM.result = { you: r.you, riv: r.riv, stars: n, hot: r.hot, shots: r.shots, narrow: r.narrow, goals: r.goals, how: g.endHow }; G = null; return; }
-    var first = !S.done[m.id]; S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = r.you > r.riv ? 1 : 0; } if (m.record) S.rec = Math.max(S.rec || 0, r.tops); if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
+    var first = !S.done[m.id]; S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = r.you > r.riv ? 1 : 0; if (g.hN) { S.hab = S.hab || {}; S.hab[m.id] = [+(g.hSide / g.hN).toFixed(2), +(g.hB / g.hN).toFixed(2), Math.round(g.hY / g.hN)]; } } if (m.record) S.rec = Math.max(S.rec || 0, r.tops); if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
     G = null; view = 'result';
     function star(on, text) { return '<div class="star' + (on ? ' on' : '') + '"><i>★</i><span>' + text + '</span></div>'; }
     var win = r.you > r.riv;
-    screen('ИТОГ', '<span class="tag' + (win ? '' : ' tag--red') + '">МАТЧ ' + m.id + ' · ' + (win ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ') + g.endHow + '</span>' +
-      '<div class="final">' + r.you + ' : ' + r.riv + '<small>' + TEAM.toUpperCase() + ' · ' + m.team.toUpperCase() + '</small></div>' +
+    screen('ИТОГ', '<span class="tag' + (win ? '' : ' tag--red') + '">МАТЧ ' + m.id + ' · ' + (m.record ? 'ТРЕНИРОВКА' : (win ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ') + g.endHow) + '</span>' +
+      (m.record ? '<div class="final">' + r.tops + '<small>ИДЕАЛЬНЫХ БРОСКОВ · РЕКОРД ' + (S.rec || r.tops) + '</small></div>' : '<div class="final">' + r.you + ' : ' + r.riv + '<small>' + TEAM.toUpperCase() + ' · ' + m.team.toUpperCase() + '</small></div>') +
       '<section class="panel panel--hot"><h2 class="h2">ЗВЁЗДЫ ДАЮТ ЗА ГОЛОВУ, А НЕ ЗА СЧЁТ</h2>' +
       star(s1, r.rivGoals ? 'Остудил голову после каждой пропущенной' : 'Голова не перегревалась') +
       star(s2, 'Половина бросков с узкой линией') + star(s3, m.star3) + '</section>' +
@@ -362,7 +374,7 @@
   function bind() {
     function pos(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; }
     cv.addEventListener('pointerdown', function (e) { e.preventDefault(); if (!G) return; var q = pos(e); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
-      if (q[0] < W / 2) PL = { id: e.pointerId, ox: q[0], oy: q[1], x: q[0], y: q[1], sx: q[0], sy: q[1], t0: performance.now() };
+      if ((q[0] < W / 2) !== !!S.lefty) PL = { id: e.pointerId, ox: q[0], oy: q[1], x: q[0], y: q[1], sx: q[0], sy: q[1], t0: performance.now() };
       else PR = { id: e.pointerId, ox: q[0], oy: q[1], x: q[0], y: q[1], mv: 0, sp: 0, t0: performance.now() }; });
     cv.addEventListener('pointermove', function (e) { if (!G) return; var q = pos(e);
       if (PL && PL.id === e.pointerId) { PL.x = q[0]; PL.y = q[1]; }
@@ -390,7 +402,7 @@
       'Доверие: ' + (S.trust >= 2 ? 'стержень заряжен на старте' : S.trust === 0 ? 'в концовке тебе дадут меньше времени' : 'обычная смена'),
       'Репутация: решит, куда ты попадёшь в конце пути'];
   }
-  function worldBrief(m) { return m.id > 4 ? '<section class="panel"><h2 class="h2">С ЧЕМ ТЫ ВЫХОДИШЬ</h2>' + worldLines().slice(0, 3).map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</section>' : ''; }
+  function worldBrief(m) { var pg = m.pickG ? m.pickG() : null; return (pg ? '<section class="panel panel--hot"><h2 class="h2">В ВОРОТАХ: ' + pg.name.toUpperCase() + '</h2><p>' + pg.why + '</p></section>' : '') + (m.id > 4 ? '<section class="panel"><h2 class="h2">С ЧЕМ ТЫ ВЫХОДИШЬ</h2>' + worldLines().slice(0, 3).map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</section>' : ''); }
   function world(id) {
     view = 'world'; var d = (S.last && S.last.d) || [];
     screen('МЕЖДУ МАТЧАМИ', '<span class="tag">МЕЖДУ МАТЧАМИ</span><h1 class="h1">ЧТО ИЗМЕНИЛОСЬ</h1>' +
@@ -398,6 +410,30 @@
       '<section class="panel"><div class="meters"><span>ФОРМА</span>' + pips(S.form == null ? 1 : S.form) + '<span>ДОВЕРИЕ</span>' + pips(S.trust || 0) + '<span>РАЗДЕВАЛКА</span>' + pips(S.room || 0) + '<span>РЕПУТАЦИЯ</span>' + pips(S.rep || 0) + '</div></section>' +
       '<section class="panel"><h2 class="h2">В СЛЕДУЮЩЕМ МАТЧЕ</h2>' + worldLines().map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</section>',
       '<button class="btn" type="button" data-act="after" data-m="' + id + '">ДАЛЬШЕ ▶</button>');
+  }
+
+  function settings() {
+    view = 'settings';
+    function tg(k, on, a, b) { return '<button class="opt" type="button" data-act="tgl" data-k="' + k + '"><b>' + (on ? a : b) + '</b></button>'; }
+    screen('НАСТРОЙКИ', '<span class="tag">НАСТРОЙКИ</span>' + tg('sound', S.sound, 'ЗВУК: ВКЛЮЧЁН', 'ЗВУК: ВЫКЛЮЧЕН') + tg('music', S.music !== false, 'МУЗЫКА: ВКЛЮЧЕНА', 'МУЗЫКА: ВЫКЛЮЧЕНА') +
+      tg('lefty', !S.lefty, 'РУКИ: ОБЫЧНО. Ведёт левая рука, бросает правая', 'РУКИ: ДЛЯ ЛЕВШИ. Ведёт правая рука, бросает левая') +
+      '<button class="btn btn--ghost" type="button" data-act="logs">ЖУРНАЛ ТЕСТА</button><button class="btn btn--ghost" type="button" data-act="parent">ДЛЯ РОДИТЕЛЕЙ</button><button class="btn btn--ghost" type="button" data-act="wipeask">НАЧАТЬ ЗАНОВО</button>',
+      '<button class="btn" type="button" data-act="home">ГОТОВО</button>');
+  }
+  function parentGate(bad) {
+    view = 'parent'; if (!pick.pa) pick.pa = [12 + Math.floor(Math.random() * 8), 3 + Math.floor(Math.random() * 7)]; pick.pans = null;
+    screen('ДЛЯ РОДИТЕЛЕЙ', '<span class="tag tag--mute">ТОЛЬКО ДЛЯ ВЗРОСЛЫХ</span><h1 class="h1">РАЗДЕЛ ДЛЯ РОДИТЕЛЕЙ</h1><p class="lead">Чтобы войти, решите пример.</p><div class="final">' + pick.pa[0] + ' × ' + pick.pa[1] + '</div>' +
+      '<input class="inp" data-inp="pans" inputmode="numeric" maxlength="4" placeholder="Ответ" aria-label="Ответ">' + (bad ? '<p class="note">Неверно. Попробуйте ещё раз.</p>' : ''),
+      '<button class="btn" type="button" data-act="parentgo">ВОЙТИ</button><button class="btn btn--ghost" type="button" data-act="settings">НАЗАД</button>');
+  }
+  function parentInfo() {
+    view = 'parent'; pick.pa = null;
+    screen('ДЛЯ РОДИТЕЛЕЙ', '<span class="tag tag--red">ЧЕРНОВИК ТЕКСТА</span><h1 class="h1">ОТКУДА ЭТА ИГРА</h1>' +
+      '<p class="lead">Игра выросла из индивидуальной программы ментальной подготовки спортсменов «Грани Чемпионов».</p>' +
+      '<section class="panel"><h2 class="h2">ЧТО ПРОБУЕТ РЕБЁНОК</h2><p>Выдох перед действием, короткий сброс после ошибки, своё слово для фокуса. В игре это приёмы на льду. В программе с ними работают лично, под конкретного спортсмена.</p></section>' +
+      '<section class="panel"><h2 class="h2">ДАННЫЕ</h2><p>Игра ничего не собирает и никуда не отправляет. Всё, что ребёнок выбирает и пишет, остаётся на этом телефоне.</p></section>' +
+      '<section class="panel"><h2 class="h2">О ПРОГРАММЕ</h2><p>Узнать о программе можно на её сайте: edgechamps.com. Игра сама на сайт не переходит. Условия обсуждаются лично.</p></section>',
+      '<button class="btn" type="button" data-act="settings">НАЗАД</button>');
   }
 
   /* ---------- матчи 5-7: черновик. Названия команд вымышленные и не проверены ---------- */
@@ -461,7 +497,7 @@
       decide(11, 'fix', 'Что в твоей игре чаще всего ломается? Выбери одно звено и чини его в этом матче.', [opt('ВЫДОХ ПОСЛЕ ПРОПУЩЕННОЙ', 'cool', ['Спокойствие', 'Дисциплина'], 'Остудил голову после каждой пропущенной'), opt('БРОСКИ В СПЕШКЕ', 'hot', ['Упорство', 'Смирение'], 'Ни одного броска с горячей головой'), opt('ПОТЕРИ ШАЙБЫ', 'loss', ['Ответственность', 'Трудолюбие'], 'Не больше двух потерь за матч')], done, 'МАТЧ 11 · ПЕРЕД ИГРОЙ'); } });
   MATCHES.push({ id: 12, name: 'ПРОСМОТР', team: 'Северная Звезда', rival: 'Главный соперник', flow: true, oneT: true, mateHead: true, pathEnd: true,
     about: 'Плей-офф, последний матч пути. На трибуне скауты. В воротах тот, кого ты ещё не обыгрывал. Всё, что собрано, пригодится.',
-    g: MIRROR, pickG: function () { var r = S.res || {}; return r[10] === 0 ? { g: MIRROR, name: 'Зеркало' } : r[9] === 0 || r[11] === 0 ? { g: CLOCK3, name: 'Часы' } : r[8] === 0 || r[6] === 0 ? { g: WALL, name: 'Стена' } : { g: MIRROR, name: 'Зеркало' }; },
+    g: MIRROR, pickG: function () { var r = S.res || {}; return r[10] === 0 ? { g: MIRROR, name: 'Зеркало', why: 'Ему ты проиграл в матче 10.' } : r[9] === 0 || r[11] === 0 ? { g: CLOCK3, name: 'Часы', why: 'Его ты ещё не обыгрывал.' } : r[8] === 0 || r[6] === 0 ? { g: WALL, name: 'Стена', why: 'Её ты ещё не пробил.' } : { g: MIRROR, name: 'Зеркало', why: 'Ты обыграл всех, поэтому в воротах самый трудный.' }; },
     noise: [1, 0, 1], riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [34, 38, 42], tune: { topR: 17, rateK: 0.58, push: 0.22, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.22, chaseM: null },
     star3: 'Показал скаутам поток или гол в касание', s3: function (r) { return r.flows >= 1 || r.oneGoals >= 1; } });
   /* ---------- обычные матчи первого пути: соперник + ситуация + условие. Играются по выбору, сюжет не держат ---------- */

@@ -18,5 +18,10 @@ rep("icept: 'защитник перехватил пас' }","icept: 'защи�
 rep("case 'word': x = 'сказал своё слово, шум ушёл'; break;","case 'word': x = 'сказал своё слово, шум ушёл'; break;\n      case 'path_end': x = 'ИТОГ ПУТИ, баллов ' + r.sc; break;")
 rep("if (!S.done[MATCHES[i].id]) return MATCHES[i].id;","if (!S.done[MATCHES[i].id] && !MATCHES[i].pool) return MATCHES[i].id;")
 rep("var done = S.done[m.id], open = m.id === nx,","if (m.id === 13) h += '<h2 class=\"h2\">ОБЫЧНЫЕ МАТЧИ: ИГРАЙ ЛЮБЫЕ' + (S.done[7] ? '' : ' ПОСЛЕ ДЕРБИ') + '</h2>' + (S.rec ? '<p class=\"note\">Рекорд тренировки: идеальных бросков ' + S.rec + '</p>' : '');\n      var done = S.done[m.id], open = m.pool ? !!S.done[7] && !done : m.id === nx,")
+rep("<div class=\"stage__in\">' + body + '</div></main>'","<div class=\"stage__in\">' + hands(body) + '</div></main>'")
+rep("if (!S.sound || !audio || audio.state","if (!S.sound || S.music === false || !audio || audio.state")
+rep("<button class=\"btn btn--ghost\" type=\"button\" data-act=\"logs\">ЖУРНАЛ ТЕСТА</button><button class=\"btn btn--ghost\" type=\"button\" data-act=\"wipeask\">НАЧАТЬ ЗАНОВО</button>');","<button class=\"btn btn--ghost\" type=\"button\" data-act=\"settings\">НАСТРОЙКИ</button>');")
+rep("    if (a === 'life1go') {","    if (a === 'settings') return settings();\n    if (a === 'tgl') { var tk = el.getAttribute('data-k'); S[tk] = tk === 'lefty' ? !S.lefty : S[tk] === false ? true : false; save(); if (!S.sound) breathSound(false); return settings(); }\n    if (a === 'parent') return parentGate();\n    if (a === 'parentgo') return +pick.pans === pick.pa[0] * pick.pa[1] ? parentInfo() : parentGate(true);\n    if (a === 'life1go') {")
+rep("var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1, world: 1 };","var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1, world: 1, settings: 1, parent: 1 };")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)

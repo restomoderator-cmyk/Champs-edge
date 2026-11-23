@@ -31,6 +31,7 @@ const {chromium}=require('playwright');const D=__dirname;const MODE=process.argv
   if(await has('[data-act="rev"]')){await click('[data-act="rev"][data-i="0"]');continue;}
   if(await has('.node--open')){await click('.node--open');continue;}
   if(await has('[data-act="home"]')){await click('[data-act="home"]');continue;}
+  if(await has('[data-act="settings"]')&&!(await has('[data-act="tgl"]'))){await shot('home-end');break;}
   if(await has('[data-act="logs"]')){await shot('home-end');await click('[data-act="logs"]');await shot('logs');break;}
   await p.waitForTimeout(100);}
  const L=await p.evaluate(()=>window.__mvp.log());const cnt={};L.forEach(r=>{const k=r.e+(r.kind?':'+r.kind:'');cnt[k]=(cnt[k]||0)+1});
