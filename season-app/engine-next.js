@@ -1,7 +1,7 @@
   /* ---------- матч: левый палец ведёт игрока, правый тянет назад, держит (выдох) и отпускает (бросок) ---------- */
   var W = 320, H = 470, NET_L = 110, NET_R = 210, GW = 44, SEG = 35, FLY = 620, GOAL_Y = 84, BREATH = 0.9, CLOCK = 9, ZONE = 392;
   // настройки баланса: одна таблица, по одному числу на матч там, где матчи различаются
-  var T = { topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.55, 1.1, 1.35, 0.97], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
+  var T = { topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.55, 1.1, 1.5, 0.97], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
     slapSp: 0.06, seenAdd: 10, dSpread: 1.0, fSpread: 0.85, dTop: 0.7, pierce: 0, dFar: 1.3, dSlap: 1, segT: [25, 35, 35, 35], paceK: [1.3, 1.25, 1.3, 1], chaseM: [null, [0, 28, 32], [26, 32, 36], null] };
   window.__seasonTune = T;
   function tv(k) { var a = T[k]; if (M.tune && k in M.tune) return M.tune[k]; return M.id - 1 < a.length ? a[M.id - 1] : a[a.length - 1]; }
@@ -71,7 +71,36 @@
   function hands(t) { if (!S.lefty || !t) return t; t = String(t); HP.forEach(function (p, i) { t = t.split(p[0]).join('\u0001' + i + '\u0001').split(p[1]).join('\u0002' + i + '\u0002'); }); HP.forEach(function (p, i) { t = t.split('\u0001' + i + '\u0001').join(p[1]).split('\u0002' + i + '\u0002').join(p[0]); }); return t; }
   function say(m, c, d, sub) { m = hands(m); sub = hands(sub); G.msg = m; G.msgC = c || '#fff'; G.msgT = d || 1.2; G.sub = M.blind ? '' : (sub || ''); }
   function burst(x, y, n, cols) { for (var i = 0; i < n; i++) G.parts.push({ x: x, y: y, vx: (Math.random() - 0.5) * 240, vy: -60 - Math.random() * 220, l: 0.6 + Math.random() * 0.6, c: cols[i % cols.length] }); }
+  var AS = window.__assets || {}, IMG = {}, SND = {};
+  function img(n) { if (!AS[n]) return null; if (!IMG[n]) { IMG[n] = new Image(); IMG[n].src = AS[n]; } return IMG[n].complete && IMG[n].naturalWidth ? IMG[n] : null; }
+  function sndName(n) { return AS[n + '.wav'] ? n + '.wav' : AS[n + '.mp3'] ? n + '.mp3' : ''; }
+  function sndBuf(n) {
+    var f = sndName(n); if (!f) return null; if (SND[f]) return SND[f] === 1 ? null : SND[f]; SND[f] = 1;
+    try { var b64 = AS[f].slice(AS[f].indexOf(',') + 1), bin = atob(b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      ac().decodeAudioData(u.buffer, function (buf) { SND[f] = buf; }, function () {}); } catch (e) {}
+    return null;
+  }
+  function sndPlay(n, loop, vol) { var b = sndBuf(n); if (!b) return null; try { var a = ac(), s0 = a.createBufferSource(), g0 = a.createGain(); s0.buffer = b; s0.loop = !!loop; g0.gain.value = vol == null ? 1 : vol; s0.connect(g0); g0.connect(a.destination); s0.start(); window.__sndPlayed = (window.__sndPlayed || 0) + 1; return { s: s0, g: g0 }; } catch (e) { return null; } }
   SFX.pass = function () { beep([[520, 0.04, 'triangle'], [820, 0.06, 'triangle']], 0.09); };
+  // у каждого звука сначала пробуем файл sfx_<имя>, потом синтез
+  Object.keys(SFX).forEach(function (k) { var f = SFX[k]; SFX[k] = function () { if (S.sound && sndName('sfx_' + k)) { if (sndPlay('sfx_' + k)) return; } return f.apply(null, arguments); }; });
+  Object.keys(AS).forEach(function (n) { if (/\.png$/.test(n)) img(n); });
+  var _bs = breathSound, BRS = null;
+  breathSound = function (on) {
+    if (!on) { if (BRS) { try { BRS.s.stop(); } catch (e) {} BRS = null; } return _bs(false); }
+    if (S.sound && sndName('sfx_breath')) { if (!BRS) BRS = sndPlay('sfx_breath', true); if (BRS) return; }
+    return _bs(true);
+  };
+  var MF = { cur: '', node: null };
+  function musicStop() { if (MF.node) { try { MF.node.s.stop(); } catch (e) {} } MF.node = null; MF.cur = ''; }
+  // музыка из файлов music_menu и music_match, если они есть; иначе играет синтезированная петля
+  function musicFile() {
+    var want = view === 'play' ? 'music_match' : 'music_menu'; if (!sndName(want)) { musicStop(); return false; }
+    if (!S.sound || S.music === false) { musicStop(); return true; }
+    if (MF.cur !== want) { musicStop(); var n = sndPlay(want, true, 0.5); if (n) { MF.node = n; MF.cur = want; } }
+    if (MF.node) MF.node.g.gain.value = G && (G.breathing || G.wasFull) ? 0.12 : 0.5;
+    return !!MF.node;
+  }
   function nextPuck(d) { G.mate = { x: Math.random() < 0.5 ? 30 : 290, y: 255 + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') * (G.passK || 1) * (G.flow > 0 ? 0.7 : 1) * (1 + 0.6 * (G.mheat || 0)) * (G.sit === 'pp' ? 0.85 : G.sit === 'pk' ? 1.45 : 1) }; G.ch = null; }
   function coach(title, text) { var c = els.coach; if (!title) { c.hidden = true; return; } title = hands(title); text = hands(text); if (c.getAttribute('data-k') !== title) { c.setAttribute('data-k', title); c.innerHTML = '<b>' + title + '</b><p>' + text + '</p>'; } c.hidden = false; }
   function heatUp(v, why) { var g = G; g.heat = Math.min(1, g.heat + v); g.shake = 0.25; log(M.id, 'heat', { by: why, heat: +g.heat.toFixed(2) }); }
@@ -268,7 +297,9 @@
     var g = G, p = g.puck, sh = g.shake > 0 ? 3 : 0, nk = g.net > 0 ? Math.round(Math.sin(g.net * 40) * 2) : 0, jy = g.jump > 0 ? Math.round(Math.sin(g.jump / 0.5 * Math.PI) * 10) : 0, s = stick();
     cx.setTransform(1, 0, 0, 1, 0, 0); cx.textBaseline = 'top'; R('#181425', 0, 0, W, H);
     cx.translate(Math.round((Math.random() - 0.5) * sh), Math.round((Math.random() - 0.5) * sh));
+    var rk = img('rink.png'); if (rk) cx.drawImage(rk, 0, 0, W, H); else {
     R('#dfe9f5', 8, 8, W - 16, H - 16); R('#e43b44', 8, 80, W - 16, 3); R('#0099db', 8, 240, W - 16, 4); R('#bcd3ee', 102, 83, 116, 54); R('#e43b44', 102, 135, 116, 2); R('#e43b44', 102, 83, 2, 54); R('#e43b44', 216, 83, 2, 54);
+    }
     // нижняя полоса с подсказками только в первом матче; дальше это место для катания
     if (g.strip) {
     cx.fillStyle = S.lefty ? 'rgba(254,174,52,.14)' : 'rgba(0,153,219,.12)'; cx.fillRect(8, ZONE, W / 2 - 9, H - ZONE - 8); cx.fillStyle = S.lefty ? 'rgba(0,153,219,.12)' : 'rgba(254,174,52,.14)'; cx.fillRect(W / 2 + 1, ZONE, W / 2 - 9, H - ZONE - 8); var mvx = S.lefty ? 236 : 84, amx = S.lefty ? 84 : 236;
@@ -276,10 +307,12 @@
     if (!PL) { cx.fillText(hands('ЛЕВЫЙ ПАЛЕЦ'), mvx, 414); cx.fillText('ВЕДЁТ', mvx, 428); }
     if (!PR) { cx.fillText(hands('ПРАВЫЙ ПАЛЕЦ'), amx, 414); cx.fillText('ТЯНИ И ДЕРЖИ', amx, 428); }
     }
+    if (!rk) {
     R(OUT, NET_L - 4, 44, NET_R - NET_L + 8, 38); R('#ffffff', NET_L, 48, NET_R - NET_L, 32);
     for (var i = NET_L + 8; i < NET_R; i += 10) R('#c0cbdc', i + nk, 48 - Math.abs(nk), 1, 32);
     for (var j = 56; j < 80; j += 8) R('#c0cbdc', NET_L, j, NET_R - NET_L, 1);
     R('#e43b44', NET_L - 4, 44, 4, 38); R('#e43b44', NET_R, 44, 4, 38); R('#e43b44', NET_L - 4, 44, NET_R - NET_L + 8, 4);
+    }
     if (p.s === 'ready' && g.pause <= 0) {
       var A = aim(), top = isTop(), sp = top ? 0.006 : spreadA(), dy = s[1] - GOAL_Y - 2;
       var hot = g.heat * (1 - 0.85 * Math.min(1, g.breath)), jit = hot > 0.2 ? (Math.random() - 0.5) * hot * 0.05 : 0;
@@ -294,6 +327,10 @@
     }
     var gh = g.gheat, gj = gh > 0.3 ? Math.round((Math.random() - 0.5) * gh * 5) : 0, gxx = g.gx + gj;
     var gout = p.s === 'ready' ? Math.round(outK(s[1]) * 10) : 0; cx.save(); cx.translate(0, g.empty ? -600 : gout);
+    var gi = img(gh >= 0.66 ? 'goalie_hot.png' : gh >= 0.33 ? 'goalie_warm.png' : 'goalie_cool.png');
+    if (gi) { cx.drawImage(gi, Math.round(gxx - 9), 51, 62, 52);
+    R(OUT, g.gx + 5, 106, GW - 10, 6); R(gh >= 0.66 ? '#e43b44' : gh >= 0.33 ? '#feae34' : '#63c74d', g.gx + 6, 107, Math.max(2, (GW - 12) * Math.max(0.08, gh)), 4);
+    } else {
     var gc = gh >= 0.66 ? '#9e2835' : gh >= 0.33 ? '#b86f50' : '#3b55b8';
     // клюшка и блин (слева), ловушка (справа), щитки, маска с решёткой
     R(OUT, gxx - 4, 80, 4, 22); R('#b86f50', gxx - 3, 81, 2, 20); R(OUT, gxx - 4, 98, 20, 5); R('#b86f50', gxx - 3, 99, 18, 3);
@@ -303,16 +340,17 @@
     R(OUT, gxx + 13, 53, 18, 16); R(gh >= 0.66 ? '#f6757a' : gh >= 0.33 ? '#feae34' : '#f4f4f4', gxx + 14, 54, 16, 14); R(gc, gxx + 14, 54, 16, 3);
     R(OUT, gxx + 16, 59, 12, 7); R('#8b9bb4', gxx + 17, 60, 10, 5); R(OUT, gxx + 17, 62, 10, 1); R(OUT, gxx + 20, 60, 1, 5); R(OUT, gxx + 23, 60, 1, 5);
     R(OUT, g.gx + 5, 106, GW - 10, 6); R(gh >= 0.66 ? '#e43b44' : gh >= 0.33 ? '#feae34' : '#63c74d', g.gx + 6, 107, Math.max(2, (GW - 12) * Math.max(0.08, gh)), 4);
+    }
     cx.restore();
-    g.defs.forEach(function (d) { cx.drawImage(spr.def, Math.round(d.x), d.y - 12, 51, 54); });
-    if (g.ch) cx.drawImage(spr.ch, Math.round(g.ch.x - 25), Math.round(g.ch.y - 27), 51, 54);
+    g.defs.forEach(function (d) { cx.drawImage(img('defender.png') || spr.def, Math.round(d.x), d.y - 12, 51, 54); });
+    if (g.ch) cx.drawImage(img(M.id === 2 ? 'chaser.png' : 'defender.png') || spr.ch, Math.round(g.ch.x - 25), Math.round(g.ch.y - 27), 51, 54);
     if (p.s === 'fly') { g.trail.forEach(function (q, k) { R(p.top ? '#2ce8f5' : '#8b9bb4', q[0] - 2, q[1], 4, 4 + k); }); R(OUT, p.x - 4, p.y - 3, 8, 6); R('#3a4466', p.x - 3, p.y - 2, 6, 3); }
     g.parts.forEach(function (q) { R(q.c, q.x, q.y, 3, 3); });
-    if (!g.so) { cx.globalAlpha = 0.8; cx.drawImage(spr.me, Math.round(g.mate.x - 25), Math.round(g.mate.y - 27), 51, 54); cx.globalAlpha = 1;
+    if (!g.so) { cx.globalAlpha = 0.8; cx.drawImage(img('mate.png') || spr.me, Math.round(g.mate.x - 25), Math.round(g.mate.y - 27), 51, 54); cx.globalAlpha = 1;
       if (M.mateHead) { R(OUT, g.mate.x - 18, g.mate.y - 38, 36, 6); R(g.mheat >= 0.66 ? '#e43b44' : g.mheat >= 0.33 ? '#feae34' : '#63c74d', g.mate.x - 17, g.mate.y - 37, Math.max(2, 34 * Math.max(0.08, g.mheat)), 4); } }
     if (p.s === 'in' && p.t < 0.45 && !g.so) { var pk = Math.max(0, Math.min(1, 1 - p.t / 0.45)), mx = g.mate.x + 20, my = g.mate.y + 20, qx = mx + (s[0] - mx) * pk, qy = my + (s[1] - my) * pk;
       cx.strokeStyle = 'rgba(58,68,102,.45)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(mx, my); cx.lineTo(qx, qy); cx.stroke(); R(OUT, qx - 5, qy - 3, 10, 6); R('#3a4466', qx - 4, qy - 2, 8, 3); }
-    cx.drawImage(spr.me, Math.round(g.px - 25), Math.round(g.py - 27 - jy), 51, 54);
+    cx.drawImage(img(S.role === 'D' ? 'hero_d.png' : 'hero_f.png') || spr.me, Math.round(g.px - 25), Math.round(g.py - 27 - jy), 51, 54);
     if (g.grace > 0) { cx.strokeStyle = 'rgba(255,255,255,' + (0.35 + 0.5 * (g.grace / 1.25)).toFixed(2) + ')'; cx.lineWidth = 2; cx.beginPath(); cx.arc(g.px, g.py, 31, 0, 6.3); cx.stroke(); }
     if (g.recv > 0) { cx.strokeStyle = 'rgba(254,231,97,' + (g.recv / 0.35).toFixed(2) + ')'; cx.lineWidth = 3; cx.beginPath(); cx.arc(s[0], s[1], 8 + (0.35 - g.recv) * 60, 0, 6.3); cx.stroke(); }
     if (p.s === 'ready') { R(OUT, s[0] - 5, s[1] - 3, 10, 6); R('#3a4466', s[0] - 4, s[1] - 2, 8, 3);

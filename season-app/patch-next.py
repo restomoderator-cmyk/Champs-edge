@@ -29,5 +29,6 @@ rep("+ (r.far ? ', издалека' : ''); break;","+ (r.far ? ', издале�
 rep("save(); log(d.mid, 'decision',","S.dec = S.dec || {}; S.dec[d.mid + ':' + d.key] = o.label; save(); log(d.mid, 'decision',")
 rep("<button class=\"btn btn--ghost\" type=\"button\" data-act=\"settings\">НАСТРОЙКИ</button>');","<button class=\"btn btn--ghost\" type=\"button\" data-act=\"stars\">МОИ ЗВЁЗДЫ И РЕШЕНИЯ</button><button class=\"btn btn--ghost\" type=\"button\" data-act=\"settings\">НАСТРОЙКИ</button>');")
 rep("    if (a === 'settings') return settings();","    if (a === 'stars') return starsScreen();\n    if (a === 'settings') return settings();")
+rep("  function musicTick() {\n","  function musicTick() {\n    if (musicFile()) return;\n")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)

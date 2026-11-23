@@ -16,8 +16,17 @@ c = main.index('  function drawHockeyPlayer('); d = main.index('  function drawT
 out = src.replace('/*FONTS*/', fonts).replace('/*SPRITES*/', main[c:d])
 assert '—' not in src
 os.chdir(here)
+# файлы художника и композитора из assets/ вшиваются в страницу; игра берёт их вместо заглушек
+import glob, json
+assets = {}
+for f in sorted(glob.glob(here + '/assets/*')):
+    ext = f.rsplit('.', 1)[-1].lower(); mime = {'png': 'image/png', 'wav': 'audio/wav', 'mp3': 'audio/mpeg'}.get(ext)
+    if mime: assets[os.path.basename(f)] = 'data:%s;base64,%s' % (mime, base64.b64encode(open(f, 'rb').read()).decode())
+if assets:
+    k = out.rindex('<script>'); out = out[:k] + '<script>window.__assets = ' + json.dumps(assets) + ';</script>\n' + out[k:]
+    print('вшито файлов из assets:', len(assets))
 open('season-next.html', 'w', encoding='utf-8').write(out)
-js = out[out.index('<script>') + 8:out.rindex('</script>')]
+js = out[out.rindex('<script>') + 8:out.rindex('</script>')]
 open('check-next.js', 'w').write(js)
 open('test-next.html', 'w', encoding='utf-8').write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + out + '</body></html>')
 print(len(out))
