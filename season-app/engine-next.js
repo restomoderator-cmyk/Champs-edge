@@ -61,6 +61,7 @@
     var sl = SEG === 35 ? tv('segT') : SEG; g.segLen = i === 3 ? 20 : M.id === 4 && i === 2 && !g.finalSeg ? Math.round(sl / 2) : M.id > 4 && i === 2 && g.shortEnd ? Math.round(sl * 0.75) : sl;
     g.sit = M.sit ? M.sit[Math.min(i, 2)] : ''; if (g.sit === 'pp') g.defs = g.defs.slice(0, Math.max(0, g.defs.length - 1)); if (g.sit === 'pk') g.rate *= 1.3;
     g.empty = !!M.emptyNet && i === 2 && g.you > g.riv; if (g.empty) g.rate *= 1.6;
+    if (g.sit || g.empty) log(M.id, 'sit', { s: g.empty ? 'empty' : g.sit });
     if (g.sit || g.empty) { g.msg = g.empty ? 'ПУСТЫЕ ВОРОТА' : g.sit === 'pp' ? 'БОЛЬШИНСТВО' : 'МЕНЬШИНСТВО'; g.msgC = '#fee761'; g.msgT = 2.4; g.sub = g.empty ? 'СОПЕРНИК СНЯЛ ВРАТАРЯ И ДАВИТ СИЛЬНЕЕ' : g.sit === 'pp' ? 'У НИХ НА ОДНОГО МЕНЬШЕ: ПАС БЫСТРЕЕ' : 'ВАС МЕНЬШЕ: ШАЙБА РЕДКО, ДАВЛЕНИЕ ВЫШЕ'; }
     g.ch = null; marks(); g.puck = { s: 'in', t: 0.6 }; g.breath = 0; g.breathing = false; g.wasFull = false; g.over = 0; g.px = 160; g.py = 320; g.playSeg++; PL = PR = null;
   }
@@ -106,7 +107,7 @@
     g.hN++; g.hSide += s[0] + Math.tan(A.a) * (s[1] - GOAL_Y) < 160 ? -1 : 1; g.hB += b; g.hY += s[1];
     if (g.heat >= 0.66) g.hotShots++; if (g.segShots++ === 0) g.segFirst[g.seg] = withBreath; if (g.shots === 0) g.firstShotBreath = withBreath;
     if (g.rivGoals.length && g.firstAfter === null) { g.firstAfter = withBreath; g.firstAfterBreath = withBreath; }
-    log(M.id, 'shot', { width: Math.round(spx * 2), breath: +b.toFixed(2), top: top, heat: +g.heat.toFixed(2), aimed: A.armed, slap: slap, far: far });
+    log(M.id, 'shot', { width: Math.round(spx * 2), breath: +b.toFixed(2), top: top, heat: +g.heat.toFixed(2), aimed: A.armed, slap: slap, far: far, one: one });
     g.breath = 0; g.over = 0; g.wasFull = false; g.breathing = false; breathSound(false); SFX.shot();
     if (g.lesson === 3 && slap) { g.lesson = 9; S.taught = true; save(); }
     if (g.lesson === 1) { if (withBreath) g.lesson = 2; else if (++g.l1 >= 6) g.lesson = 2; }
@@ -231,7 +232,7 @@
           else { burst(p.x, 70, 16, ['#fee761', '#feae34', '#ffffff']); say('ГОЛ', '#63c74d', 1.2, p.breath ? 'С ВЫДОХОМ' : ''); SFX.goal(g.streak); }
           if (g.missRow >= 2 && p.breath) deed('grit'); if (p.press) deed('brave'); if (p.first) deed('resp'); if (g.streak >= 2) deed('joy'); g.missRow = 0;
           if (p.one && !p.top) say('В КАСАНИЕ!', '#fee761', 1.4, 'ПОКА ВРАТАРЬ НЕ ВСТАЛ');
-          if (M.flow && g.topRow >= 3 && !(g.flow > 0)) { g.flow = 8; g.flows++; g.topRow = 0; say('ПОТОК', '#2ce8f5', 1.8, 'ВОСЕМЬ СЕКУНД: ВЫДОХ И ПАС БЫСТРЕЕ'); SFX.core(); }
+          if (M.flow && g.topRow >= 3 && !(g.flow > 0)) { g.flow = 8; g.flows++; g.topRow = 0; log(M.id, 'flow'); say('ПОТОК', '#2ce8f5', 1.8, 'ВОСЕМЬ СЕКУНД: ВЫДОХ И ПАС БЫСТРЕЕ'); SFX.core(); }
           nextPuck(T.goalT); if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, sc: true }; } else if (g.seg === 3) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, end: true }; }
         } else { if (inNet) g.gheat = Math.min(1, g.gheat + G.mg.shotGain);
           if (saved && inNet) miss('СЕЙВ', seen ? (g.mg.mirror ? 'ЗЕРКАЛО ЧИТАЕТ ЩЕЛЧОК: НУЖЕН ПРИЦЕЛ' : 'ХОЛОДНЫЙ ВРАТАРЬ ВИДИТ ЩЕЛЧОК ИЗДАЛЕКА') : !p.top && p.from < 230 ? 'ВБЛИЗИ ВРАТАРЬ ВЫХОДИТ: НУЖЕН ТОЧНЫЙ ВЫДОХ' : p.top ? 'БРОСИЛ ПРЯМО ВО ВРАТАРЯ: ЦЕЛЬСЯ В УГОЛ' : g.gheat < 0.33 ? 'ВРАТАРЬ ХОЛОДНЫЙ: ОН УСПЕЛ' : 'ВРАТАРЬ БЫЛ НА ЛИНИИ', false, 'save');
@@ -352,7 +353,7 @@
     var s1 = r.cooledAll, s2 = r.shots > 0 && r.narrow / r.shots >= 0.5, s3 = !!m.s3(r), n = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
     if (SIM) { SIM.result = { you: r.you, riv: r.riv, stars: n, hot: r.hot, shots: r.shots, narrow: r.narrow, goals: r.goals, how: g.endHow }; G = null; return; }
     var se = null, serOpen = false;
-    if (m.series) { S.ser = S.ser || {}; se = S.ser[m.id] || { w: (m.seriesStart || [0, 0])[0], l: (m.seriesStart || [0, 0])[1], g: 0 }; se.g = (se.g || 0) + 1; if (r.you > r.riv) se.w++; else se.l++; se.over = se.w >= m.series || se.l >= m.series; S.ser[m.id] = se; serOpen = !se.over; }
+    if (m.series) { S.ser = S.ser || {}; se = S.ser[m.id] || { w: (m.seriesStart || [0, 0])[0], l: (m.seriesStart || [0, 0])[1], g: 0 }; se.g = (se.g || 0) + 1; if (r.you > r.riv) se.w++; else se.l++; se.over = se.w >= m.series || se.l >= m.series; S.ser[m.id] = se; serOpen = !se.over; log(m.id, 'series', { w: se.w, l: se.l, over: se.over }); }
     var first = !S.done[m.id] && !serOpen; if (!serOpen) S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = (se ? se.w >= m.series : r.you > r.riv) ? 1 : 0; if (g.hN) { S.hab = S.hab || {}; S.hab[m.id] = [+(g.hSide / g.hN).toFixed(2), +(g.hB / g.hN).toFixed(2), Math.round(g.hY / g.hN)]; } } if (m.record) S.rec = Math.max(S.rec || 0, r.tops); if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
     G = null; view = 'result';
     function star(on, text) { return '<div class="star' + (on ? ' on' : '') + '"><i>★</i><span>' + text + '</span></div>'; }
@@ -399,7 +400,7 @@
     if (n >= 2) ch('form', 'Форма', 1, 'две звезды и больше, играл головой'); else if (n === 0) ch('form', 'Форма', -1, 'ни одной звезды за голову');
     if (win && (n === 3 || g.endHow)) ch('rep', 'Репутация', 1, g.endHow ? 'победа в концовке, о тебе заговорили' : 'победа на три звезды'); else if (!win && n === 0) ch('rep', 'Репутация', -1, 'поражение без единой звезды');
     if (n === 3) ch('trust', 'Доверие', 1, 'тренер видел холодную голову весь матч'); else if (r.hot >= 20) ch('trust', 'Доверие', -1, 'тренер видел, как ты кипел');
-    S.last = { id: m.id, d: d, seen: false };
+    S.last = { id: m.id, d: d, seen: false }; if (d.length) log(m.id, 'world', { d: d.join('; ') });
   }
   function worldLines() {
     var fm = S.form == null ? 1 : S.form;

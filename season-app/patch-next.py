@@ -24,5 +24,7 @@ rep("<button class=\"btn btn--ghost\" type=\"button\" data-act=\"logs\">ЖУРН
 rep("    if (a === 'life1go') {","    if (a === 'settings') return settings();\n    if (a === 'tgl') { var tk = el.getAttribute('data-k'); S[tk] = tk === 'lefty' ? !S.lefty : S[tk] === false ? true : false; save(); if (!S.sound) breathSound(false); return settings(); }\n    if (a === 'parent') return parentGate();\n    if (a === 'parentgo') return +pick.pans === pick.pa[0] * pick.pa[1] ? parentInfo() : parentGate(true);\n    if (a === 'life1go') {")
 rep("var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1, world: 1 };","var nb = { home: 1, decide: 1, decided: 1, quit: 1, result: 1, fix: 1, world: 1, settings: 1, parent: 1 };")
 rep("if (m.id === 13) h +=","if (m.id === 22) h += '<span class=\"tag tag--red\">ПУТЬ 2 · ГЕРОЙ · ЧЕРНОВИК, ШЕСТЬ МАТЧЕЙ ИЗ ДВЕНАДЦАТИ</span>';\n      if (m.id === 13) h +=")
+rep("icept: 'перехват паса', rival_goal","icept: 'перехват паса', noise: 'шум трибун', badpass: 'пас не дошёл', rival_goal")
+rep("+ (r.far ? ', издалека' : ''); break;","+ (r.far ? ', издалека' : '') + (r.one ? ', в касание' : ''); break;\n      case 'flow': x = 'ПОТОК: три идеальных гола подряд'; break;\n      case 'sit': x = 'ситуация: ' + ({ pp: 'большинство', pk: 'меньшинство', empty: 'пустые ворота' }[r.s] || r.s); break;\n      case 'world': x = 'мир изменился: ' + r.d; break;\n      case 'series': x = 'серия ' + r.w + ':' + r.l + (r.over ? ', решена' : ''); break;")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)
