@@ -1,7 +1,7 @@
   /* ---------- матч: левый палец ведёт игрока, правый тянет назад, держит (выдох) и отпускает (бросок) ---------- */
   var W = 320, H = 470, NET_L = 110, NET_R = 210, GW = 44, SEG = 35, FLY = 620, GOAL_Y = 84, BREATH = 0.9, CLOCK = 9, ZONE = 392;
   // настройки баланса: одна таблица, по одному числу на матч там, где матчи различаются
-  var T = { topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.55, 1.1, 1.35, 0.92], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
+  var T = { topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.55, 1.1, 1.35, 0.97], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
     slapSp: 0.06, seenAdd: 10, dSpread: 1.0, fSpread: 0.85, dTop: 0.7, pierce: 0, dFar: 1.3, dSlap: 1, segT: [25, 35, 35, 35], paceK: [1.3, 1.25, 1.3, 1], chaseM: [null, [0, 28, 32], [26, 32, 36], null] };
   window.__seasonTune = T;
   function tv(k) { var a = T[k]; if (M.tune && k in M.tune) return M.tune[k]; return M.id - 1 < a.length ? a[M.id - 1] : a[a.length - 1]; }
@@ -209,7 +209,7 @@
       if (p.x < 8 || p.x > W - 8) return miss('МИМО', p.wide ? 'ЛИНИЯ БЫЛА ШИРОКОЙ: ЗАМРИ ПЕРЕД БРОСКОМ' : 'ЛИНИЯ СМОТРЕЛА МИМО ВОРОТ', false, 'wide');
       if (p.y <= GOAL_Y) {
         // «девятка» идёт в угол: вратарь берёт её, только если стоит прямо на линии
-        var inNet = p.x > NET_L + 2 && p.x < NET_R - 2, seen = !!p.slap && p.from > 262 && g.gheat < 0.33 && !(S.role === 'D' && T.dSlap), saved = !g.empty && Math.abs(p.x - (g.gx + GW / 2)) < saveHalf(p.top, p.from, seen) - (p.one ? 8 : 0);
+        var inNet = p.x > NET_L + 2 && p.x < NET_R - 2, seen = !!p.slap && (g.mg.mirror || (p.from > 262 && g.gheat < 0.33 && !(S.role === 'D' && T.dSlap))), saved = !g.empty && Math.abs(p.x - (g.gx + GW / 2)) < saveHalf(p.top, p.from, seen) - (p.one ? 8 : 0) + (seen && g.mg.mirror ? 16 : 0);
         if (inNet && !saved) {
           if (!g.so) g.you++; g.press = Math.max(0, g.press - tv('goalPush')); g.goals++; g.streak++; if (p.breath) g.breathGoals++; g.gheat = Math.min(1, g.gheat + G.mg.gain); log(M.id, 'goal', { top: !!p.top, breath: !!p.breath });
           g.stop = p.top ? 0.16 : 0.1; g.jump = 0.5; g.net = 0.5; buzz(p.top ? [20, 30, 60] : 30);
@@ -221,7 +221,7 @@
           if (M.flow && g.topRow >= 3 && !(g.flow > 0)) { g.flow = 8; g.flows++; g.topRow = 0; say('ПОТОК', '#2ce8f5', 1.8, 'ВОСЕМЬ СЕКУНД: ВЫДОХ И ПАС БЫСТРЕЕ'); SFX.core(); }
           nextPuck(T.goalT); if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, sc: true }; } else if (g.seg === 3) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, end: true }; }
         } else { if (inNet) g.gheat = Math.min(1, g.gheat + G.mg.shotGain);
-          if (saved && inNet) miss('СЕЙВ', seen ? 'ХОЛОДНЫЙ ВРАТАРЬ ВИДИТ ЩЕЛЧОК ИЗДАЛЕКА' : !p.top && p.from < 230 ? 'ВБЛИЗИ ВРАТАРЬ ВЫХОДИТ: НУЖЕН ТОЧНЫЙ ВЫДОХ' : p.top ? 'БРОСИЛ ПРЯМО ВО ВРАТАРЯ: ЦЕЛЬСЯ В УГОЛ' : g.gheat < 0.33 ? 'ВРАТАРЬ ХОЛОДНЫЙ: ОН УСПЕЛ' : 'ВРАТАРЬ БЫЛ НА ЛИНИИ', false, 'save');
+          if (saved && inNet) miss('СЕЙВ', seen ? (g.mg.mirror ? 'ЗЕРКАЛО ЧИТАЕТ ЩЕЛЧОК: НУЖЕН ПРИЦЕЛ' : 'ХОЛОДНЫЙ ВРАТАРЬ ВИДИТ ЩЕЛЧОК ИЗДАЛЕКА') : !p.top && p.from < 230 ? 'ВБЛИЗИ ВРАТАРЬ ВЫХОДИТ: НУЖЕН ТОЧНЫЙ ВЫДОХ' : p.top ? 'БРОСИЛ ПРЯМО ВО ВРАТАРЯ: ЦЕЛЬСЯ В УГОЛ' : g.gheat < 0.33 ? 'ВРАТАРЬ ХОЛОДНЫЙ: ОН УСПЕЛ' : 'ВРАТАРЬ БЫЛ НА ЛИНИИ', false, 'save');
           else if (Math.abs(p.x - NET_L) < 9 || Math.abs(p.x - NET_R) < 9) miss('ШТАНГА!', p.wide ? 'ЛИНИЯ БЫЛА ШИРОКОЙ' : 'ЧУТЬ ТОЧНЕЕ', true, 'post');
           else miss('МИМО', p.wide ? 'ЛИНИЯ БЫЛА ШИРОКОЙ: ЗАМРИ ПЕРЕД БРОСКОМ' : 'ЛИНИЯ СМОТРЕЛА МИМО ВОРОТ', false, 'wide'); }
       }
@@ -432,21 +432,21 @@
   var WALL = { gain: 0.1, shotGain: 0, cool: 0.16, speed: 1.05 }, CLOCK1 = { gain: 0.2, shotGain: 0, cool: 0.1, speed: 1 }, CLOCK3 = { gain: 0.15, shotGain: 0, cool: 0.12, speed: 1.3 }, MIRROR = { gain: 0.25, shotGain: 0, cool: 0.08, speed: 1, mirror: true };
   MATCHES.push({ id: 8, name: 'В ЗОНЕ', team: 'Маяк', rival: 'Стена', flow: true,
     about: 'Новое: поток. Три идеальных гола подряд, и на восемь секунд выдох и пас становятся быстрее. Любой промах или гол соперника его обрывает.',
-    g: WALL, riv: [[14, 30], [12, 26], [10, 22, 32]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 15, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
+    g: WALL, riv: [[14, 30], [12, 26], [10, 22, 32]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 15, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'Вошёл в поток', s3: function (r) { return r.flows >= 1; },
     life: { h: 'ТВОЙ ЛУЧШИЙ МАТЧ', t: 'Вспомни свой лучший матч и что ты делал за час до него. Три вещи. Это начало твоего ритуала.' },
     pre: function (done) { function opt(label, vals) { return { label: label, dots: [['Голова', 1]], vals: vals, apply: function () { preSet(8, { heat: 0, breathK: 0.95 }); S.ritual = label; return ['Это теперь твой ритуал перед игрой', 'Холодный старт']; } }; }
       decide(8, 'ritual', 'Что ты делаешь перед игрой, когда всё получается? Собери свой ритуал.', [opt('ОДНА И ТА ЖЕ РАЗМИНКА', ['Дисциплина', 'Трудолюбие']), opt('НАУШНИКИ И ТИШИНА', ['Спокойствие', 'Радость игры']), opt('ТРИ МЕДЛЕННЫХ ВЫДОХА У БОРТА', ['Смирение', 'Упорство'])], done, 'МАТЧ 8 · ПЕРЕД ИГРОЙ'); } });
   MATCHES.push({ id: 9, name: 'ПОСЛЕДНЯЯ МИНУТА', team: 'Полюс', rival: 'Часы', flow: true, oneT: true,
     about: 'Новое: бросок в касание. Оттяни палец заранее и отпусти сразу, как принял пас: вратарь не успеет встать. Работает только с холодной головой. Вратарь ровный весь матч и прибавляет в концовке.',
-    g: CLOCK1, segG: [CLOCK1, CLOCK1, CLOCK3], riv: [[14, 30], [12, 26], [8, 18, 28]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 16, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
+    g: CLOCK1, segG: [CLOCK1, CLOCK1, CLOCK3], riv: [[14, 30], [12, 26], [8, 18, 28]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 16, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'Забил в касание', s3: function (r) { return r.oneGoals >= 1; },
     dec: { 2: { key: 'ask', q: 'Счёт на табло, осталась концовка. Тренер смотрит на скамейку.', opts: function () { return [
       { label: 'ПРОШУСЬ НА ЛЁД', dots: [['Давление', 2]], vals: ['Смелость', 'Ответственность', 'Упорство'], apply: function () { G.press = Math.min(0.99, G.press + 0.3); return ['Ты на льду с первой секунды концовки', 'Соперник это видит: его давление выше']; } },
       { label: 'ЖДУ РЕШЕНИЯ ТРЕНЕРА', dots: [['Голова', 2]], vals: ['Смирение', 'Спокойствие', 'Уважение'], apply: function () { G.heat = Math.max(0, G.heat - 0.3); G.shortEnd = true; return ['Голова холоднее', 'Тренер выпустил тебя не сразу: концовка короче']; } }]; } } } });
   MATCHES.push({ id: 10, name: 'ПАРТНЁР ОШИБСЯ', team: 'Утёс', rival: 'Зеркало', flow: true, oneT: true, mateHead: true,
     about: 'Над партнёром теперь видна его голова. Когда она горячая, его пас идёт дольше и может не дойти. Остужают её твой гол и твоё слово на скамейке. Вратарь идёт за твоим прицелом: смени прицел перед броском.',
-    g: MIRROR, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [33, 37, 41], tune: { topR: 16, rateK: 0.6, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.25, chaseM: null },
+    g: MIRROR, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [33, 37, 41], tune: { topR: 16, rateK: 0.57, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.25, chaseM: null },
     star3: 'Партнёр кипел меньше десяти секунд', s3: function (r) { return r.mateHot < 10; },
     life: { h: 'ЧЕСТНОЕ СЛОВО', t: 'Скажи одному партнёру одно честное и заботливое слово после его ошибки. Не совет, а поддержку.' },
     dec: { 1: { key: 'mate', q: 'Партнёр отдал шайбу сопернику, и вам забили. Он бьёт клюшкой о борт.', opts: function () { return [
@@ -454,7 +454,7 @@
       { label: '«ПРОСТО ОТДАВАЙ МНЕ»', dots: [['Раздевалка', 1]], vals: ['Смелость', 'Упорство'], apply: function () { G.mheat = Math.min(1, G.mheat + 0.25); S.room = Math.max(0, S.room - 1); return ['Партнёр закипел сильнее: его пас станет хуже', 'Раздевалка −1']; } }]; } } } });
   MATCHES.push({ id: 11, name: 'БЕЗ ПОДСКАЗОК', team: 'Туман', rival: 'Часы', flow: true, oneT: true, blind: true, noHints: true,
     about: 'Проверка всего, что ты собрал. Линия броска без цвета, пояснений к промахам нет. Голову придётся чувствовать самому.',
-    g: CLOCK1, segG: [CLOCK1, CLOCK1, CLOCK3], riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 16, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
+    g: CLOCK1, segG: [CLOCK1, CLOCK1, CLOCK3], riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 16, rateK: 0.67, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'Починил выбранное слабое звено', s3: function (r) { var f = (S.pre && S.pre[11] && S.pre[11].focus) || 'cool'; return f === 'cool' ? r.cooledAll : f === 'hot' ? r.shots > 0 && r.hotShots === 0 : r.losses <= 2; },
     life: { h: 'ДВА СТОЛБЦА', t: 'Раздели лист пополам. Слева: что в твоей игре живёт само. Справа: что держится на силе воли. Выбери одно из правого столбца на эту неделю.' },
     pre: function (done) { function opt(label, f, vals, line) { return { label: label, dots: [['Голова', 1]], vals: vals, apply: function () { preSet(11, { focus: f }); MATCHES[10].star3 = line; return ['Третья звезда этого матча: ' + line.toLowerCase()]; } }; }
