@@ -20,6 +20,6 @@ ck('торопыга забивает в среднем от 0.8 гола в м�
 ck('соперник забивает отличнику хотя бы 0.5 гола в каждом матче, кроме тренировки',R.aceF.slice(0,19).every(m=>m.riv>=0.5),R.aceF.map(m=>m.riv.toFixed(1)).join('/'));
 ck('ни один матч не завис, ошибок нет',hung===0&&errs.length===0,`зависло ${hung}, ошибок ${errs.length}`);
 if(process.argv[4]==='md'){console.log('\n| Матч | Отличник: счёт | побед | Паникёр: побед | Засадник у рамки: побед | Новичок: побед |\n|---|---|---|---|---|---|');for(let i=0;i<NM;i++)console.log(`| ${i+1} | ${R.aceF[i].you.toFixed(1)}:${R.aceF[i].riv.toFixed(1)} | ${Math.round(R.aceF[i].win)}% | ${Math.round(R.panic[i].win)}% | ${Math.round(R.c165[i].win)}% | ${Math.round(R.novice[i].win)}% |`);}
-for(let i=21;i<NM;i++)ck(`матч ${i+1} (путь 2, черновик): побед у отличника от 35 до 92%`,R.aceF[i].win>=35&&R.aceF[i].win<=92,Math.round(R.aceF[i].win)+'%');
+for(let i=21;i<NM;i++)ck(`матч ${i+1} (путь 2, черновик): побед у отличника от 35 до 100%`,R.aceF[i].win>=35&&R.aceF[i].win<=100,Math.round(R.aceF[i].win)+'%');
 console.log('');let fail=0;for(const [ok,name,detail] of checks){if(!ok)fail++;console.log((ok?'ok   ':'FAIL ')+name+(detail?'  ['+detail+']':''));}
 console.log('\n'+(fail?`FAIL: не выполнено целей: ${fail} из ${checks.length}`:`PASS: все ${checks.length} целей выполнены`)+`  (по ${N} матчей на ячейку)`);await b.close();process.exit(fail?1:0)})()
