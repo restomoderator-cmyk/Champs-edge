@@ -1,0 +1,6 @@
+www/
+node_modules/
+ios/
+package.json
+package-lock.json
+capacitor.config.*
