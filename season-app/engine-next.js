@@ -282,6 +282,7 @@
   function between(ns) {
     cancelAnimationFrame(raf);
     function go(i, spirit) { if (spirit) G.core = true; rebuildMatchDom(); setSeg(ns); run(); }
+    if (M.id === 1 && ns === 1 && S.askRole) { pick = {}; FLOW = go; return pre1a(); }
     if (M.dec && M.dec[ns]) return decide(M.id, M.dec[ns].key, M.dec[ns].q, M.dec[ns].opts(), go, 'МАТЧ ' + M.id + ' · СКАМЕЙКА');
     if (M.id === 2 && ns === 1) return decide(2, 'tempo', 'Горячий злится после каждой пропущенной. Как играешь дальше?', [
       { label: 'ДАВЛЮ: БРОСАЮ ЧАЩЕ', dots: [['Темп', 2], ['Голова', 1]], vals: ['Смелость', 'Упорство', 'Трудолюбие', 'Радость игры'], apply: function () { G.fast = true; G.heat = Math.min(1, G.heat + 0.15); return ['Шайба приходит быстрее', 'Голова теплее: темп стоит нервов']; } },
@@ -476,9 +477,29 @@
     view = 'settings';
     function tg(k, on, a, b) { return '<button class="opt" type="button" data-act="tgl" data-k="' + k + '"><b>' + (on ? a : b) + '</b></button>'; }
     screen('НАСТРОЙКИ', '<span class="tag">НАСТРОЙКИ</span>' + tg('sound', S.sound, 'ЗВУК: ВКЛЮЧЁН', 'ЗВУК: ВЫКЛЮЧЕН') + tg('music', S.music !== false, 'МУЗЫКА: ВКЛЮЧЕНА', 'МУЗЫКА: ВЫКЛЮЧЕНА') +
+      tg('fast1', !S.fast1, 'ВХОД: ОБЫЧНЫЙ. Сначала экраны, потом лёд', 'ВХОД ДЛЯ ТЕСТА: сразу на лёд, амплуа после первого отрезка') +
       tg('lefty', !S.lefty, 'РУКИ: ОБЫЧНО. Ведёт левая рука, бросает правая', 'РУКИ: ДЛЯ ЛЕВШИ. Ведёт правая рука, бросает левая') +
-      '<button class="btn btn--ghost" type="button" data-act="logs">ЖУРНАЛ ТЕСТА</button><button class="btn btn--ghost" type="button" data-act="parent">ДЛЯ РОДИТЕЛЕЙ</button><button class="btn btn--ghost" type="button" data-act="wipeask">НАЧАТЬ ЗАНОВО</button>',
+      '<button class="btn btn--ghost" type="button" data-act="savecode">ПЕРЕНЕСТИ ПРОГРЕСС</button><button class="btn btn--ghost" type="button" data-act="logs">ЖУРНАЛ ТЕСТА</button><button class="btn btn--ghost" type="button" data-act="parent">ДЛЯ РОДИТЕЛЕЙ</button><button class="btn btn--ghost" type="button" data-act="wipeask">НАЧАТЬ ЗАНОВО</button>',
       '<button class="btn" type="button" data-act="home">ГОТОВО</button>');
+  }
+  // перенос прогресса: строка-код, без сети. Всё, что приходит из кода, чистится: в строках не остаётся разметки
+  function cleanState(o, d) {
+    if (d > 5) return null; if (typeof o === 'string') return o.replace(/[<>&"'`]/g, '').slice(0, 60); if (typeof o === 'number') return isFinite(o) ? o : 0; if (typeof o === 'boolean' || o === null) return o;
+    if (Array.isArray(o)) return o.slice(0, 40).map(function (x) { return cleanState(x, d + 1); }); if (typeof o !== 'object') return null;
+    var r = {}, n = 0; for (var k in o) { if (n++ > 80) break; r[String(k).replace(/[^0-9A-Za-z_:]/g, '').slice(0, 24)] = cleanState(o[k], d + 1); } return r;
+  }
+  function codeOf() { try { return btoa(unescape(encodeURIComponent(JSON.stringify(S)))); } catch (e) { return ''; } }
+  function codeLoad(c) {
+    try { var o = cleanState(JSON.parse(decodeURIComponent(escape(atob(String(c).replace(/\s+/g, ''))))), 0); if (!o || typeof o.done !== 'object' || o.done === null) return false;
+      var n = blank(); for (var k in o) n[k] = o[k]; n.values = (Array.isArray(n.values) ? n.values : []).filter(function (v) { return VALUES.indexOf(v) >= 0; }).slice(0, 3);
+      n.role = n.role === 'D' ? 'D' : n.role === 'F' ? 'F' : null; n.num = n.num == null ? null : String(n.num).replace(/\D/g, '').slice(0, 2) || null; n.trust = Math.max(0, Math.min(3, +n.trust || 0)); n.room = Math.max(0, Math.min(3, +n.room || 0));
+      S = n; save(); return true; } catch (e) { return false; }
+  }
+  function saveCode(msg) {
+    view = 'savecode';
+    screen('ПРОГРЕСС', '<span class="tag">ПЕРЕНОС ПРОГРЕССА</span><p class="lead">Скопируй код и вставь его на другом телефоне. Код никуда не отправляется.</p><textarea class="log" id="logbox" readonly style="height:120px">' + esc(codeOf()) + '</textarea><p class="note" id="logmsg">' + (msg || 'В коде твои матчи, звёзды и выбор. Имени и других данных в нём нет.') + '</p>' +
+      '<h2 class="h2">ВОССТАНОВИТЬ ИЗ КОДА</h2><textarea class="log" data-inp="code" style="height:120px" placeholder="Вставь код сюда" aria-label="Код прогресса"></textarea><p class="note">Текущий прогресс на этом телефоне заменится.</p>',
+      '<button class="btn" type="button" data-act="copylog">СКОПИРОВАТЬ КОД</button><button class="btn btn--ghost" type="button" data-act="loadcode">ВОССТАНОВИТЬ</button><button class="btn btn--ghost" type="button" data-act="settings">НАЗАД</button>');
   }
   function parentGate(bad) {
     view = 'parent'; if (!pick.pa) pick.pa = [12 + Math.floor(Math.random() * 8), 3 + Math.floor(Math.random() * 7)]; pick.pans = null;
