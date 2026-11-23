@@ -6,7 +6,7 @@ const send=async(type)=>cdp.send('Input.dispatchTouchEvent',{type,touchPoints:Ob
 let box=null;const X=v=>box.x+v/320*box.width,Y=v=>box.y+v/470*box.height;
 const down=async(id,x,y)=>{pts[id]={x:X(x),y:Y(y)};await send('touchStart')};
 const move=async(id,x,y)=>{pts[id]={x:X(x),y:Y(y)};await send('touchMove')};
-const up=async(id)=>{delete pts[id];await send('touchEnd')};
+const up=async(id)=>{const q=pts[id];if(!q)return;delete pts[id];await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[{x:q.x,y:q.y,id:+id}]})};
 const wait=ms=>p.waitForTimeout(ms);const G=f=>p.evaluate(f);
 const done={};for(let i=1;i<=40;i++)done[i]=true;
 const base={sound:false,done,stars:{},role:'F',num:'9',values:['Смелость','Упорство','Радость игры'],core:true,trust:1,room:1,form:1,rep:1,fix:false,reset:{g:'x',w:'Здесь'},life:{},pre:{5:{heat:0},6:{heat:0},8:{heat:0},11:{focus:'cool'},22:{heat:0},23:{heat:0},24:{heat:0},25:{heat:0},26:{heat:0}},tips:{flow:1,oneT:1,mate:1,mirror:1,noise:1},taught:true};
@@ -20,7 +20,7 @@ const misses=()=>G(()=>window.__mvp.log().filter(r=>r.e==='miss').map(r=>r.kind)
 const R=[];const ck=(n,ok,d)=>{R.push([!!ok,n,d]);};
 try{
  await start(2);await freeze();
- await aimHold(1900,0);ck('выдох: линия сжимается до точки, пока палец неподвижен',await G(()=>window.__mvp.g().wasFull));
+ await aimHold(0,0);const full=await p.waitForFunction(()=>window.__mvp.g().wasFull,null,{timeout:3000}).then(()=>true,()=>false);ck('выдох: линия сжимается до точки, пока палец неподвижен',full);
  await G(()=>{const g=window.__mvp.g();g.px=170;g.vx=0;});for(let k=1;k<=4;k++){await move(2,240+k,430);await wait(70);}
  ck('плавный сдвиг прицела после выдоха не сбрасывает идеальный момент',await G(()=>window.__mvp.g().wasFull));await up(2);await wait(900);
  ck('идеальный бросок в свободный угол: гол',await G(()=>window.__mvp.g().tops>=1),JSON.stringify(await lastShot()));
@@ -33,7 +33,7 @@ try{
  const two=await G(()=>{const g=window.__mvp.g();return [g.px,!!window.__mvp.pr(),g.breath]});ck('два пальца сразу: один ведёт, другой целится',two[0]>190&&two[1],JSON.stringify(two));await up(1);await up(2);
  await start(5);await freeze();await G(()=>{const g=window.__mvp.g();g.noise=3;g.shield=0;});await down(1,80,420);await up(1);await wait(200);
  ck('своё слово: одиночный тап убирает шум',await G(()=>{const g=window.__mvp.g();return !(g.noise>0)&&g.trig===1}));
- await start(8);await freeze();await G(()=>{const g=window.__mvp.g();g.topRow=2;g.px=170;g.vx=0;});await aimHold(1900,0);await G(()=>{const g=window.__mvp.g();g.px=170;g.vx=0;});await up(2);await wait(900);
+ await start(8);await freeze();await G(()=>{const g=window.__mvp.g();g.topRow=2;g.px=170;g.vx=0;});await aimHold(0,0);await p.waitForFunction(()=>window.__mvp.g().wasFull,null,{timeout:3000}).catch(()=>{});await G(()=>{const g=window.__mvp.g();g.px=170;g.vx=0;});await up(2);await wait(900);
  ck('поток: третий идеальный гол подряд включает поток',await G(()=>window.__mvp.g().flow>0||window.__mvp.g().flows>=1));
  await start(9);await freeze();await G(()=>{const g=window.__mvp.g();g.puck={s:'in',t:0.6};g.px=200;});await down(2,240,380);await move(2,225,430);
  await p.waitForFunction(()=>window.__mvp.g().puck.s==='ready',null,{timeout:5000});await wait(120);await up(2);await wait(300);ck('бросок в касание: палец оттянут до паса, отпущен сразу',(await lastShot()||{}).one===true,JSON.stringify(await lastShot()));
@@ -51,7 +51,7 @@ try{
  await down(1,80,420);await G(()=>{const g=window.__mvp.g();const d=g.defs[0];g.px=d.x+25;g.py=d.y+15;g.grace=1.2;});await wait(300);const m1=(await misses()).filter(k=>k==='steal').length;await wait(1500);await G(()=>{const g=window.__mvp.g();if(g.puck.s==='ready'){const d=g.defs[0];g.px=d.x+25;g.py=d.y+15;}});await wait(400);
  ck('защитник на линии: в паузе не отбирает, после паузы отбирает',m1===0&&(await misses()).includes('steal'),(await misses()).join(','));await up(1);
  await start(3);await G(()=>{const g=window.__mvp.g();g.rate=0;g.press=0;g.safe=false;});await down(1,80,420);
- for(let i=0;i<120&&!(await misses()).includes('icept');i++){await G(()=>{const g=window.__mvp.g();if(g.puck.s==='in'){g.px=40;g.py=120;g.mate={x:290,y:330};g.safe=false;}else if(g.puck.s==='ready'){g.px=40;g.py=300;}});await wait(100);}
+ for(let i=0;i<120&&!(await misses()).includes('icept');i++){await G(()=>{const g=window.__mvp.g();g.ch=null;if(g.puck.s==='in'){g.px=40;g.py=120;g.mate={x:290,y:330};g.safe=false;}else if(g.puck.s==='ready'){g.px=40;g.py=300;g.clock=99;}});if(await G(()=>window.__mvp.g().puck.s==='ready')){await down(2,240,400);await up(2);}await wait(100);}
  ck('перехват: пас через защитника забирают',(await misses()).includes('icept'),(await misses()).join(','));await up(1);
  await start(2,{lefty:true});await G(()=>{const g=window.__mvp.g();g.px=160;g.vx=0;g.defs=[];g.ch=null;g.clock=99;});await down(1,240,420);await move(1,270,420);await wait(600);const lx=await G(()=>window.__mvp.g().px);await up(1);
  await down(2,80,380);await move(2,80,430);await wait(300);const lpr=await G(()=>!!window.__mvp.pr());await up(2);ck('режим левши: правая сторона ведёт, левая бросает',lx>190&&lpr,'px '+Math.round(lx)+' aim '+lpr);

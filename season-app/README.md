@@ -10,6 +10,7 @@
 - `bot2.js`: бот на настоящем экране, проходит все четыре матча. `node bot2.js tap 14`
 - `so.js`: проверка овертайма и буллитов.
 - `engine-next.js`, `build_next.py`, `patch-next.py`: рабочая копия игры со всем новым, сборка в `season-next.html`.
+- `botplay.js`: бот-игрок, проходит матчи настоящими касаниями двух пальцев. `MAXM=7 node botplay.js 6`
 - `mechcheck.js`: проверка каждого приёма настоящими касаниями, двадцать сценариев. `node mechcheck.js`
 - `textcheck.py`: самопроверка текстов сборки.
 - `simcheck.js`: проверка баланса ботами, PASS или FAIL. `python3 build_next.py && node simcheck.js 200`
