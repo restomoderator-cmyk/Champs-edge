@@ -20,6 +20,7 @@
     spr.ch = id === 2 ? mk({ jersey: '#f77622', jerseyDark: '#b86f50', trim: '#181425', beard: null, letter: null }) : spr.def;
     rebuildMatchDom();
     var pe = (S.pre && S.pre[id]) || {}; G.heat = pe.heat || 0; G.breathK = pe.breathK || 1;
+    if (M.series && !SIM) { S.ser = S.ser || {}; var s0 = S.ser[id]; if (s0 && s0.over) { s0 = S.ser[id] = { w: 0, l: 0 }; } if (s0) G.breathK *= 1 + 0.07 * (s0.w + s0.l); }
     if (M.tired) G.breathK *= 1.15; if (M.startHeat) G.heat = Math.max(G.heat, M.startHeat);
     if (id > 4) { var fm = S.form == null ? 1 : S.form; G.breathK *= 1.07 - 0.07 * fm; G.passK = S.room >= 2 ? 0.85 : S.room === 0 ? 1.1 : 1; if (S.trust >= 2 && S.values.length) G.core = true; G.shortEnd = S.trust === 0; }
     if (M.bench1) return benchFirst();
@@ -348,17 +349,19 @@
       cooledAll: g.rivGoals.every(function (x) { return x.cooled; }), rivGoals: g.rivGoals.length };
     var s1 = r.cooledAll, s2 = r.shots > 0 && r.narrow / r.shots >= 0.5, s3 = !!m.s3(r), n = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
     if (SIM) { SIM.result = { you: r.you, riv: r.riv, stars: n, hot: r.hot, shots: r.shots, narrow: r.narrow, goals: r.goals, how: g.endHow }; G = null; return; }
-    var first = !S.done[m.id]; S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = r.you > r.riv ? 1 : 0; if (g.hN) { S.hab = S.hab || {}; S.hab[m.id] = [+(g.hSide / g.hN).toFixed(2), +(g.hB / g.hN).toFixed(2), Math.round(g.hY / g.hN)]; } } if (m.record) S.rec = Math.max(S.rec || 0, r.tops); if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
+    var se = null, serOpen = false;
+    if (m.series) { S.ser = S.ser || {}; se = S.ser[m.id] || { w: 0, l: 0 }; if (r.you > r.riv) se.w++; else se.l++; se.over = se.w >= m.series || se.l >= m.series; S.ser[m.id] = se; serOpen = !se.over; }
+    var first = !S.done[m.id] && !serOpen; if (!serOpen) S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = (se ? se.w >= m.series : r.you > r.riv) ? 1 : 0; if (g.hN) { S.hab = S.hab || {}; S.hab[m.id] = [+(g.hSide / g.hN).toFixed(2), +(g.hB / g.hN).toFixed(2), Math.round(g.hY / g.hN)]; } } if (m.record) S.rec = Math.max(S.rec || 0, r.tops); if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
     G = null; view = 'result';
     function star(on, text) { return '<div class="star' + (on ? ' on' : '') + '"><i>★</i><span>' + text + '</span></div>'; }
     var win = r.you > r.riv;
-    screen('ИТОГ', '<span class="tag' + (win ? '' : ' tag--red') + '">МАТЧ ' + m.id + ' · ' + (m.record ? 'ТРЕНИРОВКА' : (win ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ') + g.endHow) + '</span>' +
+    screen('ИТОГ', '<span class="tag' + (win ? '' : ' tag--red') + '">МАТЧ ' + m.id + ' · ' + (m.record ? 'ТРЕНИРОВКА' : (win ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ') + g.endHow) + (se ? ' · СЕРИЯ ' + se.w + ':' + se.l : '') + '</span>' +
       (m.record ? '<div class="final">' + r.tops + '<small>ИДЕАЛЬНЫХ БРОСКОВ · РЕКОРД ' + (S.rec || r.tops) + '</small></div>' : '<div class="final">' + r.you + ' : ' + r.riv + '<small>' + TEAM.toUpperCase() + ' · ' + m.team.toUpperCase() + '</small></div>') +
       '<section class="panel panel--hot"><h2 class="h2">ЗВЁЗДЫ ДАЮТ ЗА ГОЛОВУ, А НЕ ЗА СЧЁТ</h2>' +
       star(s1, r.rivGoals ? 'Остудил голову после каждой пропущенной' : 'Голова не перегревалась') +
       star(s2, 'Половина бросков с узкой линией') + star(s3, m.star3) + '</section>' +
       '<section class="panel"><div class="stats"><span>Бросков с узкой линией</span><b>' + r.narrow + ' / ' + r.shots + '</b><span>Голов с выдоха</span><b>' + r.breathGoals + ' / ' + r.goals + '</b><span>Идеальных бросков</span><b>' + r.tops + '</b><span>Секунд с горячей головой</span><b>' + r.hot + '</b></div></section>',
-      '<button class="btn" type="button" data-act="after" data-m="' + m.id + '">ДАЛЬШЕ ▶</button><button class="btn btn--ghost" type="button" data-act="go" data-m="' + m.id + '">ПЕРЕИГРАТЬ</button>');
+      (serOpen ? '<button class="btn" type="button" data-act="go" data-m="' + m.id + '">СЛЕДУЮЩАЯ ИГРА СЕРИИ ▶</button>' : '<button class="btn" type="button" data-act="after" data-m="' + m.id + '">ДАЛЬШЕ ▶</button><button class="btn btn--ghost" type="button" data-act="go" data-m="' + m.id + '">ПЕРЕИГРАТЬ</button>'));
   }
   function after(id) {
     pick = {};
@@ -402,7 +405,7 @@
       'Доверие: ' + (S.trust >= 2 ? 'стержень заряжен на старте' : S.trust === 0 ? 'в концовке тебе дадут меньше времени' : 'обычная смена'),
       'Репутация: решит, куда ты попадёшь в конце пути'];
   }
-  function worldBrief(m) { var pg = m.pickG ? m.pickG() : null; return (pg ? '<section class="panel panel--hot"><h2 class="h2">В ВОРОТАХ: ' + pg.name.toUpperCase() + '</h2><p>' + pg.why + '</p></section>' : '') + (m.id > 4 ? '<section class="panel"><h2 class="h2">С ЧЕМ ТЫ ВЫХОДИШЬ</h2>' + worldLines().slice(0, 3).map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</section>' : ''); }
+  function worldBrief(m) { var pg = m.pickG ? m.pickG() : null, sr = m.series && S.ser && S.ser[m.id] && !S.ser[m.id].over ? S.ser[m.id] : null; return (sr ? '<section class="panel panel--hot"><h2 class="h2">СЕРИЯ ' + sr.w + ':' + sr.l + ' · ИГРА ' + (sr.w + sr.l + 1) + '</h2><p>Силы не восстановились: выдох длиннее, чем в прошлой игре.</p></section>' : '') + (pg ? '<section class="panel panel--hot"><h2 class="h2">В ВОРОТАХ: ' + pg.name.toUpperCase() + '</h2><p>' + pg.why + '</p></section>' : '') + (m.id > 4 ? '<section class="panel"><h2 class="h2">С ЧЕМ ТЫ ВЫХОДИШЬ</h2>' + worldLines().slice(0, 3).map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</section>' : ''); }
   function world(id) {
     view = 'world'; var d = (S.last && S.last.d) || [];
     screen('МЕЖДУ МАТЧАМИ', '<span class="tag">МЕЖДУ МАТЧАМИ</span><h1 class="h1">ЧТО ИЗМЕНИЛОСЬ</h1>' +
@@ -519,6 +522,8 @@
     { sit: ['pp', 'pk', ''], chase: [38, 42, 46], star3: 'Остудил голову после каждой пропущенной', s3: function (r) { return r.cooledAll; }, tune: { rateK: 0.85, paceK: 1.4 } });
   pool(20, 'ТРЕНИРОВКА: РЕКОРД', 'Свои', 'Новичок', 'Тренировка без соперника и без защитников. Сколько идеальных бросков ты сделаешь за минуту? Рекорд сохраняется.', { gain: 0.34, shotGain: 0.14, cool: 0.07, speed: 0.8 },
     { record: true, riv: [[], [], []], defs: [0, 0, 0], chase: [0, 0, 0], star3: 'Восемь идеальных бросков', s3: function (r) { return r.tops >= 8; }, tune: { segT: 20, paceK: 1, rateK: 0 } });
+  pool(21, 'СЕРИЯ ДО ДВУХ ПОБЕД', 'Айсберг', 'Стена', 'Серия с одним соперником до двух побед. Между играми силы не восстанавливаются: с каждой игрой выдох длиннее. Матч засчитан, когда серия решена.', WALL,
+    { series: 2, star3: 'Остудил голову после каждой пропущенной', s3: function (r) { return r.cooledAll; } });
   // итог пути: карьера идёт дальше при любом исходе, меняется только куда
   function pathEnd() {
     var st = 0, w = 0, k; for (k in S.stars) st += S.stars[k]; for (k in (S.res || {})) w += S.res[k];

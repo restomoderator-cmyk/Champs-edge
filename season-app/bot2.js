@@ -19,7 +19,7 @@ const {chromium}=require('playwright');const D=__dirname;const MODE=process.argv
    if(MODE==='pro'||st.lesson===1){await p.waitForFunction(()=>{const g=window.__mvp.g();return !g||g.wasFull||g.puck.s!=='ready'},null,{timeout:4000}).catch(()=>{});await once('breath-'+guard);await p.waitForTimeout(80);}
    else {await p.waitForTimeout(200);if(st.heat>0.5)await once('hot');}
    await p.mouse.up();shots++;await p.waitForTimeout(250);continue;}
-  if(await has('.final')){const t=await p.locator('.tag').first().textContent();console.log(t,'|',(await p.locator('.final').textContent()).trim(),'| stars',await p.locator('.star.on').count(),'|',(await p.locator('.stats').textContent()));await shot('result-'+t.slice(5,6));await click('[data-act="after"]');continue;}
+  if(await has('.final')){const t=await p.locator('.tag').first().textContent();console.log(t,'|',(await p.locator('.final').textContent()).trim(),'| stars',await p.locator('.star.on').count(),'|',(await p.locator('.stats').textContent()));await shot('result-'+t.slice(5,6));if(await has('[data-act="after"]'))await click('[data-act="after"]');else await click('[data-act="go"]');continue;}
   if(!(await has('.final'))&&await has('[data-act="after"]')){await once('world');await click('[data-act="after"]');continue;}
   if(await has('[data-act="choose"]')){await once('decide-'+guard);await click('[data-act="choose"][data-i="0"]');await once('decided-'+guard);continue;}
   if(await has('[data-act="decided"]')){await click('[data-act="decided"]');continue;}
