@@ -163,7 +163,7 @@
   function musicStop() { if (MF.node) { try { MF.node.s.stop(); } catch (e) {} } MF.node = null; MF.cur = ''; }
   // музыка из файлов music_menu и music_match, если они есть; иначе играет синтезированная петля
   function musicFile() {
-    var want = view === 'play' ? 'music_match' : 'music_menu'; if (!sndName(want)) { musicStop(); return false; }
+    var want = view !== 'play' ? 'music_menu' : G && (G.so || G.seg === 3) && sndName('music_overtime') ? 'music_overtime' : M && M.id === 7 && sndName('music_derby') ? 'music_derby' : 'music_match'; if (!sndName(want)) { musicStop(); return false; }
     if (!S.sound || S.music === false) { musicStop(); return true; }
     if (MF.cur !== want) { musicStop(); var n = sndPlay(want, true, 0.5); if (n) { MF.node = n; MF.cur = want; } }
     if (MF.node) MF.node.g.gain.value = G && (G.breathing || G.wasFull) ? 0.12 : 0.5;
@@ -361,6 +361,7 @@
     G.pause = 2.4; G.pauseText = ns === 3 ? ['ОВЕРТАЙМ', 'Ничьих в хоккее нет. Двадцать секунд до первого гола. Давление соперника растёт: потеряешь шайбу, забьют тебе.'] : ['СКАМЕЙКА', ns === 1 ? (M.id === 1 ? 'Дальше соперник тоже атакует. Красная полоса сверху: его давление. Каждая твоя потеря её толкает.' : 'Второй отрезок.') : 'Последний отрезок.' + (M.chase && M.chase[ns] ? (M.id === 2 ? ' Оранжевый защитник' : ' Один из защитников') + ' идёт на тебя: уезжай.' : '')];
     var keepSeg = ns; G.afterPause = function () { setSeg(keepSeg); }; run();
   }
+  function puckAt(x, y) { var pi = img('puck.png'); if (pi) cx.drawImage(pi, Math.round(x - 5), Math.round(y - 3), 10, 6); else { R(OUT, x - 5, y - 3, 10, 6); R('#3a4466', x - 4, y - 2, 8, 3); } }
   function R(c, x, y, w, h) { cx.fillStyle = c; cx.fillRect(Math.round(x), Math.round(y), w, h); }
   function draw() {
     var g = G, p = g.puck, sh = g.shake > 0 ? 3 : 0, nk = g.net > 0 ? Math.round(Math.sin(g.net * 40) * 2) : 0, jy = g.jump > 0 ? Math.round(Math.sin(g.jump / 0.5 * Math.PI) * 10) : 0, s = stick();
@@ -413,16 +414,16 @@
     cx.restore();
     g.defs.forEach(function (d) { cx.drawImage(img('defender.png') || spr.def, Math.round(d.x), d.y - 12, 51, 54); });
     if (g.ch) cx.drawImage(img(M.id === 2 ? 'chaser.png' : 'defender.png') || spr.ch, Math.round(g.ch.x - 25), Math.round(g.ch.y - 27), 51, 54);
-    if (p.s === 'fly') { g.trail.forEach(function (q, k) { R(p.top ? '#2ce8f5' : '#8b9bb4', q[0] - 2, q[1], 4, 4 + k); }); R(OUT, p.x - 4, p.y - 3, 8, 6); R('#3a4466', p.x - 3, p.y - 2, 6, 3); }
+    if (p.s === 'fly') { g.trail.forEach(function (q, k) { R(p.top ? '#2ce8f5' : '#8b9bb4', q[0] - 2, q[1], 4, 4 + k); }); puckAt(p.x, p.y); }
     g.parts.forEach(function (q) { R(q.c, q.x, q.y, 3, 3); });
     if (!g.so) { cx.globalAlpha = 0.8; cx.drawImage(img('mate.png') || spr.me, Math.round(g.mate.x - 25), Math.round(g.mate.y - 27), 51, 54); cx.globalAlpha = 1;
       if (M.mateHead) { R(OUT, g.mate.x - 18, g.mate.y - 38, 36, 6); R(g.mheat >= 0.66 ? '#e43b44' : g.mheat >= 0.33 ? '#feae34' : '#63c74d', g.mate.x - 17, g.mate.y - 37, Math.max(2, 34 * Math.max(0.08, g.mheat)), 4); } }
     if (p.s === 'in' && p.t < 0.45 && !g.so) { var pk = Math.max(0, Math.min(1, 1 - p.t / 0.45)), mx = g.mate.x + 20, my = g.mate.y + 20, qx = mx + (s[0] - mx) * pk, qy = my + (s[1] - my) * pk;
-      cx.strokeStyle = 'rgba(58,68,102,.45)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(mx, my); cx.lineTo(qx, qy); cx.stroke(); R(OUT, qx - 5, qy - 3, 10, 6); R('#3a4466', qx - 4, qy - 2, 8, 3); }
+      cx.strokeStyle = 'rgba(58,68,102,.45)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(mx, my); cx.lineTo(qx, qy); cx.stroke(); puckAt(qx, qy); }
     cx.drawImage(img(S.role === 'D' ? 'hero_d.png' : 'hero_f.png') || spr.me, Math.round(g.px - 25), Math.round(g.py - 27 - jy), 51, 54);
     if (g.grace > 0) { cx.strokeStyle = 'rgba(255,255,255,' + (0.35 + 0.5 * (g.grace / 1.25)).toFixed(2) + ')'; cx.lineWidth = 2; cx.beginPath(); cx.arc(g.px, g.py, 31, 0, 6.3); cx.stroke(); }
     if (g.recv > 0) { cx.strokeStyle = 'rgba(254,231,97,' + (g.recv / 0.35).toFixed(2) + ')'; cx.lineWidth = 3; cx.beginPath(); cx.arc(s[0], s[1], 8 + (0.35 - g.recv) * 60, 0, 6.3); cx.stroke(); }
-    if (p.s === 'ready') { R(OUT, s[0] - 5, s[1] - 3, 10, 6); R('#3a4466', s[0] - 4, s[1] - 2, 8, 3);
+    if (p.s === 'ready') { puckAt(s[0], s[1]);
       R(OUT, g.px - 22, g.py - 40 - jy, 44, 7); R(g.clock < 2.5 ? '#e43b44' : '#63c74d', g.px - 21, g.py - 39 - jy, Math.max(0, 42 * g.clock / CLOCK), 5); }
     // пальцы
     if (PL) { cx.strokeStyle = 'rgba(0,153,219,.8)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(PL.ox, PL.oy, 22, 0, 6.3); cx.stroke(); var lx = PL.x - PL.ox, ly = PL.y - PL.oy, ll = Math.hypot(lx, ly) || 1, lk = Math.min(1, 22 / ll); cx.fillStyle = 'rgba(0,153,219,.8)'; cx.beginPath(); cx.arc(PL.ox + lx * lk, PL.oy + ly * lk, 8, 0, 6.3); cx.fill(); }
@@ -465,6 +466,7 @@
     var se = null, serOpen = false;
     if (m.series) { S.ser = S.ser || {}; se = S.ser[m.id] || { w: (m.seriesStart || [0, 0])[0], l: (m.seriesStart || [0, 0])[1], g: 0 }; se.g = (se.g || 0) + 1; if (r.you > r.riv) se.w++; else se.l++; se.over = se.w >= m.series || se.l >= m.series; S.ser[m.id] = se; serOpen = !se.over; log(m.id, 'series', { w: se.w, l: se.l, over: se.over }); }
     var first = !S.done[m.id] && !serOpen; if (!serOpen) S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = (se ? se.w >= m.series : r.you > r.riv) ? 1 : 0; if (g.hN) { S.hab = S.hab || {}; S.hab[m.id] = [+(g.hSide / g.hN).toFixed(2), +(g.hB / g.hN).toFixed(2), Math.round(g.hY / g.hN)]; } } if (m.record) S.rec = Math.max(S.rec || 0, r.tops); if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
+    if (S.sound && S.music !== false) sndPlay(r.you > r.riv ? 'music_win' : 'music_loss', false, 0.6);
     G = null; view = 'result';
     function star(on, text) { return '<div class="star' + (on ? ' on' : '') + '"><i>★</i><span>' + text + '</span></div>'; }
     var win = r.you > r.riv;
@@ -640,7 +642,7 @@
       { label: '«ПРОСТО ОТДАВАЙ МНЕ»', dots: [['Раздевалка', 1]], vals: ['Смелость', 'Упорство'], apply: function () { G.mheat = Math.min(1, G.mheat + 0.25); S.room = Math.max(0, S.room - 1); return ['Партнёр закипел сильнее: его пас станет хуже', 'Раздевалка −1']; } }]; } } } });
   MATCHES.push({ id: 11, name: 'БЕЗ ПОДСКАЗОК', team: 'Туман', rival: 'Часы', flow: true, oneT: true, blind: true, noHints: true,
     about: 'Проверка всего, что ты собрал. Линия броска без цвета, пояснений к промахам нет. Голову придётся чувствовать самому.',
-    g: CLOCK1, segG: [CLOCK1, CLOCK1, CLOCK3], riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 16, rateK: 0.67, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
+    g: CLOCK1, segG: [CLOCK1, CLOCK1, CLOCK3], riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 16, rateK: 0.7, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'Починил выбранное слабое звено', s3: function (r) { var f = (S.pre && S.pre[11] && S.pre[11].focus) || 'cool'; return f === 'cool' ? r.cooledAll : f === 'hot' ? r.shots > 0 && r.hotShots === 0 : r.losses <= 2; },
     life: { h: 'ДВА СТОЛБЦА', t: 'Раздели лист пополам. Слева: что в твоей игре живёт само. Справа: что держится на силе воли. Выбери одно из правого столбца на эту неделю.' },
     pre: function (done) { function opt(label, f, vals, line) { return { label: label, dots: [['Голова', 1]], vals: vals, apply: function () { preSet(11, { focus: f }); MATCHES[10].star3 = line; return ['Третья звезда этого матча: ' + line.toLowerCase()]; } }; }

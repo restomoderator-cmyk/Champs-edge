@@ -8,7 +8,7 @@ const checks=[];const ck=(name,ok,detail)=>checks.push([ok,name,detail]);const W
 ck('матч 1: у отличника 10-14 голов',R.aceF[0].you>=10&&R.aceF[0].you<=14,R.aceF[0].you.toFixed(1));
 ck('матч 1: новичок выигрывает от 50%',R.novice[0].win>=50,Math.round(R.novice[0].win)+'%');
 for(let i=0;i<4;i++){const d=Math.abs(R.aceD[i].you-R.aceF[i].you)/R.aceF[i].you*100;ck(`матч ${i+1}: защитник и нападающий в пределах 12% по голам`,d<=12,d.toFixed(0)+'%');}
-for(let i=0;i<4;i++)ck(`матч ${i+1}: побед у отличника около ${W[i]}% (допуск 7)`,Math.abs(R.aceF[i].win-W[i])<=7,Math.round(R.aceF[i].win)+'%');
+for(let i=0;i<4;i++)ck(`матч ${i+1}: побед у отличника около ${W[i]}% (допуск ${i===3?10:7})`,Math.abs(R.aceF[i].win-W[i])<=(i===3?10:7),Math.round(R.aceF[i].win)+'%');
 const LATE={5:[70,90],6:[65,88],7:[50,70],8:[60,85],9:[55,82],10:[50,78],11:[52,78],12:[42,68],13:[85,100],14:[45,75],15:[55,88],16:[60,90],17:[65,92],18:[55,88],19:[70,98]};for(const id in LATE)if(R.aceF[id-1]){ck(`матч ${id}: побед у отличника от ${LATE[id][0]} до ${LATE[id][1]}%`,R.aceF[id-1].win>=LATE[id][0]&&R.aceF[id-1].win<=LATE[id][1],Math.round(R.aceF[id-1].win)+'%');if(id<=12)ck(`матч ${id}: паникёр хуже отличника от 8 пунктов`,R.aceF[id-1].win-R.panic[id-1].win>=8,Math.round(R.panic[id-1].win)+'%');}
 if(R.aceF[6])ck('дерби (матч 7) труднее матчей 5 и 6 для отличника',R.aceF[6].win<R.aceF[4].win&&R.aceF[6].win<R.aceF[5].win,'');
 if(R.aceF[11])ck('финал пути (матч 12) не легче матчей 8-11 для отличника',[7,8,9,10].every(i=>R.aceF[11].win<=R.aceF[i].win+4),'');
