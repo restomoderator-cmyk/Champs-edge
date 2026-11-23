@@ -20,9 +20,10 @@
     spr.ch = id === 2 ? mk({ jersey: '#f77622', jerseyDark: '#b86f50', trim: '#181425', beard: null, letter: null }) : spr.def;
     rebuildMatchDom();
     var pe = (S.pre && S.pre[id]) || {}; G.heat = pe.heat || 0; G.breathK = pe.breathK || 1;
-    if (M.series && !SIM) { S.ser = S.ser || {}; var s0 = S.ser[id]; if (s0 && s0.over) { s0 = S.ser[id] = { w: 0, l: 0 }; } if (s0) G.breathK *= 1 + 0.07 * (s0.w + s0.l); }
+    if (M.series && !SIM) { S.ser = S.ser || {}; var s0 = S.ser[id]; if (s0 && s0.over) { s0 = S.ser[id] = { w: (M.seriesStart || [0, 0])[0], l: (M.seriesStart || [0, 0])[1], g: 0 }; } if (s0) G.breathK *= 1 + 0.07 * (s0.g || 0); }
     if (M.tired) G.breathK *= 1.15; if (M.startHeat) G.heat = Math.max(G.heat, M.startHeat);
     if (id > 4) { var fm = S.form == null ? 1 : S.form; G.breathK *= 1.07 - 0.07 * fm; G.passK = S.room >= 2 ? 0.85 : S.room === 0 ? 1.1 : 1; if (S.trust >= 2 && S.values.length) G.core = true; G.shortEnd = S.trust === 0; }
+    if (M.onlySO) { setSeg(0); G.so = { n: 0, you: 0, riv: 0 }; G.defs = []; G.puck = { s: 'wait' }; marks(); G.pause = 3.2; G.pauseText = ['БУЛЛИТЫ', 'Один бросок, одна попытка. Твой вратарь пропустит две из трёх: тебе нужны все три или серия пойдёт дальше.']; G.afterPause = soShot; return run(); }
     if (M.bench1) return benchFirst();
     setSeg(0); matchTips(); if (G.core) say('СТЕРЖЕНЬ ЗАРЯЖЕН', '#2ce8f5', 2.4, 'ДВА БЫСТРЫХ ТАПА ЛЕВЫМ ПАЛЬЦЕМ'); run();
   }
@@ -76,7 +77,7 @@
   // буллиты: темп соперника объявлен заранее, как и красные метки
   function soShot() { var g = G; g.px = 160; g.py = 330; g.vx = 0; g.vy = 0; g.ax = 1; g.ay = 0; g.puck = { s: 'in', t: 0.8 }; marks(); }
   function soResult(sc) {
-    var g = G, so = g.so, r = so.n < 3 ? [1, 0, 0][so.n] : (so.n % 2 === 0 ? 1 : 0); if (sc) so.you++; so.riv += r; so.n++; marks();
+    var g = G, so = g.so, r = so.n < 3 ? (M.soSeq || [1, 0, 0])[so.n] : (so.n % 2 === 0 ? 1 : 0); if (sc) so.you++; so.riv += r; so.n++; marks();
     g.pause = 2.4; g.pauseText = [sc ? 'ТЫ ЗАБИЛ' : 'НЕ ЗАБИЛ', 'Соперник: ' + (r ? 'гол' : 'сейв твоего вратаря') + '. Буллиты ' + so.you + ':' + so.riv];
     if (so.n >= 3 && so.you !== so.riv) { if (so.you > so.riv) g.you++; else g.riv++; g.endHow = ' ПО БУЛЛИТАМ'; g.done = true; } else g.afterPause = soShot;
   }
@@ -224,6 +225,7 @@
         if (inNet && !saved) {
           if (!g.so) g.you++; g.press = Math.max(0, g.press - tv('goalPush')); g.goals++; g.streak++; if (p.breath) g.breathGoals++; g.gheat = Math.min(1, g.gheat + G.mg.gain); log(M.id, 'goal', { top: !!p.top, breath: !!p.breath });
           g.stop = p.top ? 0.16 : 0.1; g.jump = 0.5; g.net = 0.5; buzz(p.top ? [20, 30, 60] : 30);
+          if (g.seg >= 2) g.goalsEnd = (g.goalsEnd || 0) + 1;
           if (p.top) g.topRow++; else g.topRow = 0; if (p.one) g.oneGoals++; if (M.mateHead) g.mheat = Math.max(0, g.mheat - 0.3);
           if (p.top) { g.tops++; burst(p.x, 70, 30, ['#2ce8f5', '#ffffff', '#fee761']); g.flash = 0.3; say(Math.min(p.x - NET_L, NET_R - p.x) < 18 ? 'ДЕВЯТКА!' : Math.abs(p.x - (g.gx + GW / 2)) < GW / 2 + 4 ? 'НАД ПЛЕЧОМ!' : p.x < g.gx ? 'НАД БЛИНОМ!' : 'НАД ЛОВУШКОЙ!', '#2ce8f5', 1.5, 'ВЫДОХНУЛ И ПОПАЛ'); SFX.top(); }
           else { burst(p.x, 70, 16, ['#fee761', '#feae34', '#ffffff']); say('ГОЛ', '#63c74d', 1.2, p.breath ? 'С ВЫДОХОМ' : ''); SFX.goal(g.streak); }
@@ -345,18 +347,18 @@
   }
   function finish() {
     var g = G, m = M; cancelAnimationFrame(raf); breathSound(false);
-    var r = { firstShotBreath: !!g.firstShotBreath, lossesEnd: g.lossesEnd || 0, flows: g.flows, oneGoals: g.oneGoals, mateHot: g.mateHot, losses: g.losses, trig: g.trig, hotShots: g.hotShots, firstAll: [0, 1, 2].every(function (i) { return g.segFirst[i] === true; }), you: g.you, riv: g.riv, shots: g.shots, goals: g.goals, breathShots: g.breathShots, breathGoals: g.breathGoals, narrow: g.narrow, tops: g.tops, hot: Math.round(g.hot), coreHot: g.coreHot, firstAfterBreath: g.firstAfterBreath,
+    var r = { goalsEnd: g.goalsEnd || 0, firstShotBreath: !!g.firstShotBreath, lossesEnd: g.lossesEnd || 0, flows: g.flows, oneGoals: g.oneGoals, mateHot: g.mateHot, losses: g.losses, trig: g.trig, hotShots: g.hotShots, firstAll: [0, 1, 2].every(function (i) { return g.segFirst[i] === true; }), you: g.you, riv: g.riv, shots: g.shots, goals: g.goals, breathShots: g.breathShots, breathGoals: g.breathGoals, narrow: g.narrow, tops: g.tops, hot: Math.round(g.hot), coreHot: g.coreHot, firstAfterBreath: g.firstAfterBreath,
       cooledAll: g.rivGoals.every(function (x) { return x.cooled; }), rivGoals: g.rivGoals.length };
     var s1 = r.cooledAll, s2 = r.shots > 0 && r.narrow / r.shots >= 0.5, s3 = !!m.s3(r), n = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
     if (SIM) { SIM.result = { you: r.you, riv: r.riv, stars: n, hot: r.hot, shots: r.shots, narrow: r.narrow, goals: r.goals, how: g.endHow }; G = null; return; }
     var se = null, serOpen = false;
-    if (m.series) { S.ser = S.ser || {}; se = S.ser[m.id] || { w: 0, l: 0 }; if (r.you > r.riv) se.w++; else se.l++; se.over = se.w >= m.series || se.l >= m.series; S.ser[m.id] = se; serOpen = !se.over; }
+    if (m.series) { S.ser = S.ser || {}; se = S.ser[m.id] || { w: (m.seriesStart || [0, 0])[0], l: (m.seriesStart || [0, 0])[1], g: 0 }; se.g = (se.g || 0) + 1; if (r.you > r.riv) se.w++; else se.l++; se.over = se.w >= m.series || se.l >= m.series; S.ser[m.id] = se; serOpen = !se.over; }
     var first = !S.done[m.id] && !serOpen; if (!serOpen) S.done[m.id] = true; S.stars[m.id] = Math.max(S.stars[m.id] || 0, n); S.core = g.core; if (first) { S.res = S.res || {}; S.res[m.id] = (se ? se.w >= m.series : r.you > r.riv) ? 1 : 0; if (g.hN) { S.hab = S.hab || {}; S.hab[m.id] = [+(g.hSide / g.hN).toFixed(2), +(g.hB / g.hN).toFixed(2), Math.round(g.hY / g.hN)]; } } if (m.record) S.rec = Math.max(S.rec || 0, r.tops); if (first && m.id >= 4) worldAfter(m, r, n, g); save(); log(m.id, 'end', { leftSec: Math.round(g.leftSec), falseTaps: g.falseTaps, you: r.you, riv: r.riv, stars: n, narrowShare: r.shots ? +(r.narrow / r.shots).toFixed(2) : 0, hotSec: r.hot });
     G = null; view = 'result';
     function star(on, text) { return '<div class="star' + (on ? ' on' : '') + '"><i>★</i><span>' + text + '</span></div>'; }
     var win = r.you > r.riv;
     screen('ИТОГ', '<span class="tag' + (win ? '' : ' tag--red') + '">МАТЧ ' + m.id + ' · ' + (m.record ? 'ТРЕНИРОВКА' : (win ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ') + g.endHow) + (se ? ' · СЕРИЯ ' + se.w + ':' + se.l : '') + '</span>' +
-      (m.record ? '<div class="final">' + r.tops + '<small>ИДЕАЛЬНЫХ БРОСКОВ · РЕКОРД ' + (S.rec || r.tops) + '</small></div>' : '<div class="final">' + r.you + ' : ' + r.riv + '<small>' + TEAM.toUpperCase() + ' · ' + m.team.toUpperCase() + '</small></div>') +
+      (m.record ? '<div class="final">' + r.tops + '<small>ИДЕАЛЬНЫХ БРОСКОВ · РЕКОРД ' + (S.rec || r.tops) + '</small></div>' : '<div class="final">' + r.you + ' : ' + r.riv + '<small>' + (m.myTeam || TEAM).toUpperCase() + ' · ' + m.team.toUpperCase() + '</small></div>') +
       '<section class="panel panel--hot"><h2 class="h2">ЗВЁЗДЫ ДАЮТ ЗА ГОЛОВУ, А НЕ ЗА СЧЁТ</h2>' +
       star(s1, r.rivGoals ? 'Остудил голову после каждой пропущенной' : 'Голова не перегревалась') +
       star(s2, 'Половина бросков с узкой линией') + star(s3, m.star3) + '</section>' +
@@ -370,7 +372,8 @@
     if (id === 3 && !S.fix) return review(0, home);
     if (id === 4 && !S.life[4]) return life(4, home);
     if (id > 4 && MATCHES[id - 1].life && !S.life[id]) return life(id, function () { after(id); });
-    if (MATCHES[id - 1].pathEnd && !S.path1) return pathEnd();
+    if (MATCHES[id - 1].pathEnd === true && !S.path1) return pathEnd();
+    if (MATCHES[id - 1].pathEnd === 2 && !S.path2) return pathEnd2();
     home();
   }
   // левая половина льда: палец ведёт игрока, два быстрых тапа включают стержень. Правая: оттяжка, выдох, бросок
@@ -405,7 +408,7 @@
       'Доверие: ' + (S.trust >= 2 ? 'стержень заряжен на старте' : S.trust === 0 ? 'в концовке тебе дадут меньше времени' : 'обычная смена'),
       'Репутация: решит, куда ты попадёшь в конце пути'];
   }
-  function worldBrief(m) { var pg = m.pickG ? m.pickG() : null, sr = m.series && S.ser && S.ser[m.id] && !S.ser[m.id].over ? S.ser[m.id] : null; return (sr ? '<section class="panel panel--hot"><h2 class="h2">СЕРИЯ ' + sr.w + ':' + sr.l + ' · ИГРА ' + (sr.w + sr.l + 1) + '</h2><p>Силы не восстановились: выдох длиннее, чем в прошлой игре.</p></section>' : '') + (pg ? '<section class="panel panel--hot"><h2 class="h2">В ВОРОТАХ: ' + pg.name.toUpperCase() + '</h2><p>' + pg.why + '</p></section>' : '') + (m.id > 4 ? '<section class="panel"><h2 class="h2">С ЧЕМ ТЫ ВЫХОДИШЬ</h2>' + worldLines().slice(0, 3).map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</section>' : ''); }
+  function worldBrief(m) { var pg = m.pickG ? m.pickG() : null, sr = m.series ? (S.ser && S.ser[m.id] && !S.ser[m.id].over ? S.ser[m.id] : { w: (m.seriesStart || [0, 0])[0], l: (m.seriesStart || [0, 0])[1], g: 0 }) : null; return (sr ? '<section class="panel panel--hot"><h2 class="h2">СЕРИЯ ' + sr.w + ':' + sr.l + ' · ИГРА ' + (sr.w + sr.l + 1) + '</h2><p>' + (sr.g ? 'Силы не восстановились: выдох длиннее, чем в прошлой игре.' : 'Серия идёт до ' + m.series + ' побед.') + '</p></section>' : '') + (pg ? '<section class="panel panel--hot"><h2 class="h2">В ВОРОТАХ: ' + pg.name.toUpperCase() + '</h2><p>' + pg.why + '</p></section>' : '') + (m.id > 4 ? '<section class="panel"><h2 class="h2">С ЧЕМ ТЫ ВЫХОДИШЬ</h2>' + worldLines().slice(0, 3).map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</section>' : ''); }
   function world(id) {
     view = 'world'; var d = (S.last && S.last.d) || [];
     screen('МЕЖДУ МАТЧАМИ', '<span class="tag">МЕЖДУ МАТЧАМИ</span><h1 class="h1">ЧТО ИЗМЕНИЛОСЬ</h1>' +
@@ -537,6 +540,53 @@
       '<section class="panel"><div class="stats"><span>Побед</span><b>' + w + ' из 12</b><span>Звёзд за голову</span><b>' + st + ' из 36</b></div></section>' +
       '<section class="panel"><h2 class="h2">ЧТО РЕШИЛО</h2><div class="meters"><span>РЕПУТАЦИЯ</span>' + pips(S.rep || 0) + '<span>ДОВЕРИЕ</span>' + pips(S.trust || 0) + '</div><p>И то, как ты сыграл просмотр. Счёт матчей на исход почти не влиял: скауты смотрели на голову.</p></section>',
       '<button class="btn" type="button" data-act="home">ДАЛЬШЕ ▶</button>');
+  }
+  /* ---------- путь 2 «Герой»: черновик. Собраны только матчи, которые делаются из готового; остальные шесть на бумаге ---------- */
+  var VET = { gain: 0.12, shotGain: 0, cool: 0.14, speed: 1.15 }, VET3 = { gain: 0.3, shotGain: 0, cool: 0.06, speed: 0.85 }, LEGEND = { gain: 0.1, shotGain: 0, cool: 0.16, speed: 1.2, mirror: true };
+  function story2(o) { var m = { flow: true, oneT: true, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 16, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null } }; for (var k in o) if (k !== 'tune') m[k] = o[k]; if (o.tune) for (k in o.tune) m.tune[k] = o.tune[k]; MATCHES.push(m); }
+  function d3(id, key, q, opts, done, tag) { decide(id, key, q, opts.map(function (o) { return { label: o[0], dots: o[1], vals: o[2], apply: o[3] }; }), done, tag); }
+  story2({ id: 22, name: 'ДЕБЮТ', team: 'Гавань', myTeam: 'Перевал', rival: 'Ветеран', g: VET, segG: [VET, VET, VET3],
+    about: 'Первый матч во взрослой лиге. В воротах Ветеран: холодный и быстрый, но к третьему отрезку устаёт. Терпение в начале, броски в конце.',
+    star3: 'Половина голов в третьем отрезке', s3: function (r) { return r.goals > 0 && r.goalsEnd * 2 >= r.goals; },
+    pre: function (done) { d3(22, 'routine', 'Взрослая раздевалка. До выхода двадцать минут. Что ты делаешь?', [
+      ['СВОЙ РИТУАЛ, КАК ВСЕГДА', [['Голова', 2]], ['Дисциплина', 'Спокойствие', 'Трудолюбие'], function () { preSet(22, { heat: 0, breathK: 0.95 }); return ['Холодный старт: ритуал работает и здесь']; }],
+      ['СМОТРЮ, ЧТО ДЕЛАЮТ ВЕТЕРАНЫ', [['Раздевалка', 1], ['Голова', 1]], ['Любопытство', 'Уважение', 'Смирение'], function () { preSet(22, { heat: 0.2 }); S.room = Math.min(3, S.room + 1); return ['Раздевалка +1: тебя заметили', 'Но свой ритуал ты пропустил: голова тёплая']; }],
+      ['СИЖУ В ТЕЛЕФОНЕ, ЧТОБЫ НЕ НЕРВНИЧАТЬ', [['Голова', 2]], ['Радость игры'], function () { preSet(22, { heat: 0.35 }); return ['Тёплый старт: волнение никуда не делось']; }]], done, 'МАТЧ 22 · ПЕРЕД ИГРОЙ'); } });
+  story2({ id: 23, name: 'БУЛЛИТ', team: 'Гранит', myTeam: 'Перевал', rival: 'Часы', g: CLOCK3, onlySO: true, soSeq: [1, 1, 0], defs: [0, 0, 0], chase: [0, 0, 0], tune: { gsp: 1.25 },
+    about: 'Матч решается в серии буллитов. Один на один, шесть секунд на бросок. Здесь нет ничего, кроме тебя, вратаря и твоей головы.',
+    star3: 'Забил два буллита', s3: function (r) { return r.goals >= 2; },
+    pre: function (done) { d3(23, 'look', 'Ты едешь к центру. На что смотришь?', [
+      ['НА ТОЧКУ НА ЛЬДУ, КАК В СБРОСЕ', [['Голова', 2]], ['Спокойствие', 'Дисциплина', 'Смирение'], function () { preSet(23, { heat: 0 }); return ['Холодная голова: ты здесь, а не на табло']; }],
+      ['НА ВРАТАРЯ', [['Голова', 1]], ['Смелость', 'Любопытство'], function () { preSet(23, { heat: 0.2 }); return ['Голова чуть теплее: он тоже смотрит на тебя']; }],
+      ['НА ТАБЛО И ТРИБУНЫ', [['Голова', 2]], ['Радость игры'], function () { preSet(23, { heat: 0.4 }); return ['Тёплая голова: ты уже думаешь о результате']; }]], done, 'МАТЧ 23 · ПЕРЕД БРОСКОМ'); } });
+  story2({ id: 24, name: 'ОБМЕН', team: 'Перевал', myTeam: 'Гранит', rival: 'Горячий', g: HOT, tune: { paceK: 1.55 },
+    about: 'Тебя обменяли. Новая команда, раздевалка с нуля, пасов пока мало. А напротив твой бывший клуб.',
+    star3: 'Не больше двух потерь', s3: function (r) { return r.losses <= 2; },
+    pre: function (done) { d3(24, 'trade', 'Утром тебе сообщили об обмене. Вечером первый вопрос от журналиста.', [
+      ['«СПАСИБО КЛУБУ И ПАРТНЁРАМ»', [['Репутация', 2]], ['Уважение', 'Смирение', 'Верность команде'], function () { preSet(24, { heat: 0.15 }); S.room = 0; S.rep = Math.min(3, (S.rep || 0) + 1); return ['Репутация +1', 'Раздевалка с нуля: в новой команде тебя ещё не знают']; }],
+      ['«БЕЗ КОММЕНТАРИЕВ»', [['Голова', 1]], ['Спокойствие', 'Дисциплина'], function () { preSet(24, { heat: 0.25 }); S.room = 0; return ['Раздевалка с нуля', 'Голова тёплая: ты это не прожил, а отложил']; }],
+      ['«ОНИ ЕЩЁ ПОЖАЛЕЮТ»', [['Репутация', 1], ['Голова', 2]], ['Смелость', 'Честность'], function () { preSet(24, { heat: 0.45 }); S.room = 0; S.rep = Math.max(0, (S.rep || 0) - 1); return ['Репутация −1', 'Раздевалка с нуля', 'Голова горячая: ты вышел доказывать, а не играть']; }]], done, 'МАТЧ 24 · НАКАНУНЕ'); } });
+  story2({ id: 25, name: 'МИКРОФОН', team: 'Маяк', myTeam: 'Гранит', rival: 'Стена', g: WALL, startHeat: 0.3,
+    about: 'Вчера вас разгромили. Сегодня снова матч, а перед ним пресс-конференция. У каждого ответа своя цена.',
+    star3: 'Остудил голову после каждой пропущенной', s3: function (r) { return r.cooledAll; },
+    pre: function (done) { d3(25, 'press', 'Журналист: «Что вчера случилось?»', [
+      ['«Я СЫГРАЛ ПЛОХО. ИСПРАВЛЮ»', [['Доверие', 2], ['Голова', 1]], ['Честность', 'Ответственность', 'Смелость'], function () { preSet(25, { heat: 0.2 }); S.trust = Math.min(3, S.trust + 1); return ['Доверие +1: тренер услышал', 'Голова тёплая: ты взял на себя много']; }],
+      ['«КОМАНДА НЕ БЫЛА ГОТОВА»', [['Раздевалка', 2]], ['Честность'], function () { preSet(25, { heat: 0 }); S.room = Math.max(0, S.room - 1); return ['Раздевалка −1: партнёры это прочитают', 'Тебе самому легче: голова холодная']; }],
+      ['«ЗАВТРА НОВЫЙ МАТЧ»', [['Голова', 1]], ['Спокойствие', 'Смирение', 'Дисциплина'], function () { preSet(25, { heat: 0.1 }); return ['Ничего не изменилось: ты ничего не сказал', 'Голова почти холодная']; }]], done, 'МАТЧ 25 · ПРЕСС-КОНФЕРЕНЦИЯ'); } });
+  story2({ id: 26, name: 'СЕРИЯ 1:3', team: 'Айсберг', myTeam: 'Гранит', rival: 'Зеркало', g: MIRROR, series: 4, seriesStart: [1, 3], mateHead: true, chase: [33, 37, 41], tune: { rateK: 0.55 },
+    about: 'Плей-офф. Серия до четырёх побед, и вы проигрываете 1:3. Любое поражение заканчивает сезон. Силы от игры к игре не возвращаются.',
+    star3: 'Партнёр кипел меньше десяти секунд', s3: function (r) { return r.mateHot < 10; },
+    pre: function (done) { d3(26, 'speech', 'Раздевалка перед пятой игрой. Все молчат. Кто-то должен сказать.', [
+      ['«ОДНА СМЕНА. ПОТОМ СЛЕДУЮЩАЯ»', [['Раздевалка', 2]], ['Спокойствие', 'Дисциплина', 'Верность команде'], function () { preSet(26, { heat: 0 }); S.room = Math.min(3, S.room + 1); return ['Раздевалка +1: стало тише и собраннее']; }],
+      ['«НАМ НЕЧЕГО ТЕРЯТЬ»', [['Голова', 1]], ['Смелость', 'Радость игры'], function () { preSet(26, { heat: 0.15 }); return ['Команда оживилась', 'Голова чуть теплее: азарт тоже греет']; }],
+      ['МОЛЧУ: Я НЕ КАПИТАН', [['Раздевалка', 1]], ['Смирение'], function () { preSet(26, { heat: 0.1 }); S.room = Math.max(0, S.room - 1); return ['Раздевалка −1: слова ждали от тебя']; }]], done, 'МАТЧ 26 · РАЗДЕВАЛКА'); } });
+  story2({ id: 27, name: 'СЕДЬМОЙ МАТЧ', team: 'Северная Звезда', myTeam: 'Гранит', rival: 'Легенда', g: LEGEND, noise: [1, 0, 1], mateHead: true, pathEnd: 2, chase: [34, 38, 42], tune: { topR: 17, rateK: 0.56, paceK: 1.22 },
+    about: 'Седьмой матч финала. В воротах Легенда: читает прицел, быстрый, почти не греется. Всё, что собрано за два пути, пригодится.',
+    star3: 'Вошёл в поток или забил в касание', s3: function (r) { return r.flows >= 1 || r.oneGoals >= 1; } });
+  function pathEnd2() {
+    var won = (S.res || {})[27] === 1; S.path2 = { cup: won }; save(); log(27, 'path_end', { sc: won ? 1 : 0 }); view = 'world';
+    screen('ИТОГ ПУТИ', '<span class="tag">ПУТЬ 2 · ГЕРОЙ · ИТОГ</span><h1 class="h1">' + (won ? 'КУБОК' : 'ФИНАЛ БЕЗ КУБКА') + '</h1><p class="lead">' + (won ? 'Ты поднимаешь кубок над головой. Завтра будет новое утро и новый вопрос: что дальше.' : 'Вы были в одном матче от кубка. Это остаётся с тобой, как и всё, чему ты научился по дороге.') + '</p>' +
+      '<section class="panel"><p>Карьера идёт дальше в обоих случаях. Третий путь, «Легенда», пока не собран.</p></section>', '<button class="btn" type="button" data-act="home">ДАЛЬШЕ ▶</button>');
   }
   window.__seasonMatches = MATCHES;
 
