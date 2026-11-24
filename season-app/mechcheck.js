@@ -9,7 +9,7 @@ const move=async(id,x,y)=>{pts[id]={x:X(x),y:Y(y)};await send('touchMove')};
 const up=async(id)=>{const q=pts[id];if(!q)return;delete pts[id];await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[{x:q.x,y:q.y,id:+id}]})};
 const wait=ms=>p.waitForTimeout(ms);const G=f=>p.evaluate(f);
 const done={};for(let i=1;i<=40;i++)done[i]=true;
-const base={sound:false,done,stars:{},role:'F',num:'9',values:['Смелость','Упорство','Радость игры'],core:true,trust:1,room:1,form:1,rep:1,fix:false,reset:{g:'x',w:'Здесь'},life:{},pre:{5:{heat:0},6:{heat:0},8:{heat:0},11:{focus:'cool'},22:{heat:0},23:{heat:0},24:{heat:0},25:{heat:0},26:{heat:0}},tips:{flow:1,oneT:1,mate:1,mirror:1,noise:1},taught:true};
+const base={sound:false,firstTop:true,done,stars:{},role:'F',num:'9',values:['Смелость','Упорство','Радость игры'],core:true,trust:1,room:1,form:1,rep:1,fix:false,reset:{g:'x',w:'Здесь'},life:{},pre:{5:{heat:0},6:{heat:0},8:{heat:0},11:{focus:'cool'},22:{heat:0},23:{heat:0},24:{heat:0},25:{heat:0},26:{heat:0}},tips:{flow:1,oneT:1,mate:1,mirror:1,noise:1},taught:true};
 async function start(id,extra,seg){for(const k in pts)delete pts[k];await p.goto('file://'+D+'/'+PAGE);await p.evaluate(s=>{localStorage.removeItem('ce-season-mvp-log-2');localStorage.setItem('ce-season-mvp-2',s)},JSON.stringify(Object.assign({},base,extra||{})));await p.reload();if(seg)await p.evaluate(v=>window.__mvp.seg(v),seg);
  await p.click(`[data-act="match"][data-m="${id}"]`);await p.click('[data-act="go"]');await ready();box=await p.locator('#rink').boundingBox();}
 const ready=()=>p.waitForFunction(()=>{const g=window.__mvp.g();return g&&g.puck.s==='ready'&&g.pause<=0},null,{timeout:20000});
@@ -53,6 +53,9 @@ try{
  await start(3);await G(()=>{const g=window.__mvp.g();g.rate=0;g.press=0;g.safe=false;});await down(1,80,420);
  for(let i=0;i<120&&!(await misses()).includes('icept');i++){await G(()=>{const g=window.__mvp.g();g.ch=null;if(g.puck.s==='in'){g.px=40;g.py=120;g.mate={x:290,y:330};g.safe=false;}else if(g.puck.s==='ready'){g.px=40;g.py=300;g.clock=99;}});if(await G(()=>window.__mvp.g().puck.s==='ready')){await down(2,240,400);await up(2);}await wait(100);}
  ck('перехват: пас через защитника забирают',(await misses()).includes('icept'),(await misses()).join(','));await up(1);
+ await start(1,{firstTop:false});await G(()=>{const g=window.__mvp.g();g.clock=99;g.rate=0;g.px=170;g.vx=0;g.gx=150;});await down(1,80,420);await aimHold(0,0);await p.waitForFunction(()=>window.__mvp.g().wasFull,null,{timeout:3000}).catch(()=>{});await G(()=>{const g=window.__mvp.g();g.gx=Math.max(110,Math.min(166,g.px+20-22));g.mg=Object.assign({},g.mg,{speed:0});});await up(2);await wait(900);await up(1);
+ ck('первый в жизни идеальный бросок заходит, даже если вратарь стоит на линии',await G(()=>window.__mvp.g().goals>=1&&window.__mvp.s().firstTop===true));
+ await start(2);await G(()=>{const g=window.__mvp.g();g.heat=0.9;g.hotLong=4.9;g.clock=99;g.rate=0;g.ch=null;});await wait(900);ck('горячая голова: через пять секунд появляется подсказка',await p.locator('#coach:not([hidden])').count()===1&&/ГОЛОВА ГОРИТ/.test(await p.locator('#coach').textContent()));
  await start(2,{lefty:true});await G(()=>{const g=window.__mvp.g();g.px=160;g.vx=0;g.defs=[];g.ch=null;g.clock=99;});await down(1,240,420);await move(1,270,420);await wait(600);const lx=await G(()=>window.__mvp.g().px);await up(1);
  await down(2,80,380);await move(2,80,430);await wait(300);const lpr=await G(()=>!!window.__mvp.pr());await up(2);ck('режим левши: правая сторона ведёт, левая бросает',lx>190&&lpr,'px '+Math.round(lx)+' aim '+lpr);
 }catch(e){ck('сценарии дошли до конца',false,String(e.message).slice(0,200));}
