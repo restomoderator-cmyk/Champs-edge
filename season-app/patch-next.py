@@ -35,5 +35,8 @@ rep("return brief(MATCHES[0]); }","if (S.askRole && G) { S.askRole = false; save
 rep("    if (a === 'stars') return starsScreen();","    if (a === 'savecode') return saveCode();\n    if (a === 'loadcode') { if (codeLoad(pick.code)) return home(); return saveCode('Код не подошёл. Проверь, что он скопирован целиком.'); }\n    if (a === 'stars') return starsScreen();")
 rep("case 'path_end':","case 'fast_entry': x = 'вход для теста: сразу на лёд'; break;\n      case 'path_end':")
 rep("fix: 1, world: 1, settings: 1, parent: 1 };","fix: 1, world: 1, settings: 1, parent: 1, savecode: 1 };")
+rep("'</b>«' + m.team + '» · вратарь ' + m.rival + '</span>","'</b>«' + m.team + '»' + cityOf(m.team) + ' · вратарь ' + m.rival + '</span>")
+rep("Ты в команде «Северный Ветер».","Ты в команде «Северный Ветер» из Ледогорска.")
+rep("TEAM.toUpperCase() + '</span><span>ДОВЕРИЕ</span>'","TEAM.toUpperCase() + cityOf(TEAM).toUpperCase() + '</span><span>ДОВЕРИЕ</span>'")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)

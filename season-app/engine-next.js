@@ -121,7 +121,7 @@
     ['СЕЗОН', 'SEASON'], ['ПУТЬ 1 · ТАЛАНТ', 'PATH 1 · TALENT'], ['ИГРОК', 'PLAYER'], ['КОМАНДА', 'TEAM'], ['ДОВЕРИЕ', 'TRUST'], ['РАЗДЕВАЛКА', 'LOCKER ROOM'], ['ФОРМА', 'FORM'], ['РЕПУТАЦИЯ', 'REPUTATION'],
     ['СТЕРЖЕНЬ ЗАРЯЖЕН', 'CORE CHARGED'], ['СТЕРЖЕНЬ ПУСТ', 'CORE IS EMPTY'], ['СТЕРЖЕНЬ: ЗАРЯЖЕН', 'CORE: CHARGED'], ['СТЕРЖЕНЬ: ПУСТ', 'CORE: EMPTY'], ['НОВОЕ: СТЕРЖЕНЬ', 'NEW: YOUR CORE'], ['СТЕРЖЕНЬ', 'CORE'], ['ЗАРЯЖЕН', 'CHARGED'], ['ГОТОВ', 'READY'], ['ТАП-ТАП', 'TAP-TAP'], ['ПУСТ', 'EMPTY'],
     ['НАПАДАЮЩИЙ', 'FORWARD'], ['ЗАЩИТНИК', 'DEFENSEMAN'], ['Нападающий', 'Forward'], ['Защитник', 'Defenseman'], ['вратарь', 'goalie'], ['Новичок', 'Rookie'], ['Горячий', 'Hothead'], ['Стена', 'The Wall'], ['Провокатор и Горячий', 'Agitator and Hothead'], ['Провокатор', 'Agitator'],
-    ['Северный Ветер', 'North Wind'], ['СЕВЕРНЫЙ ВЕТЕР', 'NORTH WIND'], ['Кометы', 'Comets'], ['КОМЕТЫ', 'COMETS'], ['Вьюга', 'Blizzard'], ['ВЬЮГА', 'BLIZZARD'], ['Кедры', 'Cedars'], ['КЕДРЫ', 'CEDARS'], ['Айсберг', 'Iceberg'], ['АЙСБЕРГ', 'ICEBERG'], ['Прибой', 'Surf'], ['ПРИБОЙ', 'SURF'], ['Ледокол', 'Icebreaker'], ['ЛЕДОКОЛ', 'ICEBREAKER'], ['Южный Порт', 'South Port'], ['ЮЖНЫЙ ПОРТ', 'SOUTH PORT'],
+    ['Северный Ветер', 'North Wind'], ['СЕВЕРНЫЙ ВЕТЕР', 'NORTH WIND'], ['Кометы', 'Comets'], ['КОМЕТЫ', 'COMETS'], ['Вьюга', 'Blizzard'], ['ВЬЮГА', 'BLIZZARD'], ['Кедры', 'Cedars'], ['КЕДРЫ', 'CEDARS'], ['Айсберг', 'Iceberg'], ['АЙСБЕРГ', 'ICEBERG'], ['Прибой', 'Surf'], ['ПРИБОЙ', 'SURF'], ['Ледокол', 'Icebreaker'], ['ЛЕДОКОЛ', 'ICEBREAKER'], ['Докеры', 'Dockers'], ['ДОКЕРЫ', 'DOCKERS'],
     ['ПЕРВЫЙ ВЫХОД', 'FIRST SHIFT'], ['В ЧЁМ ТВОЯ СУПЕРСИЛА?', 'WHAT IS YOUR SUPERPOWER?'], ['В ЧЁМ ТВОЯ СУПЕРСИЛА', 'YOUR SUPERPOWER'], ['ПЕРВАЯ ОШИБКА', 'FIRST MISTAKE'], ['СКАМЕЙКА', 'THE BENCH'], ['ЧУЖИЕ ТРИБУНЫ', 'HOSTILE CROWD'], ['НОЧЬ ПЕРЕД ИГРОЙ', 'THE NIGHT BEFORE'], ['ДЕРБИ', 'THE DERBY'],
     ['МОИ ЗВЁЗДЫ И РЕШЕНИЯ', 'MY STARS AND CHOICES'], ['НАСТРОЙКИ', 'SETTINGS'], ['ЖУРНАЛ ТЕСТА', 'TEST LOG'], ['НАЧАТЬ ЗАНОВО', 'START OVER'], ['ДЛЯ РОДИТЕЛЕЙ', 'FOR PARENTS'], ['ПЕРЕНЕСТИ ПРОГРЕСС', 'MOVE PROGRESS'], ['ГОТОВО', 'DONE'], ['НАЗАД', 'BACK'], ['ЗВУК: ВКЛЮЧЁН', 'SOUND: ON'], ['ЗВУК: ВЫКЛЮЧЕН', 'SOUND: OFF'], ['МУЗЫКА: ВКЛЮЧЕНА', 'MUSIC: ON'], ['МУЗЫКА: ВЫКЛЮЧЕНА', 'MUSIC: OFF'], ['ЗВУК', 'SOUND'],
     ['ТВОЙ ИГРОК', 'YOUR PLAYER'], ['ДВА КАСАНИЯ', 'TWO TAPS'], ['КТО ТЫ НА ЛЬДУ?', 'WHO ARE YOU ON THE ICE?'], ['НОМЕР', 'NUMBER'],
@@ -132,13 +132,13 @@
     ['ЗВЁЗДЫ ДАЮТ ЗА ГОЛОВУ, А НЕ ЗА СЧЁТ', 'STARS ARE FOR YOUR HEAD, NOT THE SCORE'], ['Остудил голову после каждой пропущенной', 'Cooled your head after every goal against'], ['Голова не перегревалась', 'Your head never overheated'], ['Половина бросков с узкой линией', 'Half your shots with a narrow line'],
     ['Один идеальный бросок за матч', 'One perfect shot in the match'], ['Остудил голову стержнем в трудный момент', 'Cooled your head with your core at a hard moment'], ['Первый бросок после пропущенной был с выдохом', 'Your first shot after a goal against came on an exhale'], ['Два гола с выдоха', 'Two goals on an exhale'], ['Трижды убрал шум своим словом', 'Cleared the noise with your word three times'], ['Ни одного броска с горячей головой', 'Not one shot with a hot head'], ['В каждом отрезке первый бросок был с выдохом', 'In every period your first shot came on an exhale'],
     ['Бросков с узкой линией', 'Shots with a narrow line'], ['Голов с выдоха', 'Goals on an exhale'], ['Идеальных бросков', 'Perfect shots'], ['Секунд с горячей головой', 'Seconds with a hot head'],
-    ['Юниорская лига. Ты в команде «Северный Ветер». Тренер выпускает тебя в первой смене. Вратарь соперника новичок: двигается медленно.', 'Junior league. You play for the North Wind. Coach sends you out on the first shift. Their goalie is a rookie and moves slowly.'],
+    ['Юниорская лига. Ты в команде «Северный Ветер» из Ледогорска. Тренер выпускает тебя в первой смене. Вратарь соперника новичок: двигается медленно.', 'Junior league. You play for the North Wind. Coach sends you out on the first shift. Their goalie is a rookie and moves slowly.'],
     ['Вратарь соперника закипает после пропущенной и начинает ошибаться.', 'Their goalie boils over after a goal against and starts making mistakes.'],
     ['В первом отрезке ты пропустишь. Это не твоя ошибка. Смотри, что будет дальше.', 'You will be scored on in the first period. It is not your mistake. Watch what happens next.'],
     ['Вратарь соперника почти не греется. Его берут терпением. Первый отрезок ты сидишь на скамейке.', 'Their goalie barely heats up. Patience beats him. You sit out the first period.'],
     ['Выезд. Трибуны гудят, и линия броска начинает дрожать. Новый приём: твоё слово. Короткий тап левым пальцем, и шум уходит на несколько секунд.', 'Away game. The crowd roars and your shot line starts to shake. New move: your word. A short tap with your left thumb clears the noise for a few seconds.'],
     ['Как герой провёл вечер, так он и начнёт матч. Вратарь почти не греется: его берут терпением.', 'How he spent the evening is how he starts the match. The goalie barely heats up: patience beats him.'],
-    ['Главный матч месяца. Три отрезка, три разных условия, и никто не подсказывает. В воротах по очереди Провокатор и Горячий.', 'The biggest game of the month. Three periods, three different conditions, and nobody tells you what to do. Agitator and Hothead take turns in net.'],
+    ['Городское дерби: «Докеры» тоже из Ледогорска. Главный матч месяца. Три отрезка, три разных условия, и никто не подсказывает. В воротах по очереди Провокатор и Горячий.', 'The city derby: the Dockers are from the same town. The biggest game of the month. Three periods, three different conditions, and nobody tells you what to do. Agitator and Hothead take turns in net.'],
     ['Шайбу тебе пасует партнёр у борта. Принял: коснись справа внизу и тяни назад, появится линия броска. Отпусти: бросок.', 'A teammate at the boards passes you the puck. Got it: touch the lower right and pull back, and the shot line appears. Let go to shoot.'],
     ['Подержи палец ровно секунду. Это выдох: линия сужается, голова остывает. Кистевой бросок, точный.', 'Keep your thumb still for a second. That is an exhale: the line narrows and your head cools. A wrist shot, accurate.'],
     ['Быстрый тап правым: сильный бросок без прицела. Летит быстро, но широко.', 'A quick tap with the right thumb: a hard shot with no aim. Fast but wide.'],
@@ -270,6 +270,9 @@
   function danger() { var g = G; var st = stick(); if (st[1] < 137 && st[0] > 102 && st[0] < 218) return 'poke'; if (!(g.grace > 0)) for (var i = 0; i < g.defs.length; i++) if (Math.hypot(g.px - (g.defs[i].x + 25), g.py - (g.defs[i].y + 15)) < 30) return 'def'; return ''; }
   function hitDef(x, y) { var g = G, c = g.ch; for (var i = 0; i < g.defs.length; i++) { var d = g.defs[i]; if (x > d.x + 6 && x < d.x + 42 && y > d.y - 8 && y < d.y + 40) return true; } return !!c && x > c.x - 20 && x < c.x + 18 && y > c.y - 24 && y < c.y + 24; }
   // своё слово: короткий тап левым пальцем убирает шум трибун и на несколько секунд не даёт ему вернуться
+  // прописка команд. Города вымышленные; на совпадение с настоящими не проверены
+  var CITY = { 'Северный Ветер': 'Ледогорск', 'Докеры': 'Ледогорск', 'Кометы': 'Синеозёрск', 'Вьюга': 'Буранск', 'Кедры': 'Кедроград', 'Айсберг': 'Порт-Северный', 'Прибой': 'Южная Гавань', 'Ледокол': 'Усть-Ледовск', 'Маяк': 'Маячный', 'Полюс': 'Полярск', 'Утёс': 'Утёсовск', 'Туман': 'Туманск', 'Северная Звезда': 'Звездоград', 'Сталевары': 'Сталегорск', 'Горняки': 'Седогорск', 'Буровики': 'Нефтеозёрск' };
+  function cityOf(t) { return CITY[t] ? ', ' + CITY[t] : ''; }
   var TIPS = { flow: ['ПОТОК', 'Три идеальных гола подряд, и на восемь секунд выдох и пас быстрее. Промах его обрывает.'],
     oneT: ['БРОСОК В КАСАНИЕ', 'Оттяни палец броска ещё до паса и отпусти сразу, как принял шайбу. Только с холодной головой.'],
     mate: ['ГОЛОВА ПАРТНЁРА', 'Полоска над партнёром. Когда она красная, его пас может не дойти. Твой гол её остужает.'],
@@ -648,8 +651,8 @@
       { label: 'ЛОЖУСЬ ВОВРЕМЯ', dots: [['Голова', 2]], vals: ['Дисциплина', 'Ответственность', 'Трудолюбие'], apply: function () { preSet(6, { heat: 0, breathK: 0.95 }); S.form = Math.min(3, (S.form == null ? 1 : S.form) + 1); return ['Холодный старт', 'Форма +1: выдох быстрее']; } },
       { label: 'ДОИГРЫВАЮ В ПРИСТАВКУ ДО НОЧИ', dots: [['Голова', 2]], vals: ['Радость игры'], apply: function () { preSet(6, { heat: 0.35, breathK: 1.1 }); S.form = Math.max(0, (S.form == null ? 1 : S.form) - 1); return ['Тёплый старт', 'Форма −1: герой не выспался, выдох длиннее']; } },
       { label: 'ДО ПОЛУНОЧИ РАЗБИРАЮ СВОИ ОШИБКИ', dots: [['Голова', 1], ['Доверие', 1]], vals: ['Упорство', 'Честность'], apply: function () { preSet(6, { heat: 0.2, breathK: 1.1 }); S.trust = Math.min(3, S.trust + 1); return ['Доверие +1: утром тренер увидел твои вопросы', 'Но голова тёплая и выдох длиннее']; } }], done, 'МАТЧ 6 · НАКАНУНЕ'); } });
-  MATCHES.push({ id: 7, name: 'ДЕРБИ', team: 'Южный Порт', rival: 'Провокатор и Горячий',
-    about: 'Главный матч месяца. Три отрезка, три разных условия, и никто не подсказывает. В воротах по очереди Провокатор и Горячий.',
+  MATCHES.push({ id: 7, name: 'ДЕРБИ', team: 'Докеры', rival: 'Провокатор и Горячий',
+    about: 'Городское дерби: «Докеры» тоже из Ледогорска. Главный матч месяца. Три отрезка, три разных условия, и никто не подсказывает. В воротах по очереди Провокатор и Горячий.',
     g: PROVOK, segG: [PROVOK, HOT, HOT], noise: [1, 0, 1], noHints: true, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 16, rateK: 0.66, push: 0.22, goalPush: 0.05, gsp: 1.05, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'В каждом отрезке первый бросок был с выдохом', s3: function (r) { return r.firstAll; },
     dec: { 1: { key: 'partner', q: 'Партнёр ошибся, и вам забили. Он садится рядом и молчит.', opts: function () { return [
@@ -731,47 +734,47 @@
   var VET = { gain: 0.12, shotGain: 0, cool: 0.14, speed: 1.15 }, VET3 = { gain: 0.3, shotGain: 0, cool: 0.06, speed: 0.85 }, LEGEND = { gain: 0.1, shotGain: 0, cool: 0.16, speed: 1.2, mirror: true };
   function story2(o) { var m = { flow: true, oneT: true, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 16, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null } }; for (var k in o) if (k !== 'tune') m[k] = o[k]; if (o.tune) for (k in o.tune) m.tune[k] = o.tune[k]; MATCHES.push(m); }
   function d3(id, key, q, opts, done, tag) { decide(id, key, q, opts.map(function (o) { return { label: o[0], dots: o[1], vals: o[2], apply: o[3] }; }), done, tag); }
-  story2({ id: 22, name: 'ДЕБЮТ', team: 'Гавань', myTeam: 'Перевал', rival: 'Ветеран', g: VET, segG: [VET, VET, VET3],
+  story2({ id: 22, name: 'ДЕБЮТ', team: 'Сталевары', myTeam: 'Горняки', rival: 'Ветеран', g: VET, segG: [VET, VET, VET3],
     about: 'Первый матч во взрослой лиге. В воротах Ветеран: холодный и быстрый, но к третьему отрезку устаёт. Терпение в начале, броски в конце.',
     star3: 'Половина голов в третьем отрезке', s3: function (r) { return r.goals > 0 && r.goalsEnd * 2 >= r.goals; },
     pre: function (done) { d3(22, 'routine', 'Взрослая раздевалка. До выхода двадцать минут. Что ты делаешь?', [
       ['СВОЙ РИТУАЛ, КАК ВСЕГДА', [['Голова', 2]], ['Дисциплина', 'Спокойствие', 'Трудолюбие'], function () { preSet(22, { heat: 0, breathK: 0.95 }); return ['Холодный старт: ритуал работает и здесь']; }],
       ['СМОТРЮ, ЧТО ДЕЛАЮТ ВЕТЕРАНЫ', [['Раздевалка', 1], ['Голова', 1]], ['Любопытство', 'Уважение', 'Смирение'], function () { preSet(22, { heat: 0.2 }); S.room = Math.min(3, S.room + 1); return ['Раздевалка +1: тебя заметили', 'Но свой ритуал ты пропустил: голова тёплая']; }],
       ['СИЖУ В ТЕЛЕФОНЕ, ЧТОБЫ НЕ НЕРВНИЧАТЬ', [['Голова', 2]], ['Радость игры'], function () { preSet(22, { heat: 0.35 }); return ['Тёплый старт: волнение никуда не делось']; }]], done, 'МАТЧ 22 · ПЕРЕД ИГРОЙ'); } });
-  story2({ id: 23, name: 'БУЛЛИТ', team: 'Гранит', myTeam: 'Перевал', rival: 'Часы', g: CLOCK3, onlySO: true, soSeq: [1, 1, 0], defs: [0, 0, 0], chase: [0, 0, 0], tune: { gsp: 1.25 },
+  story2({ id: 23, name: 'БУЛЛИТ', team: 'Буровики', myTeam: 'Горняки', rival: 'Часы', g: CLOCK3, onlySO: true, soSeq: [1, 1, 0], defs: [0, 0, 0], chase: [0, 0, 0], tune: { gsp: 1.25 },
     about: 'Матч решается в серии буллитов. Один на один, шесть секунд на бросок. Здесь нет ничего, кроме тебя, вратаря и твоей головы.',
     star3: 'Забил два буллита', s3: function (r) { return r.goals >= 2; },
     pre: function (done) { d3(23, 'look', 'Ты едешь к центру. На что смотришь?', [
       ['НА ТОЧКУ НА ЛЬДУ, КАК В СБРОСЕ', [['Голова', 2]], ['Спокойствие', 'Дисциплина', 'Смирение'], function () { preSet(23, { heat: 0 }); return ['Холодная голова: ты здесь, а не на табло']; }],
       ['НА ВРАТАРЯ', [['Голова', 1]], ['Смелость', 'Любопытство'], function () { preSet(23, { heat: 0.2 }); return ['Голова чуть теплее: он тоже смотрит на тебя']; }],
       ['НА ТАБЛО И ТРИБУНЫ', [['Голова', 2]], ['Радость игры'], function () { preSet(23, { heat: 0.4 }); return ['Тёплая голова: ты уже думаешь о результате']; }]], done, 'МАТЧ 23 · ПЕРЕД БРОСКОМ'); } });
-  story2({ id: 24, name: 'ОБМЕН', team: 'Перевал', myTeam: 'Гранит', rival: 'Горячий', g: HOT, tune: { paceK: 1.55 },
+  story2({ id: 24, name: 'ОБМЕН', team: 'Горняки', myTeam: 'Буровики', rival: 'Горячий', g: HOT, tune: { paceK: 1.55 },
     about: 'Тебя обменяли. Новая команда, раздевалка с нуля, пасов пока мало. А напротив твой бывший клуб.',
     star3: 'Не больше двух потерь', s3: function (r) { return r.losses <= 2; },
     pre: function (done) { d3(24, 'trade', 'Утром тебе сообщили об обмене. Вечером первый вопрос от журналиста.', [
       ['«СПАСИБО КЛУБУ И ПАРТНЁРАМ»', [['Репутация', 2]], ['Уважение', 'Смирение', 'Верность команде'], function () { preSet(24, { heat: 0.15 }); S.room = 0; S.rep = Math.min(3, (S.rep || 0) + 1); return ['Репутация +1', 'Раздевалка с нуля: в новой команде тебя ещё не знают']; }],
       ['«БЕЗ КОММЕНТАРИЕВ»', [['Голова', 1]], ['Спокойствие', 'Дисциплина'], function () { preSet(24, { heat: 0.25 }); S.room = 0; return ['Раздевалка с нуля', 'Голова тёплая: ты это не прожил, а отложил']; }],
       ['«ОНИ ЕЩЁ ПОЖАЛЕЮТ»', [['Репутация', 1], ['Голова', 2]], ['Смелость', 'Честность'], function () { preSet(24, { heat: 0.45 }); S.room = 0; S.rep = Math.max(0, (S.rep || 0) - 1); return ['Репутация −1', 'Раздевалка с нуля', 'Голова горячая: ты вышел доказывать, а не играть']; }]], done, 'МАТЧ 24 · НАКАНУНЕ'); } });
-  story2({ id: 25, name: 'МИКРОФОН', team: 'Маяк', myTeam: 'Гранит', rival: 'Стена', g: WALL, startHeat: 0.3,
+  story2({ id: 25, name: 'МИКРОФОН', team: 'Маяк', myTeam: 'Буровики', rival: 'Стена', g: WALL, startHeat: 0.3,
     about: 'Вчера вас разгромили. Сегодня снова матч, а перед ним пресс-конференция. У каждого ответа своя цена.',
     star3: 'Остудил голову после каждой пропущенной', s3: function (r) { return r.cooledAll; },
     pre: function (done) { d3(25, 'press', 'Журналист: «Что вчера случилось?»', [
       ['«Я СЫГРАЛ ПЛОХО. ИСПРАВЛЮ»', [['Доверие', 2], ['Голова', 1]], ['Честность', 'Ответственность', 'Смелость'], function () { preSet(25, { heat: 0.2 }); S.trust = Math.min(3, S.trust + 1); return ['Доверие +1: тренер услышал', 'Голова тёплая: ты взял на себя много']; }],
       ['«КОМАНДА НЕ БЫЛА ГОТОВА»', [['Раздевалка', 2]], ['Честность'], function () { preSet(25, { heat: 0 }); S.room = Math.max(0, S.room - 1); return ['Раздевалка −1: партнёры это прочитают', 'Тебе самому легче: голова холодная']; }],
       ['«ЗАВТРА НОВЫЙ МАТЧ»', [['Голова', 1]], ['Спокойствие', 'Смирение', 'Дисциплина'], function () { preSet(25, { heat: 0.1 }); return ['Ничего не изменилось: ты ничего не сказал', 'Голова почти холодная']; }]], done, 'МАТЧ 25 · ПРЕСС-КОНФЕРЕНЦИЯ'); } });
-  story2({ id: 26, name: 'СЕРИЯ 1:3', team: 'Айсберг', myTeam: 'Гранит', rival: 'Зеркало', g: MIRROR, series: 4, seriesStart: [1, 3], mateHead: true, chase: [33, 37, 41], tune: { rateK: 0.55 },
+  story2({ id: 26, name: 'СЕРИЯ 1:3', team: 'Айсберг', myTeam: 'Буровики', rival: 'Зеркало', g: MIRROR, series: 4, seriesStart: [1, 3], mateHead: true, chase: [33, 37, 41], tune: { rateK: 0.55 },
     about: 'Плей-офф. Серия до четырёх побед, и вы проигрываете 1:3. Любое поражение заканчивает сезон. Силы от игры к игре не возвращаются.',
     star3: 'Партнёр кипел меньше десяти секунд', s3: function (r) { return r.mateHot < 10; },
     pre: function (done) { d3(26, 'speech', 'Раздевалка перед пятой игрой. Все молчат. Кто-то должен сказать.', [
       ['«ОДНА СМЕНА. ПОТОМ СЛЕДУЮЩАЯ»', [['Раздевалка', 2]], ['Спокойствие', 'Дисциплина', 'Верность команде'], function () { preSet(26, { heat: 0 }); S.room = Math.min(3, S.room + 1); return ['Раздевалка +1: стало тише и собраннее']; }],
       ['«НАМ НЕЧЕГО ТЕРЯТЬ»', [['Голова', 1]], ['Смелость', 'Радость игры'], function () { preSet(26, { heat: 0.15 }); return ['Команда оживилась', 'Голова чуть теплее: азарт тоже греет']; }],
       ['МОЛЧУ: Я НЕ КАПИТАН', [['Раздевалка', 1]], ['Смирение'], function () { preSet(26, { heat: 0.1 }); S.room = Math.max(0, S.room - 1); return ['Раздевалка −1: слова ждали от тебя']; }]], done, 'МАТЧ 26 · РАЗДЕВАЛКА'); } });
-  story2({ id: 27, name: 'СЕДЬМОЙ МАТЧ', team: 'Северная Звезда', myTeam: 'Гранит', rival: 'Легенда', g: LEGEND, noise: [1, 0, 1], mateHead: true, pathEnd: 2, chase: [34, 38, 42], tune: { topR: 17, rateK: 0.56, paceK: 1.22 },
+  story2({ id: 27, name: 'СЕДЬМОЙ МАТЧ', team: 'Северная Звезда', myTeam: 'Буровики', rival: 'Легенда', g: LEGEND, noise: [1, 0, 1], mateHead: true, pathEnd: 2, chase: [34, 38, 42], tune: { topR: 17, rateK: 0.56, paceK: 1.22 },
     about: 'Седьмой матч финала. В воротах Легенда: читает прицел, быстрый, почти не греется. Всё, что собрано за два пути, пригодится.',
     star3: 'Вошёл в поток или забил в касание', s3: function (r) { return r.flows >= 1 || r.oneGoals >= 1; } });
   // обычные матчи второго пути: те же ситуации, новые вратари. Открываются после дебюта
-  function pool2(id, name, team, rival, about, g, o) { pool(id, name, team, rival, about, g, o); var m = MATCHES[MATCHES.length - 1]; m.pool2 = true; m.myTeam = 'Гранит'; }
-  pool2(28, 'БОЛЬШИНСТВО ПРОТИВ ВЕТЕРАНА', 'Гавань', 'Ветеран', 'Весь матч в большинстве против вратаря, который устаёт к третьему отрезку. Не спеши в начале.', VET,
+  function pool2(id, name, team, rival, about, g, o) { pool(id, name, team, rival, about, g, o); var m = MATCHES[MATCHES.length - 1]; m.pool2 = true; m.myTeam = 'Буровики'; }
+  pool2(28, 'БОЛЬШИНСТВО ПРОТИВ ВЕТЕРАНА', 'Сталевары', 'Ветеран', 'Весь матч в большинстве против вратаря, который устаёт к третьему отрезку. Не спеши в начале.', VET,
     { segG: [VET, VET, VET3], sit: ['pp', 'pp', 'pp'], star3: 'Половина голов в третьем отрезке', s3: function (r) { return r.goals > 0 && r.goalsEnd * 2 >= r.goals; }, tune: { rateK: 1.1, paceK: 1.9, segT: 28 } });
   pool2(29, 'ВЧЕТВЕРОМ ПРОТИВ ЛЕГЕНДЫ', 'Северная Звезда', 'Легенда', 'Меньшинство против лучшего вратаря лиги. Шайба приходит редко, каждая на вес золота.', LEGEND,
     { sit: ['pk', 'pk', 'pk'], chase: [29, 33, 37], star3: 'Не больше двух потерь', s3: function (r) { return r.losses <= 2; }, tune: { rateK: 0.3 } });
