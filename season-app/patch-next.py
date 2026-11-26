@@ -47,5 +47,12 @@ rep("  function save() { if (SIM) return; try { localStorage.setItem(KEY, JSON.s
   function cloudLog() { if (!CL || !clReady || lgT || !LB.length) return; lgT = setTimeout(function () { lgT = 0; if (lgBusy) return cloudLog(); lgBusy = true; var id = lgId, n = LB.length; CL.doc('log/' + id).set({ t0: T0, n: n, json: JSON.stringify(LB.slice(0, n)) }).then(function () { if (n >= 250) { LB = LB.slice(n); lgId = 'c' + Date.now(); } }).catch(function () {}).then(function () { lgBusy = false; if (LB.length > n || (n >= 250 && LB.length)) cloudLog(); }); }, 5000); }
   try { if (window.claude && window.claude.use) window.claude.use('db').then(function (db) { if (!db) return; CL = db; return db.doc('season/state').get().then(function (sn) { var d = sn.exists ? sn.data() : null; if (d && d.json && (d.ts || 0) > TS0 && !G) { var o = JSON.parse(d.json); S = blank(); for (var k in o) S[k] = o[k]; try { localStorage.setItem(KEY, d.json); } catch (e) {} if (view === 'home') home(); } clReady = true; if ((S.ts || 0) > ((d && d.ts) || 0)) cloudSave(); cloudLog(); }); }).catch(function () {}); } catch (e) {}""")
 rep("LOG.push(r); if (LOG.length > 3000) LOG.shift();","LOG.push(r); if (LOG.length > 3000) LOG.shift(); LB.push(r); cloudLog();")
+# Сцены между матчами (scenes-next.js): перед матчами 1-4 и после матчей 3 и 4
+import os as _os
+rep("  function runMatch(id) {", open(_os.path.dirname(_os.path.abspath(__file__)) + '/scenes-next.js', encoding='utf-8').read() + "  function runMatch(id) {")
+rep("    var m = MATCHES[id - 1]; pick = {}; log(id, 'open');", "    if (scnWant(id + 'a')) return playScene(id + 'a', function () { runMatch(id); });\n    var m = MATCHES[id - 1]; pick = {}; log(id, 'open');")
+rep("    if (id === 1 && !S.life[1]) return life(1, home);", "    if (scnWant(id + 'b')) return playScene(id + 'b', function () { after(id); });\n    if (id === 1 && !S.life[1]) return life(1, home);")
+rep("    if (a === 'savecode') return saveCode();", "    if (a === 'scn') return scnNext();\n    if (a === 'scnskip') return scnEnd(true);\n    if (a === 'savecode') return saveCode();")
+rep("case 'fast_entry':", "case 'scene': x = 'сцена ' + r.k; break;\n      case 'scene_skip': x = 'пропустил сцену ' + r.k + ' на реплике ' + r.at; break;\n      case 'fast_entry':")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)
