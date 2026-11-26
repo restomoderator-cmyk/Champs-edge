@@ -38,5 +38,14 @@ rep("fix: 1, world: 1, settings: 1, parent: 1 };","fix: 1, world: 1, settings: 1
 rep("'</b>«' + m.team + '» · вратарь ' + m.rival + '</span>","'</b>«' + m.team + '»' + cityOf(m.team) + ' · вратарь ' + m.rival + '</span>")
 rep("Ты в команде «Северный Ветер».","Ты в команде «Северный Ветер» из Ледогорска.")
 rep("TEAM.toUpperCase() + '</span><span>ДОВЕРИЕ</span>'","TEAM.toUpperCase() + cityOf(TEAM).toUpperCase() + '</span><span>ДОВЕРИЕ</span>'")
+# Облако: прогресс и журнал копии дублируются в хранилище страницы, чтобы не пропадать при выходе
+rep("  function save() { if (SIM) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }",
+"""  var CL = null, clReady = false, clBusy = false, clDirty = false, clT = 0, TS0 = S.ts || 0, LB = [], lgId = 'c' + T0, lgBusy = false, lgT = 0;
+  function save() { if (SIM) return; S.ts = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} cloudSave(); }
+  function cloudSave() { if (!CL || !clReady) return; clDirty = true; clearTimeout(clT); clT = setTimeout(cloudFlush, 2500); }
+  function cloudFlush() { if (clBusy || !clDirty) return; clBusy = true; clDirty = false; CL.doc('season/state').set({ ts: S.ts || 0, json: JSON.stringify(S) }).catch(function () {}).then(function () { clBusy = false; if (clDirty) cloudSave(); }); }
+  function cloudLog() { if (!CL || !clReady || lgT || !LB.length) return; lgT = setTimeout(function () { lgT = 0; if (lgBusy) return cloudLog(); lgBusy = true; var id = lgId, n = LB.length; CL.doc('log/' + id).set({ t0: T0, n: n, json: JSON.stringify(LB.slice(0, n)) }).then(function () { if (n >= 250) { LB = LB.slice(n); lgId = 'c' + Date.now(); } }).catch(function () {}).then(function () { lgBusy = false; if (LB.length > n || (n >= 250 && LB.length)) cloudLog(); }); }, 5000); }
+  try { if (window.claude && window.claude.use) window.claude.use('db').then(function (db) { if (!db) return; CL = db; return db.doc('season/state').get().then(function (sn) { var d = sn.exists ? sn.data() : null; if (d && d.json && (d.ts || 0) > TS0 && !G) { var o = JSON.parse(d.json); S = blank(); for (var k in o) S[k] = o[k]; try { localStorage.setItem(KEY, d.json); } catch (e) {} if (view === 'home') home(); } clReady = true; if ((S.ts || 0) > ((d && d.ts) || 0)) cloudSave(); cloudLog(); }); }).catch(function () {}); } catch (e) {}""")
+rep("LOG.push(r); if (LOG.length > 3000) LOG.shift();","LOG.push(r); if (LOG.length > 3000) LOG.shift(); LB.push(r); cloudLog();")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)
