@@ -65,5 +65,8 @@ rep("if (m.id === 22) h +=", "if (m.id > LIMIT) return;\n      if (m.id === 22) 
 rep("if (!S.done[MATCHES[i].id] && !MATCHES[i].pool) return MATCHES[i].id;", "if (!S.done[MATCHES[i].id] && !MATCHES[i].pool && MATCHES[i].id <= LIMIT) return MATCHES[i].id;")
 # Подсказка по ходу игры не закрывает лёд
 rep(".coach b {", ".coach--low { top: 4px; width: min(98%, 420px); padding: 5px 8px; border-width: 3px; }\n.coach--low b { display: inline; margin-right: 8px; }\n.coach--low p { display: inline; font-size: 18px; }\n.coach b {")
+# Главный экран: кнопка «следующий матч» и отметка последнего сыгранного
+rep("<b>' + m.id + ' · ' + m.name + '</b>«' + m.team", "<b>' + m.id + ' · ' + m.name + (S.last && S.last.id === m.id ? ' <span style=\"color:#2ce8f5\">◀ ИГРАЛ ПОСЛЕДНИМ</span>' : '') + '</b>«' + m.team")
+rep("screen('СЕЗОН', h, '<button class=\"btn btn--ghost\" type=\"button\" data-act=\"stars\">", "screen('СЕЗОН', h, (nx ? '<button class=\"btn\" type=\"button\" data-act=\"match\" data-m=\"' + nx + '\">▶ СЛЕДУЮЩИЙ МАТЧ: ' + nx + ' · ' + MATCHES[nx - 1].name + '</button>' : '') + '<button class=\"btn btn--ghost\" type=\"button\" data-act=\"stars\">")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)
