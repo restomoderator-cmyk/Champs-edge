@@ -473,7 +473,7 @@
     f.t -= dt;
     if (f.ph === 'prov') { var held = PR && Math.hypot(PR.ox - PR.x, PR.oy - PR.y) >= 12; if (held) { f.calm += dt; if (!f.snd) { f.snd = true; breathSound(true); } } else { f.calm = Math.max(0, f.calm - dt * 2); if (f.snd) { f.snd = false; breathSound(false); } }
       if (f.calm >= 1.3) { breathSound(false); return fightEnd('walk'); } if (f.t <= 0) { breathSound(false); return fightEnd('walk'); } }
-    else if (f.ph === 'brawl') { f.beat += dt; if (f.pop > 0) f.pop -= dt; if (f.ouch > 0) f.ouch -= dt;
+    else if (f.ph === 'brawl') { f.beat += dt; if (f.pop > 0) f.pop -= dt; if (f.ouch > 0) f.ouch -= dt; f.knock = (f.knock || 0) + dt; if (f.knock >= 0.29) { f.knock = 0; SFX.pass(); }
       if (!f.hHe && f.hits >= 4) { f.hHe = true; f.fly.push({ x: W / 2 + 70, y: 150, vx: 46, vy: -300, c: '#f4f4f4', s: '#3b55b8' }); SFX.post(); }
       if (!f.hMe && f.miss >= 4) { f.hMe = true; f.fly.push({ x: W / 2 - 70, y: 150, vx: -46, vy: -300, c: '#f4f4f4', s: '#e43b44' }); SFX.post(); }
       f.fly.forEach(function (h) { if (h.rest) return; h.x += h.vx * dt; h.y += h.vy * dt; h.vy += 900 * dt; if (h.y > 276) { h.y = 276; if (Math.abs(h.vy) < 120) { h.rest = true; } else { h.vy = -h.vy * 0.45; h.vx *= 0.6; } } }); if (f.beat >= f.len) { if (!f.done) { f.miss++; f.ouch = 0.22; f.pop = 0; } f.n++; f.len = Math.max(0.4, 0.64 - 0.016 * f.n); f.win0 = f.len * (1 - 0.5 * g.heat); f.beat = 0; f.done = false; f.side = f.side === 'L' ? 'R' : 'L'; if (Math.random() < 0.3) f.side = f.side === 'L' ? 'R' : 'L'; } if (f.t <= 0) return fightEnd(f.hits >= Math.ceil((f.hits + f.miss) * 0.55) && f.hits >= 5 ? 'win' : 'lose'); }
@@ -511,11 +511,18 @@
       cx.fillStyle = 'rgba(223,233,245,.92)'; cx.beginPath(); cx.ellipse(W / 2, 222, 132 + EX, 78, 0, 0, 6.3); cx.fill(); cx.fillStyle = 'rgba(160,185,215,.5)'; cx.beginPath(); cx.ellipse(W / 2, 262, 96, 12, 0, 0, 6.3); cx.fill();
       [[30, 268, '#b86f50', 52, 4], [240, 276, '#b86f50', 50, 4], [34, 246, '#e43b44', 14, 11], [52, 282, '#e43b44', 14, 11], [270, 250, '#3b55b8', 14, 11], [252, 286, '#3b55b8', 14, 11]].forEach(function (o) { R(OUT, o[0] - 1, o[1] - 1, o[3] + 2, o[4] + 2); R(o[2], o[0], o[1], o[3], o[4]); });
       
-      fighter(W / 2 - 62 + sway + (hit ? 8 : got ? -8 : 0), 150, 1, '#e43b44', '#9e2835', !f.hMe, hit ? 2 : (!got && feint ? 1 : 0), got);
-      fighter(W / 2 + 62 + sway + (got ? -8 : hit ? 8 : 0), 150, -1, '#3b55b8', '#1b2a6b', !f.hHe, got ? 2 : (!hit && !feint ? 1 : 0), hit);
+      // скамейка: партнёры стучат клюшками по бортику
+      for (var bi2 = 0; bi2 < 5; bi2++) { var bx0 = 44 + bi2 * 54, up2 = Math.floor(g.T * 7 + bi2 * 1.3) % 2, hop = up2 ? 0 : -2;
+        R(OUT, bx0 - 1, 119 + hop, 16, 12); R('#f4f4f4', bx0, 120 + hop, 14, 6); R('#e43b44', bx0, 122 + hop, 14, 2); R('#f2c9a0', bx0 + 4, 126 + hop, 9, 4); R(OUT, bx0 + 10, 127 + hop, 2, 1);
+        R(OUT, bx0 - 3, 130 + hop, 20, 10); R('#e43b44', bx0 - 2, 131 + hop, 18, 9);
+        var sy2 = up2 ? 116 : 124; R(OUT, bx0 + 19, sy2 - 1, 5, 20); R('#b86f50', bx0 + 20, sy2, 3, 18); R(OUT, bx0 + 19, sy2 + 16, 11, 5); R('#feae34', bx0 + 20, sy2 + 17, 9, 3);
+        if (!up2) { R('#fee761', bx0 + 30, 136, 3, 2); R('#fee761', bx0 + 27, 132, 2, 3); } }
+      R(OUT, 22 - EX, 139, 276 + 2 * EX, 9); R('#ffffff', 23 - EX, 140, 274 + 2 * EX, 4); R('#fee761', 23 - EX, 144, 274 + 2 * EX, 3);
+      fighter(W / 2 - 62 + sway + (hit ? 8 : got ? -8 : 0), 154, 1, '#e43b44', '#9e2835', !f.hMe, hit ? 2 : (!got && feint ? 1 : 0), got);
+      fighter(W / 2 + 62 + sway + (got ? -8 : hit ? 8 : 0), 154, -1, '#3b55b8', '#1b2a6b', !f.hHe, got ? 2 : (!hit && !feint ? 1 : 0), hit);
       f.fly.forEach(function (h) { R(OUT, h.x - 13, h.y - 9, 26, 18); R(h.c, h.x - 12, h.y - 8, 24, 16); R(h.s, h.x - 12, h.y - 2, 24, 4); R('#2ce8f5', h.x - 2, h.y + 4, 12, 3); });
       if (hit || got) { var bx = W / 2 + sway + (hit ? 34 : -34), by2 = 150; R('#fee761', bx - 9, by2 - 2, 18, 4); R('#fee761', bx - 2, by2 - 9, 4, 18); R('#ffffff', bx - 5, by2 - 5, 10, 10); R('#fee761', bx - 3, by2 - 3, 6, 6); }
-      T1(tr('ДРАКА'), 84, '#fee761'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('БЕЙ ТОЙ РУКОЙ, ЧТО ГОРИТ'), W / 2, 110);
+      T1(tr('ДРАКА'), 74, '#fee761'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('БЕЙ ТОЙ РУКОЙ, ЧТО ГОРИТ'), W / 2, 98);
       var act = !f.done && f.beat <= f.win0; [['L', 12 - EX, tr('ЛЕВОЙ')], ['R', W / 2 + 4, tr('ПРАВОЙ')]].forEach(function (b) { var on = f.side === b[0], bw2 = W / 2 - 16 + EX; R(OUT, b[1] - 3, 327, bw2 + 6, 86); R(on ? (act ? '#fee761' : '#8a6a2a') : '#262b44', b[1], 330, bw2, 80); cx.font = '10px "Press Start 2P", monospace'; cx.fillStyle = on ? OUT : '#5a6988'; cx.fillText(b[2], b[1] + bw2 / 2, 364); });
       cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#63c74d'; cx.fillText(tr('ПОПАЛ') + ' ' + f.hits, 90, 300); cx.fillStyle = '#e43b44'; cx.fillText(tr('МИМО') + ' ' + f.miss, 230, 300);
       R('#262b44', 60, 430, 200, 8); R('#fee761', 60, 430, Math.max(0, 200 * f.t / 9.5), 8); }
