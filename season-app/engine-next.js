@@ -10,7 +10,7 @@
   // откуда начинается атака: у центра; пока идёт обучение первого матча, сразу в зоне, чтобы ворота были видны
   function SY() { return WH() > H && G && G.lesson >= 9 ? (M && M.id === 1 ? 440 : WH() - 120) : 320; }
   // настройки баланса: одна таблица, по одному числу на матч там, где матчи различаются
-  var T = { cleanK: 0.571, topK: 1, paceL: 1.25, rateL: 2.45, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
+  var T = { cleanK: 0.686, topK: 1, paceL: 1.25, rateL: 2.45, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
     slapSp: 0.06, seenAdd: 10, dSpread: 1.0, fSpread: 0.85, dTop: 0.7, pierce: 0, dFar: 1.3, dSlap: 1, segT: [25, 35, 35, 35], paceK: [1.3, 1.25, 1.3, 1], chaseM: [null, [0, 28, 32], [26, 32, 36], null] };
   window.__seasonTune = T;
   function tv(k) { var a = T[k]; if (M.tune && k in M.tune) return M.tune[k]; return M.id - 1 < a.length ? a[M.id - 1] : a[a.length - 1]; }
@@ -459,14 +459,14 @@
   /* ---------- провокация и шуточная драка: раз за матч, начать её сам игрок не может, только ответить ---------- */
   var FB = { x: 70, y: 318, w: 180, h: 54 };
   function fightStart() { var g = G; g.fightDone = true; g.fight = { ph: 'prov', t: 3.6, calm: 0 }; g.heat = Math.max(g.heat, 0.8); g.shake = 0.5; PL = PR = null; breathSound(false); SFX.bad(); buzz([40, 30, 40]); log(M.id, 'fight_prov'); }
-  function fightAnswer() { var g = G, f = g.fight; f.ph = 'brawl'; f.t = 9.5; f.beat = 0; f.n = 0; f.len = 0.64; f.fly = []; f.hMe = false; f.hHe = false; f.side = Math.random() < 0.5 ? 'L' : 'R'; f.done = false; f.hits = 0; f.miss = 0; f.win0 = f.len * (1 - 0.5 * g.heat); PL = PR = null; SFX.shot(); buzz(30); }
+  function fightAnswer() { var g = G, f = g.fight; f.ph = 'brawl'; f.t = 9.5; f.beat = 0; f.n = 0; f.len = 0.64; f.fly = []; f.hMe = false; f.hHe = false; f.side = Math.random() < 0.5 ? 'L' : 'R'; f.done = false; f.hits = 0; f.miss = 0; f.win0 = f.len * (1 - 0.3 * g.heat); PL = PR = null; SFX.shot(); buzz(30); }
   function fightTap(q) { var g = G, f = g.fight;
     if (f.ph === 'prov') { if (q[0] > FB.x && q[0] < FB.x + FB.w && q[1] > FB.y && q[1] < FB.y + FB.h) { fightAnswer(); return true; } return false; }
     if (f.ph === 'brawl') { var side = (q[0] < W / 2) ? 'L' : 'R'; if (!f.done && side === f.side && f.beat <= f.win0) { f.hits++; f.done = true; f.pop = 0.22; f.ouch = 0; SFX.post(); buzz(15); } else if (!f.done) { f.miss++; f.done = true; f.ouch = 0.22; f.pop = 0; buzz(8); } return true; }
     return true; }
   function fightEnd(kind) { var g = G, f = g.fight; f.ph = 'out'; f.t = 2.6; f.res = kind; PL = PR = null;
     if (kind === 'walk') { g.heat = Math.max(0, g.heat - 0.45); g.gheat = Math.min(1, g.gheat + 0.3); S.trust = Math.min(3, (S.trust || 0) + 1); SFX.full(); }
-    else { S.trust = Math.max(0, (S.trust || 0) - 1); S.room = Math.min(3, (S.room || 0) + 1); g.t = Math.min(g.segLen - 1, g.t + 6); g.press = Math.min(0.95, g.press + 0.25);
+    else { S.trust = Math.max(0, (S.trust || 0) - 1); S.room = Math.min(3, (S.room || 0) + 1); g.t = Math.min(g.segLen - 1, g.t + 6); g.press = Math.min(0.95, g.press + 0.12);
       if (kind === 'win') { g.heat = Math.min(g.heat, 0.4); g.gheat = Math.min(1, g.gheat + 0.5); SFX.top(); } else { g.heat = 1; SFX.riv(); } }
     save(); log(M.id, 'fight', { r: kind, hits: f.hits || 0 }); }
   function fightStep(dt) { var g = G, f = g.fight; g.T += dt; if (g.shake > 0) g.shake -= dt; g.parts.forEach(function (q) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 520 * dt; q.l -= dt; }); g.parts = g.parts.filter(function (q) { return q.l > 0; });
@@ -476,7 +476,7 @@
     else if (f.ph === 'brawl') { f.beat += dt; if (f.pop > 0) f.pop -= dt; if (f.ouch > 0) f.ouch -= dt; f.knock = (f.knock || 0) + dt; if (f.knock >= 0.29) { f.knock = 0; SFX.pass(); }
       if (!f.hHe && f.hits >= 4) { f.hHe = true; f.fly.push({ x: W / 2 + 70, y: 150, vx: 46, vy: -300, c: '#f4f4f4', s: '#3b55b8' }); SFX.post(); }
       if (!f.hMe && f.miss >= 4) { f.hMe = true; f.fly.push({ x: W / 2 - 70, y: 150, vx: -46, vy: -300, c: '#f4f4f4', s: '#e43b44' }); SFX.post(); }
-      f.fly.forEach(function (h) { if (h.rest) return; h.x += h.vx * dt; h.y += h.vy * dt; h.vy += 900 * dt; if (h.y > 276) { h.y = 276; if (Math.abs(h.vy) < 120) { h.rest = true; } else { h.vy = -h.vy * 0.45; h.vx *= 0.6; } } }); if (f.beat >= f.len) { if (!f.done) { f.miss++; f.ouch = 0.22; f.pop = 0; } f.n++; f.len = Math.max(0.4, 0.64 - 0.016 * f.n); f.win0 = f.len * (1 - 0.5 * g.heat); f.beat = 0; f.done = false; f.side = f.side === 'L' ? 'R' : 'L'; if (Math.random() < 0.3) f.side = f.side === 'L' ? 'R' : 'L'; } if (f.t <= 0) return fightEnd(f.hits >= Math.ceil((f.hits + f.miss) * 0.55) && f.hits >= 5 ? 'win' : 'lose'); }
+      f.fly.forEach(function (h) { if (h.rest) return; h.x += h.vx * dt; h.y += h.vy * dt; h.vy += 900 * dt; if (h.y > 276) { h.y = 276; if (Math.abs(h.vy) < 120) { h.rest = true; } else { h.vy = -h.vy * 0.45; h.vx *= 0.6; } } }); if (f.beat >= f.len) { if (!f.done) { f.miss++; f.ouch = 0.22; f.pop = 0; } f.n++; f.len = Math.max(0.4, 0.64 - 0.016 * f.n); f.win0 = f.len * (1 - 0.3 * g.heat); f.beat = 0; f.done = false; f.side = f.side === 'L' ? 'R' : 'L'; if (Math.random() < 0.3) f.side = f.side === 'L' ? 'R' : 'L'; } if (f.t <= 0) return fightEnd(f.hits >= Math.ceil((f.hits + f.miss) * 0.45) && f.hits >= 5 ? 'win' : 'lose'); }
     else if (f.t <= 0) { var r = f.res; g.fight = null; if (r !== 'walk') { g.pause = 3.6; g.pauseText = ['УДАЛЕНИЕ', 'Оба на скамейке штрафников. Команда играла без тебя: шесть секунд матча ушли, соперник давил. Доверие тренера ниже, раздевалка это запомнит.']; } } }
   // боец крупным планом: без клюшки и перчаток, одна рука держит соперника за свитер, вторая бьёт. dir: 1 смотрит вправо, -1 влево
   function fighter(x, y, dir, col, dark, helm, punch, hurt) {
@@ -797,7 +797,7 @@
       { label: 'ДО ПОЛУНОЧИ РАЗБИРАЮ СВОИ ОШИБКИ', dots: [['Голова', 1], ['Доверие', 1]], vals: ['Упорство', 'Честность'], apply: function () { preSet(6, { heat: 0.2, breathK: 1.1 }); S.trust = Math.min(3, S.trust + 1); return ['Доверие +1: утром тренер увидел твои вопросы', 'Но голова тёплая и выдох длиннее']; } }], done, 'МАТЧ 6 · НАКАНУНЕ'); } });
   MATCHES.push({ id: 7, name: 'ДЕРБИ', team: 'Докеры', rival: 'Провокатор и Горячий', fight: true, oneT: true,
     about: 'Городское дерби: «Докеры» тоже из Ледогорска. Главный матч месяца. Три отрезка, три разных условия, и никто не подсказывает. В воротах по очереди Провокатор и Горячий.',
-    g: PROVOK, segG: [PROVOK, HOT, HOT], noise: [1, 0, 1], noHints: true, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 16, rateK: 1.0, push: 0.22, goalPush: 0.05, gsp: 1.05, segT: 35, paceK: 1.3, chaseM: null },
+    g: PROVOK, segG: [PROVOK, HOT, HOT], noise: [1, 0, 1], noHints: true, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 16, rateK: 0.87, push: 0.22, goalPush: 0.05, gsp: 1.05, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'В каждом отрезке первый бросок был с выдохом', s3: function (r) { return r.firstAll; },
     dec: { 1: { key: 'partner', q: 'Партнёр ошибся, и вам забили. Он садится рядом и молчит.', opts: function () { return [
       { label: '«ЗАБУДЬ. СЛЕДУЮЩАЯ СМЕНА НАША»', dots: [['Раздевалка', 2]], vals: ['Верность команде', 'Уважение', 'Спокойствие', 'Смирение'], apply: function () { S.room = Math.min(3, S.room + 1); G.fast = true; return ['Раздевалка +1', 'Партнёр ожил: пас идёт быстрее']; } },
