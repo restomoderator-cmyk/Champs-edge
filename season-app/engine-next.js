@@ -10,7 +10,7 @@
   // откуда начинается атака: у центра; пока идёт обучение первого матча, сразу в зоне, чтобы ворота были видны
   function SY() { return WH() > H && G && G.lesson >= 9 ? (M && M.id === 1 ? 440 : WH() - 120) : 320; }
   // настройки баланса: одна таблица, по одному числу на матч там, где матчи различаются
-  var T = { cleanK: 0.571, topK: 1, paceL: 1.25, rateL: 2.3, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
+  var T = { cleanK: 0.571, topK: 1, paceL: 1.25, rateL: 2.45, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
     slapSp: 0.06, seenAdd: 10, dSpread: 1.0, fSpread: 0.85, dTop: 0.7, pierce: 0, dFar: 1.3, dSlap: 1, segT: [25, 35, 35, 35], paceK: [1.3, 1.25, 1.3, 1], chaseM: [null, [0, 28, 32], [26, 32, 36], null] };
   window.__seasonTune = T;
   function tv(k) { var a = T[k]; if (M.tune && k in M.tune) return M.tune[k]; return M.id - 1 < a.length ? a[M.id - 1] : a[a.length - 1]; }
@@ -73,7 +73,7 @@
     g.empty = !!M.emptyNet && i === 2 && g.you > g.riv; if (g.empty) g.rate *= 1.6;
     if (g.sit || g.empty) log(M.id, 'sit', { s: g.empty ? 'empty' : g.sit });
     if (g.sit || g.empty) { g.msg = g.empty ? 'ПУСТЫЕ ВОРОТА' : g.sit === 'pp' ? 'БОЛЬШИНСТВО' : 'МЕНЬШИНСТВО'; g.msgC = '#fee761'; g.msgT = 2.4; g.sub = g.empty ? 'СОПЕРНИК СНЯЛ ВРАТАРЯ И ДАВИТ СИЛЬНЕЕ' : g.sit === 'pp' ? 'У НИХ НА ОДНОГО МЕНЬШЕ: ПАС БЫСТРЕЕ' : 'ВАС МЕНЬШЕ: ШАЙБА РЕДКО, ДАВЛЕНИЕ ВЫШЕ'; }
-    g.ch = null; marks(); g.puck = { s: 'in', t: 0.6 }; g.breath = 0; g.breathing = false; g.wasFull = false; g.over = 0; g.px = 160; g.py = SY(); g.mate = { x: WH() > H ? 290 + EX : 30, y: SY() > 320 ? WH() - 200 : 300 }; g.cam = null; g.playSeg++; PL = PR = null;
+    g.ch = null; marks(); g.puck = { s: 'in', t: 0.6 }; g.breath = 0; g.breathing = false; g.wasFull = false; g.over = 0; g.px = 160; g.py = SY(); g.mate = SY() > 600 ? { x: 30 - EX + Math.random() * (260 + 2 * EX), y: WH() - 96 + Math.random() * 62 } : { x: WH() > H ? 290 + EX : 30, y: SY() > 320 ? WH() - 200 : 300 }; g.cam = null; g.playSeg++; PL = PR = null;
   }
   function fit() { var w = document.getElementById('wrap'); if (!w || !cv) return; var cs = getComputedStyle(w), aw = w.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2, ah = w.clientHeight - parseFloat(cs.paddingBottom) - 8, k = Math.max(0.4, Math.min(aw / W, ah / H)); EX = SIM ? 0 : Math.max(0, Math.min(28, Math.floor((aw - W * k) / (2 * k)))); if (cv.width !== W + 2 * EX) cv.width = W + 2 * EX; cv.style.width = Math.floor((W + 2 * EX) * k) + 'px'; cv.style.height = Math.floor(H * k) + 'px'; }
   window.addEventListener('resize', fit);
@@ -219,7 +219,7 @@
     if (MF.node) MF.node.g.gain.value = G && (G.breathing || G.wasFull) ? 0.12 : 0.5;
     return !!MF.node;
   }
-  function nextPuck(d) { G.mate = { x: WH() > H || Math.random() >= 0.5 ? 290 + EX : 30 - EX, y: (SY() > 320 ? WH() - 230 : 255) + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') * (WH() > H ? T.paceL : 1) * (G.passK || 1) * (G.flow > 0 ? 0.7 : 1) * (1 + 0.6 * (G.mheat || 0)) * (G.sit === 'pp' ? 0.85 : G.sit === 'pk' ? 1.45 : 1) }; G.ch = null; }
+  function nextPuck(d) { G.mate = SY() > 600 ? { x: 30 - EX + Math.random() * (260 + 2 * EX), y: WH() - 96 + Math.random() * 62 } : { x: WH() > H || Math.random() >= 0.5 ? 290 + EX : 30 - EX, y: (SY() > 320 ? WH() - 230 : 255) + Math.random() * 95 }; G.puck = { s: 'in', t: (d || 1.5) * (G.fast ? 0.65 : 1) * (G.lastSlap ? 1.6 : 1) * tv('paceK') * (WH() > H ? T.paceL : 1) * (G.passK || 1) * (G.flow > 0 ? 0.7 : 1) * (1 + 0.6 * (G.mheat || 0)) * (G.sit === 'pp' ? 0.85 : G.sit === 'pk' ? 1.45 : 1) }; G.ch = null; }
   function coach(title, text) { var c = els.coach; if (!title) { c.hidden = true; return; } c.className = 'coach' + (G && G.lesson >= 9 ? ' coach--low' : ''); title = hands(title); text = hands(text); if (c.getAttribute('data-k') !== title) { c.setAttribute('data-k', title); c.innerHTML = '<b>' + title + '</b><p>' + text + '</p>'; } c.hidden = false; }
   function heatUp(v, why) { var g = G; g.heat = Math.min(1, g.heat + v); g.shake = 0.25; log(M.id, 'heat', { by: why, heat: +g.heat.toFixed(2) }); }
   // буллиты: темп соперника объявлен заранее, как и красные метки
@@ -375,10 +375,10 @@
       if (cd < 24 && !(g.grace > 0)) { PR = null; breathSound(false); return miss('ПОТЕРЯ', 'ЗАЩИТНИК ОТОБРАЛ: УЕЗЖАЙ ЛЕВЫМ ПАЛЬЦЕМ', false, 'steal'); } }
     var dg = p.s === 'ready' && !teaching ? danger() : '';
     if (dg) { PR = null; breathSound(false); return dg === 'poke' ? miss('ПОТЕРЯ', 'ВРАТАРЬ ВЫБИЛ ШАЙБУ: НЕ ЛЕЗЬ В ЕГО ЗОНУ', false, 'poke') : miss('ПОТЕРЯ', 'СЛИШКОМ БЛИЗКО К ЗАЩИТНИКУ: ОБЪЕЗЖАЙ', false, 'steal'); }
-    if (p.s === 'in' && p.t < 0.45 && p.t > 0 && !g.so && !g.safe && g.lesson >= 9 && (WH() === H || g.faceoff)) { var ik = 1 - p.t / 0.45, st2 = stick(), ipx = g.mate.x + 20 + (st2[0] - g.mate.x - 20) * ik, ipy = g.mate.y + 20 + (st2[1] - g.mate.y - 20) * ik; if (hitDef(ipx, ipy)) return miss('ПЕРЕХВАТ', 'ЗАЩИТНИК ПЕРЕХВАТИЛ ПАС: ОТКРОЙСЯ ПАРТНЁРУ', false, 'icept'); }
+    if (p.s === 'in' && p.t < 0.45 && p.t > 0 && !g.so && !g.safe && g.lesson >= 9 && (WH() === H || g.faceoff || M.id > 1)) { var ik = 1 - p.t / 0.45, st2 = stick(), ipx = g.mate.x + 20 + (st2[0] - g.mate.x - 20) * ik, ipy = g.mate.y + 20 + (st2[1] - g.mate.y - 20) * ik; if (hitDef(ipx, ipy)) return miss('ПЕРЕХВАТ', 'ЗАЩИТНИК ПЕРЕХВАТИЛ ПАС: ОТКРОЙСЯ ПАРТНЁРУ', false, 'icept'); }
     if (p.s === 'in' && M.mateHead && p.t < 0.45 && !p.rolled && !g.so) { p.rolled = true; if (g.mheat >= 0.5 && !g.safe && Math.random() < 0.4 * g.mheat) return miss('ПАС НЕТОЧНЫЙ', 'ПАРТНЁР КИПИТ: ЕГО ПАС НЕ ДОШЁЛ', true, 'badpass'); }
-    if (p.s === 'in' && WH() > H && !g.so && !p.go && p.t < 0.7) p.go = true;
-    if (p.s === 'in' && WH() > H && !g.so && !p.cut && p.t < 0.7) { p.cut = true; if (g.zoneNext) { g.zoneNext = false; var zs = Math.random() < 0.5 ? 1 : -1; g.px = 160 + zs * 76; g.py = 300; g.vx = 0; g.vy = 0; g.ax = 0; g.ay = 0; g.cam = null; g.wipe = 0.3; g.ch = null; g.mate = { x: zs > 0 ? 30 - EX : 290 + EX, y: 150 }; g.faceoff = true; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } p.t = Math.max(p.t, 1.9); if (M.oneT && !S.oneTaught) { S.oneTaught = true; save(); g.pause = 5.5; g.pauseText = ['БРОСОК В КАСАНИЕ', 'Вратарь поймал шайбу: вбрасывание в зоне. Партнёр отдаст пас из угла. Встань так, чтобы линия паса была зелёной. Правый палец оттяни заранее и держи. Шайба у тебя: сразу отпускай.']; }
+    if (p.s === 'in' && WH() > H && !g.so && !p.go && p.t < 1) p.go = true;
+    if (p.s === 'in' && WH() > H && !g.so && !p.cut && p.t < 1) { p.cut = true; if (g.zoneNext) { g.zoneNext = false; var zs = Math.random() < 0.5 ? 1 : -1; g.px = 160 + zs * 76; g.py = 300; g.vx = 0; g.vy = 0; g.ax = 0; g.ay = 0; g.cam = null; g.wipe = 0.3; g.ch = null; g.mate = { x: zs > 0 ? 30 - EX : 290 + EX, y: 150 }; g.faceoff = true; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } p.t = Math.max(p.t, 1.9); if (M.oneT && !S.oneTaught) { S.oneTaught = true; save(); g.pause = 5.5; g.pauseText = ['БРОСОК В КАСАНИЕ', 'Вратарь поймал шайбу: вбрасывание в зоне. Партнёр отдаст пас из угла. Встань так, чтобы линия паса была зелёной. Правый палец оттяни заранее и держи. Шайба у тебя: сразу отпускай.']; }
       say('ВБРАСЫВАНИЕ В ЗОНЕ', '#fee761', 1.1, M.oneT ? 'ОТКРОЙСЯ ПОД ПАС: МОЖНО В КАСАНИЕ' : 'ОТКРОЙСЯ ПОД ПАС ПАРТНЁРА'); }
       else if (Math.hypot(g.px - 160, g.py - (SY())) > 60) { g.px = 160; g.py = SY(); g.vx = 0; g.vy = 0; g.ax = 0; g.ay = -1; g.cam = null; g.wipe = 0.3; g.ch = null; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } } }
     if (p.s === 'in') { p.t -= dt; if (p.t <= 0 && !danger()) { g.puck = { s: 'ready' }; g.faceoff = false; g.recvAge = 0; if (g.safe) { g.safe = false; g.grace = 1.25; } g.recv = 0.35; SFX.pass(); buzz(10); g.clock = g.so ? 6 : CLOCK + (WH() > H ? 4 : 0); if (M.chase && M.chase[g.seg] && g.sit !== 'pp') { var sp1 = [[58, 150], [262, 150], [58, 350], [262, 350], [160, 135], [160, 355], [40, 250], [280, 250]].filter(function (q) { return Math.hypot(q[0] - g.px, q[1] - g.py) > 120; }), sq = sp1[Math.floor(Math.random() * sp1.length)] || [58, 150]; g.ch = { x: sq[0], y: sq[1], v: M.chase[g.seg] * (g.sit === 'pk' ? 1.12 : 1) }; } } }
@@ -508,7 +508,7 @@
     g.parts.forEach(function (q) { R(q.c, q.x, q.y, 3, 3); });
     if (!g.so) { cx.globalAlpha = 0.8; cx.drawImage(img('mate.png') || spr.me, Math.round(g.mate.x - 25), Math.round(g.mate.y - 27), 51, 54); cx.globalAlpha = 1;
       if (M.mateHead) { R(OUT, g.mate.x - 18, g.mate.y - 38, 36, 6); R(g.mheat >= 0.66 ? '#e43b44' : g.mheat >= 0.33 ? '#feae34' : '#63c74d', g.mate.x - 17, g.mate.y - 37, Math.max(2, 34 * Math.max(0.08, g.mheat)), 4); } }
-    if (p.s === 'in' && g.faceoff && p.t >= 0.45) { var pb = passBlocked(); cx.setLineDash([5, 5]); cx.strokeStyle = pb ? 'rgba(228,59,68,.9)' : 'rgba(99,199,77,.9)'; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(g.mate.x + 20, g.mate.y + 20); cx.lineTo(s[0], s[1]); cx.stroke(); cx.setLineDash([]); }
+    if (p.s === 'in' && (g.faceoff || (p.go && M.id > 1 && WH() > H)) && !g.so && p.t >= 0.45) { var pb = passBlocked(); cx.setLineDash([5, 5]); cx.strokeStyle = pb ? 'rgba(228,59,68,.9)' : 'rgba(99,199,77,.9)'; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(g.mate.x + 20, g.mate.y + 20); cx.lineTo(s[0], s[1]); cx.stroke(); cx.setLineDash([]); }
     if (p.s === 'in' && p.t < 0.45 && !g.so) { var pk = Math.max(0, Math.min(1, 1 - p.t / 0.45)), mx = g.mate.x + 20, my = g.mate.y + 20, qx = mx + (s[0] - mx) * pk, qy = my + (s[1] - my) * pk;
       cx.strokeStyle = 'rgba(58,68,102,.45)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(mx, my); cx.lineTo(qx, qy); cx.stroke(); puckAt(qx, qy); }
     cx.drawImage(img(S.role === 'D' ? 'hero_d.png' : 'hero_f.png') || spr.me, Math.round(g.px - 25), Math.round(g.py - 27 - jy), 51, 54);
@@ -858,7 +858,7 @@
   function simWait(g, dt) { var m = SIM.m; if (g.puck.s !== 'ready') { m.r = null; return true; } if (m.r == null) { m.r = 0.5 + Math.random() * 0.7; m.e = (Math.random() - 0.5) * 0.07; } m.r -= dt; return m.r > 0; }
   function simHold(a) { a += SIM.m.e || 0; if (!PR) PR = { id: -1, ox: 240, oy: 380, x: 240, y: 380, mv: 0, sp: 0, t0: 0 }; PR.x = PR.ox - Math.sin(a) * 50; PR.y = PR.oy + Math.cos(a) * 50; PR.mv = 0; }
   function simFire(slap) { shoot(slap); PR = null; }
-  function simGo(g, x, y) { var dx = x - g.px, dy = y - g.py, d = Math.hypot(dx, dy); SIM.man = true; if (d < 6) { SIM.ix = 0; SIM.iy = 0; return true; } var ux = dx / d, uy = dy / d, obs = g.defs.map(function (q) { return [q.x + 25 + q.v * 0.25, q.y + 15]; }); if (g.ch) obs.push([g.ch.x, g.ch.y]);
+  function simGo(g, x, y) { if (g.puck.s === 'in' && WH() > H && !g.faceoff && SY() > 600) { x = 160; y = SY(); } var dx = x - g.px, dy = y - g.py, d = Math.hypot(dx, dy); SIM.man = true; if (d < 6) { SIM.ix = 0; SIM.iy = 0; return true; } var ux = dx / d, uy = dy / d, obs = g.defs.map(function (q) { return [q.x + 25 + q.v * 0.25, q.y + 15]; }); if (g.ch) obs.push([g.ch.x, g.ch.y]);
     obs.forEach(function (o) { var ox = g.px - o[0], oy = g.py - o[1], od = Math.hypot(ox, oy) || 1; if (od < 78) { var k = (78 - od) / 78 * 2.6; ux += ox / od * k + (ox >= 0 ? 0.5 : -0.5) * k * 0.6; uy += oy / od * k * 0.5; } });
     var ul = Math.hypot(ux, uy) || 1; SIM.ix = ux / ul; SIM.iy = uy / ul; return false; }
   var BOTS = {
