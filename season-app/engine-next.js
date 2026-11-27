@@ -10,7 +10,7 @@
   // откуда начинается атака: у центра; пока идёт обучение первого матча, сразу в зоне, чтобы ворота были видны
   function SY() { return WH() > H && G && G.lesson >= 9 ? (M && M.id === 1 ? 440 : WH() - 120) : 320; }
   // настройки баланса: одна таблица, по одному числу на матч там, где матчи различаются
-  var T = { cleanK: 0.43, topK: 1, paceL: 1.25, rateL: 3.3, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
+  var T = { cleanK: 1, topK: 1, paceL: 1.25, rateL: 2.5, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
     slapSp: 0.06, seenAdd: 10, dSpread: 1.0, fSpread: 0.85, dTop: 0.7, pierce: 0, dFar: 1.3, dSlap: 1, segT: [25, 35, 35, 35], paceK: [1.3, 1.25, 1.3, 1], chaseM: [null, [0, 28, 32], [26, 32, 36], null] };
   window.__seasonTune = T;
   function tv(k) { var a = T[k]; if (M.tune && k in M.tune) return M.tune[k]; return M.id - 1 < a.length ? a[M.id - 1] : a[a.length - 1]; }
@@ -324,7 +324,7 @@
       else if (g.seg === 3) { log(M.id, 'shootout'); g.so = { n: 0, you: 0, riv: 0 }; g.t = 0; g.defs = []; g.ch = null; g.puck = { s: 'wait' }; marks(); g.pause = 3.4; g.pauseText = ['БУЛЛИТЫ', 'По три попытки. Твой вратарь пропустит первую и возьмёт две следующие. Забей больше одной.']; g.afterPause = soShot; }
       else { g.nextSeg = g.seg + 1; g.pause = 1.0; g.pauseText = ['СКАМЕЙКА', '']; }
       return; }
-    if (!teaching && !g.so && !g.soPend && live) g.press += g.rate * (M.id === 1 ? (WH() > H ? 2.8 : 1) : (WH() > H ? T.rateL : 1) * (0.85 + HK() * g.heat)) * dt; if (g.heat >= 0.5) g.hotPress = (g.hotPress || 0) + dt;
+    if (!teaching && !g.so && !g.soPend && live) g.press += g.rate * (M.id === 1 ? (WH() > H ? 1.2 : 1) : (WH() > H ? T.rateL : 1) * (0.85 + HK() * g.heat)) * dt; if (g.heat >= 0.5) g.hotPress = (g.hotPress || 0) + dt;
     if (g.press >= 1 && !g.so && !g.soPend) { g.press = 0; g.flow = 0; g.topRow = 0; if (M.mateHead) g.mheat = Math.min(1, g.mheat + 0.4); g.riv++; g.rivGoals.push({ at: g.T, cooled: false }); g.firstAfter = null; heatUp(0.3, 'rival_goal'); log(M.id, 'rival_goal'); say('СОПЕРНИК ЗАБИЛ', '#e43b44', 1.6, g.hotPress > 2 && HK() > 0 ? 'ГОРЯЧАЯ ГОЛОВА УСКОРИЛА ЕГО ДАВЛЕНИЕ' : 'ГОЛОВА НАГРЕЛАСЬ: ЛИНИЯ ШИРЕ'); g.hotPress = 0; SFX.riv();
       if (g.seg === 3) { PR = null; breathSound(false); g.puck = { s: 'wait' }; g.soPend = { t: 1.4, end: true, lose: true }; return; } }
     if (g.flow > 0) g.flow -= dt; g.recvAge += dt; if (M.mateHead) { g.mheat = Math.max(0, g.mheat - 0.02 * dt); if (g.mheat >= 0.5) g.mateHot += dt; }
