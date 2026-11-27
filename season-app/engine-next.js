@@ -459,10 +459,10 @@
   /* ---------- провокация и шуточная драка: раз за матч, начать её сам игрок не может, только ответить ---------- */
   var FB = { x: 70, y: 318, w: 180, h: 54 };
   function fightStart() { var g = G; g.fightDone = true; g.fight = { ph: 'prov', t: 3.6, calm: 0 }; g.heat = Math.max(g.heat, 0.8); g.shake = 0.5; PL = PR = null; breathSound(false); SFX.bad(); buzz([40, 30, 40]); log(M.id, 'fight_prov'); }
-  function fightAnswer() { var g = G, f = g.fight; f.ph = 'brawl'; f.t = 9.5; f.beat = 0; f.n = 0; f.len = 0.64; f.side = Math.random() < 0.5 ? 'L' : 'R'; f.done = false; f.hits = 0; f.miss = 0; f.win0 = f.len * (1 - 0.5 * g.heat); PL = PR = null; SFX.shot(); buzz(30); }
+  function fightAnswer() { var g = G, f = g.fight; f.ph = 'brawl'; f.t = 9.5; f.beat = 0; f.n = 0; f.len = 0.64; f.fly = []; f.hMe = false; f.hHe = false; f.side = Math.random() < 0.5 ? 'L' : 'R'; f.done = false; f.hits = 0; f.miss = 0; f.win0 = f.len * (1 - 0.5 * g.heat); PL = PR = null; SFX.shot(); buzz(30); }
   function fightTap(q) { var g = G, f = g.fight;
     if (f.ph === 'prov') { if (q[0] > FB.x && q[0] < FB.x + FB.w && q[1] > FB.y && q[1] < FB.y + FB.h) { fightAnswer(); return true; } return false; }
-    if (f.ph === 'brawl') { var side = (q[0] < W / 2) ? 'L' : 'R'; if (!f.done && side === f.side && f.beat <= f.win0) { f.hits++; f.done = true; f.pop = 0.2; SFX.post(); buzz(15); burst(160 + (Math.random() - 0.5) * 60, 200, 5, ['#fee761', '#ffffff']); } else if (!f.done) { f.miss++; f.done = true; f.ouch = 0.2; buzz(8); } return true; }
+    if (f.ph === 'brawl') { var side = (q[0] < W / 2) ? 'L' : 'R'; if (!f.done && side === f.side && f.beat <= f.win0) { f.hits++; f.done = true; f.pop = 0.22; f.ouch = 0; SFX.post(); buzz(15); } else if (!f.done) { f.miss++; f.done = true; f.ouch = 0.22; f.pop = 0; buzz(8); } return true; }
     return true; }
   function fightEnd(kind) { var g = G, f = g.fight; f.ph = 'out'; f.t = 2.6; f.res = kind; PL = PR = null;
     if (kind === 'walk') { g.heat = Math.max(0, g.heat - 0.45); g.gheat = Math.min(1, g.gheat + 0.3); S.trust = Math.min(3, (S.trust || 0) + 1); SFX.full(); }
@@ -473,8 +473,30 @@
     f.t -= dt;
     if (f.ph === 'prov') { var held = PR && Math.hypot(PR.ox - PR.x, PR.oy - PR.y) >= 12; if (held) { f.calm += dt; if (!f.snd) { f.snd = true; breathSound(true); } } else { f.calm = Math.max(0, f.calm - dt * 2); if (f.snd) { f.snd = false; breathSound(false); } }
       if (f.calm >= 1.3) { breathSound(false); return fightEnd('walk'); } if (f.t <= 0) { breathSound(false); return fightEnd('walk'); } }
-    else if (f.ph === 'brawl') { f.beat += dt; if (f.pop > 0) f.pop -= dt; if (f.ouch > 0) f.ouch -= dt; if (f.beat >= f.len) { if (!f.done) f.miss++; f.n++; f.len = Math.max(0.4, 0.64 - 0.016 * f.n); f.win0 = f.len * (1 - 0.5 * g.heat); f.beat = 0; f.done = false; f.side = f.side === 'L' ? 'R' : 'L'; if (Math.random() < 0.3) f.side = f.side === 'L' ? 'R' : 'L'; } if (f.t <= 0) return fightEnd(f.hits >= Math.ceil((f.hits + f.miss) * 0.55) && f.hits >= 5 ? 'win' : 'lose'); }
+    else if (f.ph === 'brawl') { f.beat += dt; if (f.pop > 0) f.pop -= dt; if (f.ouch > 0) f.ouch -= dt;
+      if (!f.hHe && f.hits >= 4) { f.hHe = true; f.fly.push({ x: W / 2 + 70, y: 150, vx: 46, vy: -300, c: '#f4f4f4', s: '#3b55b8' }); SFX.post(); }
+      if (!f.hMe && f.miss >= 4) { f.hMe = true; f.fly.push({ x: W / 2 - 70, y: 150, vx: -46, vy: -300, c: '#f4f4f4', s: '#e43b44' }); SFX.post(); }
+      f.fly.forEach(function (h) { if (h.rest) return; h.x += h.vx * dt; h.y += h.vy * dt; h.vy += 900 * dt; if (h.y > 276) { h.y = 276; if (Math.abs(h.vy) < 120) { h.rest = true; } else { h.vy = -h.vy * 0.45; h.vx *= 0.6; } } }); if (f.beat >= f.len) { if (!f.done) { f.miss++; f.ouch = 0.22; f.pop = 0; } f.n++; f.len = Math.max(0.4, 0.64 - 0.016 * f.n); f.win0 = f.len * (1 - 0.5 * g.heat); f.beat = 0; f.done = false; f.side = f.side === 'L' ? 'R' : 'L'; if (Math.random() < 0.3) f.side = f.side === 'L' ? 'R' : 'L'; } if (f.t <= 0) return fightEnd(f.hits >= Math.ceil((f.hits + f.miss) * 0.55) && f.hits >= 5 ? 'win' : 'lose'); }
     else if (f.t <= 0) { var r = f.res; g.fight = null; if (r !== 'walk') { g.pause = 3.6; g.pauseText = ['УДАЛЕНИЕ', 'Оба на скамейке штрафников. Команда играла без тебя: шесть секунд матча ушли, соперник давил. Доверие тренера ниже, раздевалка это запомнит.']; } } }
+  // боец крупным планом: без клюшки и перчаток, одна рука держит соперника за свитер, вторая бьёт. dir: 1 смотрит вправо, -1 влево
+  function fighter(x, y, dir, col, dark, helm, punch, hurt) {
+    var u = 4; function P(c, rx, ry, w, h) { R(c, dir > 0 ? x + rx * u : x - (rx + w) * u, y + ry * u, w * u, h * u); }
+    var hd = hurt ? -2 : 0, lean = hurt ? -1 : 0;
+    P('rgba(40,60,100,.35)', -8, 30, 16, 2);
+    P(OUT, -6, 22, 5, 7); P(OUT, 0, 22, 5, 7); P('#ffffff', -5, 22, 3, 6); P('#ffffff', 1, 22, 3, 6); P(col, -5, 24, 3, 1); P(col, 1, 24, 3, 1); P(OUT, -7, 28, 6, 2); P(OUT, 0, 28, 6, 2); P('#c0cbdc', -7, 30, 7, 1); P('#c0cbdc', 0, 30, 7, 1);
+    P(OUT, -7, 16, 13, 7); P('#262b44', -6, 17, 11, 5); P('#3a4466', -6, 17, 11, 1);
+    P(OUT, -8 + lean, 7, 15, 11); P(col, -7 + lean, 8, 13, 9); P(dark, -7 + lean, 8, 3, 9); P('#ffffff', -7 + lean, 14, 13, 2);
+    // дальняя рука: замах или удар
+    if (punch === 2) { P(OUT, 3, 5, 12, 5); P(col, 4, 6, 8, 3); P('#f2c9a0', 12, 6, 3, 3); }
+    else if (punch === 1) { P(OUT, -10, 6, 6, 6); P(col, -9, 7, 4, 4); P('#f2c9a0', -10, 5, 3, 3); }
+    else { P(OUT, -9, 9, 5, 7); P(col, -8, 10, 3, 5); P('#f2c9a0', -8, 14, 3, 2); }
+    // ближняя рука держит за свитер
+    P(OUT, 4, 10, 10, 5); P(col, 5, 11, 7, 3); P('#f2c9a0', 12, 11, 2, 3);
+    // голова: в шлеме или уже без него
+    P(OUT, -6 + hd, -2, 11, 10);
+    if (helm) { P('#f4f4f4', -5 + hd, -1, 9, 5); P(col, -5 + hd, 1, 9, 1); P('#c0cbdc', -5 + hd, 3, 4, 3); P('#f2c9a0', -1 + hd, 4, 5, 3); P(OUT, 2 + hd, 4, 1, 1); P('#2ce8f5', 0 + hd, 3, 5, 1); }
+    else { P('#f2c9a0', -5 + hd, 1, 9, 6); P('#b86f50', -5 + hd, -1, 9, 3); P('#b86f50', -5 + hd, 1, 2, 3); P('#b86f50', -3 + hd, -2, 2, 1); P('#b86f50', 1 + hd, -2, 2, 1); P(OUT, 1 + hd, 3, 1, 1); P(OUT, hurt ? 1 + hd : 0 + hd, 5, hurt ? 2 : 3, 1); }
+  }
   function fightDraw() { var g = G, f = g.fight, me = img(S.role === 'D' ? 'hero_d.png' : 'hero_f.png') || spr.me, he = img('defender.png') || spr.def;
     cx.fillStyle = 'rgba(14,12,24,.72)'; cx.fillRect(-EX, 0, W + 2 * EX, H); cx.textAlign = 'center';
     function T1(t, y, c, sz) { cx.font = (sz || 14) + 'px "Press Start 2P", monospace'; cx.fillStyle = OUT; cx.fillText(t, W / 2 + 2, y + 2); cx.fillStyle = c; cx.fillText(t, W / 2, y); }
@@ -484,10 +506,15 @@
       var pk = 1 + 0.06 * Math.sin(g.T * 10), bw = FB.w * pk, bh = FB.h * pk; R(OUT, W / 2 - bw / 2 - 4, FB.y + FB.h / 2 - bh / 2 - 4, bw + 8, bh + 8); R(Math.floor(g.T * 5) % 2 ? '#e43b44' : '#f6757a', W / 2 - bw / 2, FB.y + FB.h / 2 - bh / 2, bw, bh); cx.font = '14px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('ОТВЕТИТЬ'), W / 2, FB.y + 20);
       R('#262b44', 60, 290, 200, 8); R('#fee761', 60, 290, Math.max(0, 200 * f.t / 3.6), 8);
       if (f.calm > 0) { cx.strokeStyle = '#2ce8f5'; cx.lineWidth = 6; cx.beginPath(); cx.arc(W / 2, 204, 74, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, f.calm / 1.3)); cx.stroke(); } }
-    else if (f.ph === 'brawl') { var jx = Math.round(Math.sin(g.T * 40) * 3), jy = Math.round(Math.cos(g.T * 33) * 3);
-      for (var i = 0; i < 9; i++) { var a = i * 0.7 + g.T * 3, rr = 34 + 10 * Math.sin(g.T * 9 + i); cx.fillStyle = i % 2 ? '#c0cbdc' : '#ffffff'; cx.beginPath(); cx.arc(W / 2 + jx + Math.cos(a) * 30, 204 + jy + Math.sin(a) * 22, rr, 0, 6.3); cx.fill(); }
-      [[-52, -30, '#b86f50', 30, 4], [40, -40, '#b86f50', 4, 30], [-58, 28, '#e43b44', 16, 12], [44, 30, '#3b55b8', 16, 12], [0, -58, '#feae34', 12, 10]].forEach(function (o, k) { var w = Math.sin(g.T * 14 + k * 2) * 8; R(OUT, W / 2 + o[0] + w - 1, 204 + o[1] - w - 1, o[3] + 2, o[4] + 2); R(o[2], W / 2 + o[0] + w, 204 + o[1] - w, o[3], o[4]); });
-      for (var st = 0; st < 5; st++) { var sa = g.T * 4 + st * 1.26; R('#fee761', W / 2 + Math.cos(sa) * 84 - 3, 204 + Math.sin(sa) * 60 - 3, 6, 6); R('#ffffff', W / 2 + Math.cos(sa) * 84 - 1, 204 + Math.sin(sa) * 60 - 5, 2, 10); }
+    else if (f.ph === 'brawl') { var sway = Math.round(Math.sin(g.T * 2.6) * 7), hit = f.pop > 0, got = f.ouch > 0, feint = Math.floor(g.T * 3) % 2;
+      // пятно света на льду, брошенные перчатки и клюшки
+      cx.fillStyle = 'rgba(223,233,245,.92)'; cx.beginPath(); cx.ellipse(W / 2, 222, 132 + EX, 78, 0, 0, 6.3); cx.fill(); cx.fillStyle = 'rgba(160,185,215,.5)'; cx.beginPath(); cx.ellipse(W / 2, 262, 96, 12, 0, 0, 6.3); cx.fill();
+      [[30, 268, '#b86f50', 52, 4], [240, 276, '#b86f50', 50, 4], [34, 246, '#e43b44', 14, 11], [52, 282, '#e43b44', 14, 11], [270, 250, '#3b55b8', 14, 11], [252, 286, '#3b55b8', 14, 11]].forEach(function (o) { R(OUT, o[0] - 1, o[1] - 1, o[3] + 2, o[4] + 2); R(o[2], o[0], o[1], o[3], o[4]); });
+      
+      fighter(W / 2 - 62 + sway + (hit ? 8 : got ? -8 : 0), 150, 1, '#e43b44', '#9e2835', !f.hMe, hit ? 2 : (!got && feint ? 1 : 0), got);
+      fighter(W / 2 + 62 + sway + (got ? -8 : hit ? 8 : 0), 150, -1, '#3b55b8', '#1b2a6b', !f.hHe, got ? 2 : (!hit && !feint ? 1 : 0), hit);
+      f.fly.forEach(function (h) { R(OUT, h.x - 13, h.y - 9, 26, 18); R(h.c, h.x - 12, h.y - 8, 24, 16); R(h.s, h.x - 12, h.y - 2, 24, 4); R('#2ce8f5', h.x - 2, h.y + 4, 12, 3); });
+      if (hit || got) { var bx = W / 2 + sway + (hit ? 34 : -34), by2 = 150; R('#fee761', bx - 9, by2 - 2, 18, 4); R('#fee761', bx - 2, by2 - 9, 4, 18); R('#ffffff', bx - 5, by2 - 5, 10, 10); R('#fee761', bx - 3, by2 - 3, 6, 6); }
       T1(tr('ДРАКА'), 84, '#fee761'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('БЕЙ ТОЙ РУКОЙ, ЧТО ГОРИТ'), W / 2, 110);
       var act = !f.done && f.beat <= f.win0; [['L', 12 - EX, tr('ЛЕВОЙ')], ['R', W / 2 + 4, tr('ПРАВОЙ')]].forEach(function (b) { var on = f.side === b[0], bw2 = W / 2 - 16 + EX; R(OUT, b[1] - 3, 327, bw2 + 6, 86); R(on ? (act ? '#fee761' : '#8a6a2a') : '#262b44', b[1], 330, bw2, 80); cx.font = '10px "Press Start 2P", monospace'; cx.fillStyle = on ? OUT : '#5a6988'; cx.fillText(b[2], b[1] + bw2 / 2, 364); });
       cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#63c74d'; cx.fillText(tr('ПОПАЛ') + ' ' + f.hits, 90, 300); cx.fillStyle = '#e43b44'; cx.fillText(tr('МИМО') + ' ' + f.miss, 230, 300);
