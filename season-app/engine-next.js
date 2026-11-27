@@ -2,6 +2,8 @@
   var W = 320, H = 470, NET_L = 110, NET_R = 210, GW = 44, SEG = 35, FLY = 620, GOAL_Y = 84, BREATH = 0.9, CLOCK = 9, ZONE = 392;
   // длинная площадка, камера едет за игроком. Короткая включается в настройках
   var EX = 0;
+  // насколько горячая голова ускоряет давление соперника: в первых матчах никак, дальше сильнее
+  function HK() { return M.id <= 2 ? 0 : M.id === 3 ? 0.3 : M.id === 4 ? 0.5 : 0.7; }
   function WH() { return S.short ? H : 800; }
   // на время тестов открыты только первые матчи: так правки и проверки идут быстрее. Остальные лежат в коде
   var LIMIT = S.allm ? 99 : 8;
@@ -12,7 +14,7 @@
     slapSp: 0.06, seenAdd: 10, dSpread: 1.0, fSpread: 0.85, dTop: 0.7, pierce: 0, dFar: 1.3, dSlap: 1, segT: [25, 35, 35, 35], paceK: [1.3, 1.25, 1.3, 1], chaseM: [null, [0, 28, 32], [26, 32, 36], null] };
   window.__seasonTune = T;
   function tv(k) { var a = T[k]; if (M.tune && k in M.tune) return M.tune[k]; return M.id - 1 < a.length ? a[M.id - 1] : a[a.length - 1]; }
-  var G = null, M = null, cv, cx, raf = 0, prev = 0, spr = {}, els = {}, PL = null, PR = null, KEYS = {}, lastL = 0;
+  var G = null, M = null, cv, cx, raf = 0, prev = 0, spr = {}, els = {}, PL = null, PR = null, KEYS = {}, lastL = 0, PL_word = 0;
   function mk(path) { var c = document.createElement('canvas'); c.width = 34; c.height = 36; drawHockeyPlayer(c.getContext('2d'), 2, 3, path, 0, false); return c; }
   function startMatch(id) {
     M = MATCHES[id - 1]; PL = PR = null; if (M.pickG) { var pg = M.pickG(); M.g = pg.g; M.rival = pg.name; } if (tv('chaseM')) M.chase = tv('chaseM');
@@ -242,7 +244,7 @@
   function isTop() { return G.wasFull && G.over <= topW(); }
   function shoot(slap) {
     var g = G, p = g.puck; if (p.s !== 'ready' || g.pause > 0) return;
-    var s = stick(), A = aim(); slap = !!slap && !A.armed; var one = !!M.oneT && !slap && A.armed && g.recvAge < 0.45; var far = S.role === 'D' && s[1] > 262, fs = slap || one ? 1.5 : far ? T.dFar : 1; g.lastSlap = slap;
+    var s = stick(), A = aim(); slap = !!slap && !A.armed; var one = !!M.oneT && !slap && A.armed && g.recvAge < 0.6; var far = S.role === 'D' && s[1] > 262, fs = slap || one ? 1.5 : far ? T.dFar : 1; g.lastSlap = slap;
     var b = slap ? 0 : Math.min(1, g.breath), withBreath = b >= 0.5, top = !slap && isTop(), sp = top ? 0 : slap ? T.slapSp + g.heat * 0.5 : spreadA(), ang = A.a + (Math.random() * 2 - 1) * sp;
     var sure = top && !S.firstTop && !SIM; if (sure) { S.firstTop = true; save(); ang = Math.atan2((g.gx + GW / 2 < 160 ? 192 : 128) - s[0], s[1] - GOAL_Y); }
     if (top && !A.armed && !sure) ang = Math.atan2((g.gx + GW / 2 < 160 ? 192 : 128) - s[0], s[1] - GOAL_Y);
@@ -262,7 +264,7 @@
   }
   function miss(text, why, soft, kind) {
     var g = G, wasFace = g.faceoff; g.faceoff = false; g.streak = 0; g.missRow++; g.topRow = 0; g.flow = 0; if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') { g.losses++; if (g.seg >= 2) g.lossesEnd = (g.lossesEnd || 0) + 1; } if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') g.safe = true;
-    if ((kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') && g.lesson >= 9 && !g.so && !(kind === 'icept' && wasFace)) g.press = Math.min(0.99, g.press + tv('push') * (M.id === 1 ? 1 : 1.3)); heatUp(kind === 'badpass' ? 0.05 : soft || kind === 'poke' || kind === 'steal' || kind === 'icept' ? 0.1 : 0.22, kind); if (kind === 'badpass') g.safe = true; log(M.id, 'miss', { kind: kind });
+    if ((kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') && g.lesson >= 9 && !g.so && !(kind === 'icept' && wasFace)) g.press = Math.min(0.99, g.press + tv('push') * (M.id <= 3 ? 1 : 1.3)); heatUp(kind === 'badpass' ? 0.05 : soft || kind === 'poke' || kind === 'steal' || kind === 'icept' ? 0.1 : 0.22, kind); if (kind === 'badpass') g.safe = true; log(M.id, 'miss', { kind: kind });
     say(text, soft ? '#fee761' : '#e43b44', 1.7, why); if (soft) SFX.post(); else SFX.bad(); nextPuck(soft ? 1.6 : 1.9); if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.2, sc: false }; }
   }
   // стержень: два быстрых тапа левым пальцем. При холодной голове не тратится
@@ -322,8 +324,8 @@
       else if (g.seg === 3) { log(M.id, 'shootout'); g.so = { n: 0, you: 0, riv: 0 }; g.t = 0; g.defs = []; g.ch = null; g.puck = { s: 'wait' }; marks(); g.pause = 3.4; g.pauseText = ['БУЛЛИТЫ', 'По три попытки. Твой вратарь пропустит первую и возьмёт две следующие. Забей больше одной.']; g.afterPause = soShot; }
       else { g.nextSeg = g.seg + 1; g.pause = 1.0; g.pauseText = ['СКАМЕЙКА', '']; }
       return; }
-    if (!teaching && !g.so && !g.soPend) g.press += g.rate * (M.id === 1 ? 1 : (WH() > H ? T.rateL : 1) * (0.85 + 0.7 * g.heat)) * dt; if (g.heat >= 0.5) g.hotPress = (g.hotPress || 0) + dt;
-    if (g.press >= 1 && !g.so && !g.soPend) { g.press = 0; g.flow = 0; g.topRow = 0; if (M.mateHead) g.mheat = Math.min(1, g.mheat + 0.4); g.riv++; g.rivGoals.push({ at: g.T, cooled: false }); g.firstAfter = null; heatUp(0.3, 'rival_goal'); log(M.id, 'rival_goal'); say('СОПЕРНИК ЗАБИЛ', '#e43b44', 1.6, g.hotPress > 2 && M.id > 1 ? 'ГОРЯЧАЯ ГОЛОВА УСКОРИЛА ЕГО ДАВЛЕНИЕ' : 'ГОЛОВА НАГРЕЛАСЬ: ЛИНИЯ ШИРЕ'); g.hotPress = 0; SFX.riv();
+    if (!teaching && !g.so && !g.soPend) g.press += g.rate * (M.id === 1 ? 1 : (WH() > H ? T.rateL : 1) * (0.85 + HK() * g.heat)) * dt; if (g.heat >= 0.5) g.hotPress = (g.hotPress || 0) + dt;
+    if (g.press >= 1 && !g.so && !g.soPend) { g.press = 0; g.flow = 0; g.topRow = 0; if (M.mateHead) g.mheat = Math.min(1, g.mheat + 0.4); g.riv++; g.rivGoals.push({ at: g.T, cooled: false }); g.firstAfter = null; heatUp(0.3, 'rival_goal'); log(M.id, 'rival_goal'); say('СОПЕРНИК ЗАБИЛ', '#e43b44', 1.6, g.hotPress > 2 && HK() > 0 ? 'ГОРЯЧАЯ ГОЛОВА УСКОРИЛА ЕГО ДАВЛЕНИЕ' : 'ГОЛОВА НАГРЕЛАСЬ: ЛИНИЯ ШИРЕ'); g.hotPress = 0; SFX.riv();
       if (g.seg === 3) { PR = null; breathSound(false); g.puck = { s: 'wait' }; g.soPend = { t: 1.4, end: true, lose: true }; return; } }
     if (g.flow > 0) g.flow -= dt; g.recvAge += dt; if (M.mateHead) { g.mheat = Math.max(0, g.mheat - 0.02 * dt); if (g.mheat >= 0.5) g.mateHot += dt; }
     if (g.shield > 0) g.shield -= dt; if (g.noise > 0) g.noise -= dt;
@@ -375,7 +377,8 @@
     if (dg) { PR = null; breathSound(false); return dg === 'poke' ? miss('ПОТЕРЯ', 'ВРАТАРЬ ВЫБИЛ ШАЙБУ: НЕ ЛЕЗЬ В ЕГО ЗОНУ', false, 'poke') : miss('ПОТЕРЯ', 'СЛИШКОМ БЛИЗКО К ЗАЩИТНИКУ: ОБЪЕЗЖАЙ', false, 'steal'); }
     if (p.s === 'in' && p.t < 0.45 && p.t > 0 && !g.so && !g.safe && g.lesson >= 9 && (WH() === H || g.faceoff)) { var ik = 1 - p.t / 0.45, st2 = stick(), ipx = g.mate.x + 20 + (st2[0] - g.mate.x - 20) * ik, ipy = g.mate.y + 20 + (st2[1] - g.mate.y - 20) * ik; if (hitDef(ipx, ipy)) return miss('ПЕРЕХВАТ', 'ЗАЩИТНИК ПЕРЕХВАТИЛ ПАС: ОТКРОЙСЯ ПАРТНЁРУ', false, 'icept'); }
     if (p.s === 'in' && M.mateHead && p.t < 0.45 && !p.rolled && !g.so) { p.rolled = true; if (g.mheat >= 0.5 && !g.safe && Math.random() < 0.4 * g.mheat) return miss('ПАС НЕТОЧНЫЙ', 'ПАРТНЁР КИПИТ: ЕГО ПАС НЕ ДОШЁЛ', true, 'badpass'); }
-    if (p.s === 'in' && WH() > H && !g.so && !p.cut && p.t < 0.7) { p.cut = true; if (g.zoneNext) { g.zoneNext = false; var zs = Math.random() < 0.5 ? 1 : -1; g.px = 160 + zs * 76; g.py = 300; g.vx = 0; g.vy = 0; g.ax = 0; g.ay = 0; g.cam = null; g.wipe = 0.3; g.ch = null; g.mate = { x: zs > 0 ? 30 - EX : 290 + EX, y: 150 }; g.faceoff = true; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } p.t = Math.max(p.t, 1.9); say('ВБРАСЫВАНИЕ В ЗОНЕ', '#fee761', 1.1, M.oneT ? 'ОТКРОЙСЯ ПОД ПАС: МОЖНО В КАСАНИЕ' : 'ОТКРОЙСЯ ПОД ПАС ПАРТНЁРА'); }
+    if (p.s === 'in' && WH() > H && !g.so && !p.cut && p.t < 0.7) { p.cut = true; if (g.zoneNext) { g.zoneNext = false; var zs = Math.random() < 0.5 ? 1 : -1; g.px = 160 + zs * 76; g.py = 300; g.vx = 0; g.vy = 0; g.ax = 0; g.ay = 0; g.cam = null; g.wipe = 0.3; g.ch = null; g.mate = { x: zs > 0 ? 30 - EX : 290 + EX, y: 150 }; g.faceoff = true; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } p.t = Math.max(p.t, 1.9); if (M.oneT && !S.oneTaught) { S.oneTaught = true; save(); g.pause = 5.5; g.pauseText = ['БРОСОК В КАСАНИЕ', 'Вратарь поймал шайбу: вбрасывание в зоне. Партнёр отдаст пас из угла. Встань так, чтобы линия паса была зелёной. Правый палец оттяни заранее и держи. Шайба у тебя: сразу отпускай.']; }
+      say('ВБРАСЫВАНИЕ В ЗОНЕ', '#fee761', 1.1, M.oneT ? 'ОТКРОЙСЯ ПОД ПАС: МОЖНО В КАСАНИЕ' : 'ОТКРОЙСЯ ПОД ПАС ПАРТНЁРА'); }
       else if (Math.hypot(g.px - 160, g.py - (SY())) > 60) { g.px = 160; g.py = SY(); g.vx = 0; g.vy = 0; g.ax = 0; g.ay = -1; g.cam = null; g.wipe = 0.3; g.ch = null; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } } }
     if (p.s === 'in') { p.t -= dt; if (p.t <= 0 && !danger()) { g.puck = { s: 'ready' }; g.faceoff = false; g.recvAge = 0; if (g.safe) { g.safe = false; g.grace = 1.25; } g.recv = 0.35; SFX.pass(); buzz(10); g.clock = g.so ? 6 : CLOCK + (WH() > H ? 4 : 0); if (M.chase && M.chase[g.seg] && g.sit !== 'pp') { var sp1 = [[58, 150], [262, 150], [58, 350], [262, 350], [160, 135], [160, 355], [40, 250], [280, 250]].filter(function (q) { return Math.hypot(q[0] - g.px, q[1] - g.py) > 120; }), sq = sp1[Math.floor(Math.random() * sp1.length)] || [58, 150]; g.ch = { x: sq[0], y: sq[1], v: M.chase[g.seg] * (g.sit === 'pk' ? 1.12 : 1) }; } } }
     else if (p.s === 'ready') { if (g.lesson >= 9) g.clock -= dt; if (g.clock <= 0) { PR = null; breathSound(false); miss('ПОТЕРЯ', 'ПОЗДНО: ВРЕМЯ НА БРОСОК ВЫШЛО', false, 'late'); } }
@@ -473,7 +476,7 @@
       var col = M.blind ? '200,205,215' : top ? '44,232,245' : g.heat >= 0.66 ? '228,59,68' : g.heat >= 0.33 ? '254,174,52' : '99,199,77', al = PR ? 1 : 0.35;
       cx.fillStyle = 'rgba(' + col + ',' + ((top ? 0.55 : 0.28) * al) + ')'; cx.beginPath(); cx.moveTo(s[0] - 2, s[1]); cx.lineTo(x1, GOAL_Y + 2); cx.lineTo(x2, GOAL_Y + 2); cx.lineTo(s[0] + 2, s[1]); cx.closePath(); cx.fill();
       cx.strokeStyle = 'rgba(' + col + ',' + (0.95 * al) + ')'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(s[0], s[1]); cx.lineTo(x1, GOAL_Y + 2); cx.moveTo(s[0], s[1]); cx.lineTo(x2, GOAL_Y + 2); cx.stroke();
-      if (PR && !M.blind) { var lb = laneBlocked(s, A.a, top); if (lb) { R(OUT, lb[0] - 9, lb[1] - 4, 18, 8); R(OUT, lb[0] - 4, lb[1] - 9, 8, 18); R('#e43b44', lb[0] - 8, lb[1] - 3, 16, 6); R('#e43b44', lb[0] - 3, lb[1] - 8, 6, 16); } }
+      if (PR && !M.blind) { var lb = laneBlocked(s, A.a, top); if (lb) { cx.strokeStyle = OUT; cx.lineWidth = 7; cx.beginPath(); cx.moveTo(s[0], s[1]); cx.lineTo(lb[0], lb[1]); cx.stroke(); cx.strokeStyle = '#e43b44'; cx.lineWidth = 4; cx.beginPath(); cx.moveTo(s[0], s[1]); cx.lineTo(lb[0], lb[1]); cx.stroke(); R(OUT, lb[0] - 12, lb[1] - 5, 24, 10); R(OUT, lb[0] - 5, lb[1] - 12, 10, 24); R('#e43b44', lb[0] - 11, lb[1] - 4, 22, 8); R('#e43b44', lb[0] - 4, lb[1] - 11, 8, 22); } }
       if (PR) { var blocked = (!g.empty && Math.abs(xc - (g.gx + GW / 2)) < saveHalf(top, s[1], false)) || xc < NET_L + 2 || xc > NET_R - 2; R(blocked ? '#e43b44' : '#ffffff', x1 - 1, GOAL_Y - 1, Math.max(3, x2 - x1 + 2), 3);
         if (g.breath > 0.03) { cx.strokeStyle = top ? '#2ce8f5' : '#ffffff'; cx.lineWidth = top ? 5 : 3; cx.beginPath(); cx.arc(s[0], s[1], 28 - 21 * Math.min(1, g.breath), 0, 6.3); cx.stroke(); } }
       // поправка из разбора: где вратарь окажется к моменту броска
@@ -507,7 +510,7 @@
       cx.strokeStyle = 'rgba(58,68,102,.45)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(mx, my); cx.lineTo(qx, qy); cx.stroke(); puckAt(qx, qy); }
     cx.drawImage(img(S.role === 'D' ? 'hero_d.png' : 'hero_f.png') || spr.me, Math.round(g.px - 25), Math.round(g.py - 27 - jy), 51, 54);
     if (!M.blind && !g.so) { var hh = g.heat, hc = hh >= 0.66 ? '#e43b44' : hh >= 0.33 ? '#feae34' : '#63c74d', hx0 = g.px - 22, hy0 = g.py - 50 - jy, pulse = hh >= 0.66 && Math.floor(g.T * 6) % 2;
-      R(OUT, hx0 - 10, hy0 - 2, 56, 10); R('#e8b796', hx0 - 8, hy0 + 2, 6, 5); R(hc, hx0 - 9, hy0 - 1, 8, 4); R('#262b44', hx0, hy0, 44, 6); R(pulse ? '#ffffff' : hc, hx0, hy0, Math.max(3, Math.round(44 * hh)), 6); R(OUT, hx0 + 14, hy0, 1, 6); R(OUT, hx0 + 29, hy0, 1, 6);
+      R(OUT, hx0 - 2, hy0 - 2, 48, 10); R('#262b44', hx0, hy0, 44, 6); R(pulse ? '#ffffff' : hc, hx0, hy0, Math.max(3, Math.round(44 * hh)), 6); R(OUT, hx0 + 14, hy0, 1, 6); R(OUT, hx0 + 29, hy0, 1, 6);
       if (hh >= 0.66) { var fl = Math.floor(g.T * 8) % 3; R('#feae34', g.px - 6, g.py - 34 - jy - fl, 4, 6 + fl); R('#e43b44', g.px - 1, g.py - 37 - jy - (2 - fl), 5, 9); R('#fee761', g.px + 5, g.py - 33 - jy - fl, 3, 5 + fl); }
       if (hh >= 0.33) { cx.font = '8px "Press Start 2P", monospace'; cx.textAlign = 'center'; cx.fillStyle = OUT; cx.fillText(tr(hh >= 0.66 ? 'ГОЛОВА ГОРИТ' : 'ГОЛОВА ГРЕЕТСЯ'), g.px + 1, hy0 - 12); cx.fillStyle = hc; cx.fillText(tr(hh >= 0.66 ? 'ГОЛОВА ГОРИТ' : 'ГОЛОВА ГРЕЕТСЯ'), g.px, hy0 - 13); cx.textAlign = 'left'; } }
     if (g.grace > 0) { cx.strokeStyle = 'rgba(255,255,255,' + (0.35 + 0.5 * (g.grace / 1.25)).toFixed(2) + ')'; cx.lineWidth = 2; cx.beginPath(); cx.arc(g.px, g.py, 31, 0, 6.3); cx.stroke(); }
@@ -598,7 +601,7 @@
     cv.addEventListener('pointermove', function (e) { if (!G) return; var q = pos(e);
       if (PL && PL.id === e.pointerId) { PL.x = q[0]; PL.y = q[1]; }
       else if (PR && PR.id === e.pointerId) { PR.mv += Math.hypot(q[0] - PR.x, q[1] - PR.y); PR.x = q[0]; PR.y = q[1]; } });
-    function up(e, cancel) { if (PL && PL.id === e.pointerId) { var now = performance.now(); if (!cancel && now - PL.t0 < 230 && Math.hypot(PL.x - PL.sx, PL.y - PL.sy) < 10) { if (useWord()) lastL = 0; else if (now - lastL < 400) { lastL = 0; useCore(); } else lastL = now; } PL = null; } else if (PR && PR.id === e.pointerId) { if (G && !cancel) shoot(performance.now() - PR.t0 < 220); PR = null; } }
+    function up(e, cancel) { if (PL && PL.id === e.pointerId) { var now = performance.now(); if (!cancel && now - PL.t0 < 230 && Math.hypot(PL.x - PL.sx, PL.y - PL.sy) < 10) { if (useWord()) { lastL = 0; PL_word = now; } else if (now - PL_word < 800) { lastL = 0; } else if (now - lastL < 400) { lastL = 0; useCore(); } else lastL = now; } PL = null; } else if (PR && PR.id === e.pointerId) { if (G && !cancel) shoot(performance.now() - PR.t0 < 220); PR = null; } }
     cv.addEventListener('pointerup', function (e) { e.preventDefault(); up(e, false); });
     cv.addEventListener('pointercancel', function (e) { up(e, true); });
     cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });

@@ -4,7 +4,7 @@ await p.goto('file://'+D+'/'+PAGE);
 const rows=[['aceF','ace',{},'отличник, нападающий'],['aceD','ace',{role:'D'},'отличник, защитник'],['panic','panicker',{},'паникёр'],['c250','camper',{cx:160,cy:250},'засадник у синей'],['c200','camper',{cx:160,cy:200},'засадник между защ.'],['c165','camper',{cx:160,cy:165},'засадник у рамки'],['skater','skater',{},'катала'],['novice','novice',{},'новичок'],['spam','spammer',{},'торопыга']];
 const NM=await p.evaluate(()=>Math.min(window.__seasonMatches.length,window.__seasonLimit||99));const R={};let hung=0;console.log('бот'.padEnd(24)+Array.from({length:NM},(_,i)=>('М'+(i+1)).padEnd(15)).join(''));
 for(const [key,bot,cfg,name] of rows){R[key]=[];let line=name.padEnd(24);for(let id=1;id<=NM;id++){const a=await p.evaluate(([b,i,n,c])=>window.__mvp.sim(b,i,n,c),[bot,id,N,cfg]);const n=Math.max(1,a.n);hung+=a.hung;const m={you:a.you/n,riv:a.riv/n,win:100*a.win/n,ot:100*a.ot/n,stars:a.stars/n,loss:a.loss/n};R[key].push(m);line+=`${m.you.toFixed(1)}:${m.riv.toFixed(1)} ${Math.round(m.win)}%`.padEnd(15);}console.log(line);}
-const checks=[];const ck=(name,ok,detail)=>checks.push([ok,name,detail]);const W=[100,95,88,75];
+const checks=[];const ck=(name,ok,detail)=>checks.push([ok,name,detail]);const W=[100,97,93,85];
 ck('матч 1: у отличника 10-14 голов',R.aceF[0].you>=10&&R.aceF[0].you<=14,R.aceF[0].you.toFixed(1));
 ck('матч 1: новичок выигрывает от 50%',R.novice[0].win>=50,Math.round(R.novice[0].win)+'%');
 for(let i=0;i<4;i++){const d=Math.abs(R.aceD[i].you-R.aceF[i].you)/R.aceF[i].you*100;ck(`матч ${i+1}: защитник и нападающий в пределах 12% по голам`,d<=12,d.toFixed(0)+'%');}
