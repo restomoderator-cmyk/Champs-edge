@@ -94,6 +94,7 @@
     var DATA = {
       '1a': { title: 'ПЕРВЫЙ ДЕНЬ', bg: 'room', warm: true, cast: { you: [40, 112, 'stand'], sht: [124, 102, 'sit'], bat: [188, 102, 'sit'] }, lines: [
         ['sht', 'О, новенький. Тебя как звать?', 'sht=joy you=wow'],
+        ['you', '{name}', 'you=norm sht=norm'],
         ['bat', 'Неважно. Будет Малой.', 'bat=smirk you=sad:dots'],
         ['you', 'Я вообще-то ещё расту.', 'you=stern:anger sht=joy:laugh'],
         ['sht', 'Не обижайся. Меня вообще в честь железки назвали. Я Штанга: попадаю в неё чаще, чем в ворота.', 'sht=joy::sit+up you=norm'],
@@ -151,9 +152,10 @@
       c.imageSmoothingEnabled = false; c.setTransform(2, 0, 0, 2, 0, 0);
       if (sc.bg === 'car') { car(c, st); tx = who === 'you' ? 126 : 194; }
       else { room(c, sc.warm); Object.keys(st).sort(function (a, b) { return st[a].y - st[b].y; }).forEach(function (k) { if (st[k].on && st[k].x != null) big(c, st[k].x, st[k].y, st[k]); }); tx = st[who].x + 14; }
-      bubble(c, sc.lines[i][1], Math.max(16, Math.min(296, tx)), sc.lines[i][3]);
+      bubble(c, text(key, i), Math.max(16, Math.min(296, tx)), sc.lines[i][3]);
     }
-    return { data: DATA, draw: draw, cast: CAST };
+    function text(key, i) { return DATA[key].lines[i][1].replace('{name}', S.name ? S.name + '.' : 'Меня зовут...'); }
+    return { data: DATA, draw: draw, cast: CAST, text: text };
   })();
   var SC = null;
   function scnWant(key) { return !!SCENE.data[key] && !(S.sc && S.sc[key]) && !SIM && !(navigator.webdriver && !window.__scenes); }
@@ -163,7 +165,7 @@
       screen(sc.title, '<span class="tag tag--mute">' + sc.title + '</span><canvas id="scn" width="640" height="440" data-act="scn" style="width:100%;height:auto;border:4px solid var(--slate);cursor:pointer" role="img"></canvas><p class="note" id="scnwho"></p>',
         '<button class="btn" type="button" data-act="scn" id="scnbtn">ДАЛЬШЕ ▶</button><button class="btn btn--ghost" type="button" data-act="scnskip">ПРОПУСТИТЬ СЦЕНУ</button>'); }
     var cvs = document.getElementById('scn'); SCENE.draw(cvs.getContext('2d'), SC.key, SC.i);
-    cvs.setAttribute('aria-label', SCENE.cast[sc.lines[SC.i][0]].name + ': ' + sc.lines[SC.i][1]);
+    cvs.setAttribute('aria-label', SCENE.cast[sc.lines[SC.i][0]].name + ': ' + SCENE.text(SC.key, SC.i));
     document.getElementById('scnwho').textContent = SCENE.cast[sc.lines[SC.i][0]].name + ' · ' + (SC.i + 1) + ' из ' + sc.lines.length;
     document.getElementById('scnbtn').textContent = last ? 'ДАЛЬШЕ ▶▶' : 'ДАЛЬШЕ ▶';
   }

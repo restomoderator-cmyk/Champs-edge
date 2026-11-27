@@ -9,7 +9,7 @@ const move=async(id,x,y)=>{pts[id]={x:X(x),y:Y(y)};await send('touchMove')};
 const up=async(id)=>{const q=pts[id];if(!q)return;delete pts[id];await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[{x:q.x,y:q.y,id:+id}]})};
 const wait=ms=>p.waitForTimeout(ms);const G=f=>p.evaluate(f);
 const done={};for(let i=1;i<=40;i++)done[i]=true;
-const base={sound:false,firstTop:true,done,stars:{},role:'F',num:'9',values:['Смелость','Упорство','Радость игры'],core:true,trust:1,room:1,form:1,rep:1,fix:false,reset:{g:'x',w:'Здесь'},life:{},pre:{5:{heat:0},6:{heat:0},8:{heat:0},11:{focus:'cool'},22:{heat:0},23:{heat:0},24:{heat:0},25:{heat:0},26:{heat:0}},tips:{flow:1,oneT:1,mate:1,mirror:1,noise:1},taught:true};
+const base={short:true,sound:false,firstTop:true,done,stars:{},role:'F',num:'9',values:['Смелость','Упорство','Радость игры'],core:true,trust:1,room:1,form:1,rep:1,fix:false,reset:{g:'x',w:'Здесь'},life:{},pre:{5:{heat:0},6:{heat:0},8:{heat:0},11:{focus:'cool'},22:{heat:0},23:{heat:0},24:{heat:0},25:{heat:0},26:{heat:0}},tips:{flow:1,oneT:1,mate:1,mirror:1,noise:1},taught:true};
 async function start(id,extra,seg){for(const k in pts)delete pts[k];await p.goto('file://'+D+'/'+PAGE);await p.evaluate(s=>{localStorage.removeItem('ce-season-mvp-log-2');localStorage.setItem('ce-season-mvp-2',s)},JSON.stringify(Object.assign({},base,extra||{})));await p.reload();if(seg)await p.evaluate(v=>window.__mvp.seg(v),seg);
  await p.click(`[data-act="match"][data-m="${id}"]`);await p.click('[data-act="go"]');await ready();box=await p.locator('#rink').boundingBox();}
 const ready=()=>p.waitForFunction(()=>{const g=window.__mvp.g();return g&&g.puck.s==='ready'&&g.pause<=0},null,{timeout:20000});
