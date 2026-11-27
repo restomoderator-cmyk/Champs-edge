@@ -459,7 +459,7 @@
   /* ---------- провокация и шуточная драка: раз за матч, начать её сам игрок не может, только ответить ---------- */
   var FB = { x: 70, y: 318, w: 180, h: 54 };
   function fightStart() { var g = G; g.fightDone = true; g.fight = { ph: 'prov', t: 3.6, calm: 0 }; g.heat = Math.max(g.heat, 0.8); g.shake = 0.5; PL = PR = null; breathSound(false); SFX.bad(); buzz([40, 30, 40]); log(M.id, 'fight_prov'); }
-  function fightAnswer() { var g = G, f = g.fight; f.ph = 'brawl'; f.t = 5.4; f.beat = 0; f.side = Math.random() < 0.5 ? 'L' : 'R'; f.done = false; f.hits = 0; f.miss = 0; f.win0 = 0.6 * (1 - 0.5 * g.heat); PL = PR = null; SFX.shot(); buzz(30); }
+  function fightAnswer() { var g = G, f = g.fight; f.ph = 'brawl'; f.t = 9.5; f.beat = 0; f.n = 0; f.len = 0.64; f.side = Math.random() < 0.5 ? 'L' : 'R'; f.done = false; f.hits = 0; f.miss = 0; f.win0 = f.len * (1 - 0.5 * g.heat); PL = PR = null; SFX.shot(); buzz(30); }
   function fightTap(q) { var g = G, f = g.fight;
     if (f.ph === 'prov') { if (q[0] > FB.x && q[0] < FB.x + FB.w && q[1] > FB.y && q[1] < FB.y + FB.h) { fightAnswer(); return true; } return false; }
     if (f.ph === 'brawl') { var side = (q[0] < W / 2) ? 'L' : 'R'; if (!f.done && side === f.side && f.beat <= f.win0) { f.hits++; f.done = true; f.pop = 0.2; SFX.post(); buzz(15); burst(160 + (Math.random() - 0.5) * 60, 200, 5, ['#fee761', '#ffffff']); } else if (!f.done) { f.miss++; f.done = true; f.ouch = 0.2; buzz(8); } return true; }
@@ -473,7 +473,7 @@
     f.t -= dt;
     if (f.ph === 'prov') { var held = PR && Math.hypot(PR.ox - PR.x, PR.oy - PR.y) >= 12; if (held) { f.calm += dt; if (!f.snd) { f.snd = true; breathSound(true); } } else { f.calm = Math.max(0, f.calm - dt * 2); if (f.snd) { f.snd = false; breathSound(false); } }
       if (f.calm >= 1.3) { breathSound(false); return fightEnd('walk'); } if (f.t <= 0) { breathSound(false); return fightEnd('walk'); } }
-    else if (f.ph === 'brawl') { f.beat += dt; if (f.pop > 0) f.pop -= dt; if (f.ouch > 0) f.ouch -= dt; if (f.beat >= 0.6) { if (!f.done) f.miss++; f.beat = 0; f.done = false; f.side = f.side === 'L' ? 'R' : 'L'; if (Math.random() < 0.3) f.side = f.side === 'L' ? 'R' : 'L'; } if (f.t <= 0) return fightEnd(f.hits >= 5 ? 'win' : 'lose'); }
+    else if (f.ph === 'brawl') { f.beat += dt; if (f.pop > 0) f.pop -= dt; if (f.ouch > 0) f.ouch -= dt; if (f.beat >= f.len) { if (!f.done) f.miss++; f.n++; f.len = Math.max(0.4, 0.64 - 0.016 * f.n); f.win0 = f.len * (1 - 0.5 * g.heat); f.beat = 0; f.done = false; f.side = f.side === 'L' ? 'R' : 'L'; if (Math.random() < 0.3) f.side = f.side === 'L' ? 'R' : 'L'; } if (f.t <= 0) return fightEnd(f.hits >= Math.ceil((f.hits + f.miss) * 0.55) && f.hits >= 5 ? 'win' : 'lose'); }
     else if (f.t <= 0) { var r = f.res; g.fight = null; if (r !== 'walk') { g.pause = 3.6; g.pauseText = ['УДАЛЕНИЕ', 'Оба на скамейке штрафников. Команда играла без тебя: шесть секунд матча ушли, соперник давил. Доверие тренера ниже, раздевалка это запомнит.']; } } }
   function fightDraw() { var g = G, f = g.fight, me = img(S.role === 'D' ? 'hero_d.png' : 'hero_f.png') || spr.me, he = img('defender.png') || spr.def;
     cx.fillStyle = 'rgba(14,12,24,.72)'; cx.fillRect(-EX, 0, W + 2 * EX, H); cx.textAlign = 'center';
@@ -491,7 +491,7 @@
       T1(tr('ДРАКА'), 84, '#fee761'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('БЕЙ ТОЙ РУКОЙ, ЧТО ГОРИТ'), W / 2, 110);
       var act = !f.done && f.beat <= f.win0; [['L', 12 - EX, tr('ЛЕВОЙ')], ['R', W / 2 + 4, tr('ПРАВОЙ')]].forEach(function (b) { var on = f.side === b[0], bw2 = W / 2 - 16 + EX; R(OUT, b[1] - 3, 327, bw2 + 6, 86); R(on ? (act ? '#fee761' : '#8a6a2a') : '#262b44', b[1], 330, bw2, 80); cx.font = '10px "Press Start 2P", monospace'; cx.fillStyle = on ? OUT : '#5a6988'; cx.fillText(b[2], b[1] + bw2 / 2, 364); });
       cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#63c74d'; cx.fillText(tr('ПОПАЛ') + ' ' + f.hits, 90, 300); cx.fillStyle = '#e43b44'; cx.fillText(tr('МИМО') + ' ' + f.miss, 230, 300);
-      R('#262b44', 60, 430, 200, 8); R('#fee761', 60, 430, Math.max(0, 200 * f.t / 5.4), 8); }
+      R('#262b44', 60, 430, 200, 8); R('#fee761', 60, 430, Math.max(0, 200 * f.t / 9.5), 8); }
     else { var r = f.res; if (r === 'walk') { cx.drawImage(me, 109, 150, 102, 108); T1(tr('НЕ ОТВЕТИЛ'), 96, '#2ce8f5'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('ТРИБУНЫ СВИСТЯТ. ТРЕНЕР КИВАЕТ'), W / 2, 284); cx.fillStyle = '#63c74d'; cx.fillText(tr('ДОВЕРИЕ +1 · ИХ ВРАТАРЬ ЗАКИПАЕТ'), W / 2, 304); }
       else { cx.drawImage(me, 60, 170, 76, 81); cx.save(); cx.translate(260, 170); cx.scale(-1, 1); cx.drawImage(he, 0, 0, 76, 81); cx.restore(); R('#b86f50', 40, 250, 240, 8); var hx2 = r === 'win' ? 222 : 98; R(OUT, hx2 - 9, 286 + Math.round(Math.sin(g.T * 8) * 2) - 1, 20, 14); R(r === 'win' ? '#f4f4f4' : '#fee761', hx2 - 8, 286 + Math.round(Math.sin(g.T * 8) * 2), 18, 12);
         T1(tr(r === 'win' ? 'ТВОЯ ВЗЯЛА' : 'ТЕБЕ ДОСТАЛОСЬ'), 96, r === 'win' ? '#fee761' : '#e43b44'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('ОБА НА СКАМЕЙКЕ ШТРАФНИКОВ'), W / 2, 124); cx.fillStyle = '#feae34'; cx.fillText(tr('РАЗДЕВАЛКА +1 · ДОВЕРИЕ −1'), W / 2, 318); } }
