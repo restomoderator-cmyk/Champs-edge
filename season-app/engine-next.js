@@ -10,7 +10,7 @@
   // откуда начинается атака: у центра; пока идёт обучение первого матча, сразу в зоне, чтобы ворота были видны
   function SY() { return WH() > H && G && G.lesson >= 9 ? (M && M.id === 1 ? 440 : WH() - 120) : 320; }
   // настройки баланса: одна таблица, по одному числу на матч там, где матчи различаются
-  var T = { cleanK: 1, topK: 1, paceL: 1.25, rateL: 2.5, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
+  var T = { cleanK: 0.571, topK: 1, paceL: 1.25, rateL: 2.3, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
     slapSp: 0.06, seenAdd: 10, dSpread: 1.0, fSpread: 0.85, dTop: 0.7, pierce: 0, dFar: 1.3, dSlap: 1, segT: [25, 35, 35, 35], paceK: [1.3, 1.25, 1.3, 1], chaseM: [null, [0, 28, 32], [26, 32, 36], null] };
   window.__seasonTune = T;
   function tv(k) { var a = T[k]; if (M.tune && k in M.tune) return M.tune[k]; return M.id - 1 < a.length ? a[M.id - 1] : a[a.length - 1]; }
@@ -247,7 +247,7 @@
     var s = stick(), A = aim(); slap = !!slap && !A.armed; var one = !!M.oneT && !slap && A.armed && g.recvAge < 0.6; var far = S.role === 'D' && s[1] > 262, fs = slap || one ? 1.5 : far ? T.dFar : 1; g.lastSlap = slap;
     var b = slap ? 0 : Math.min(1, g.breath), withBreath = b >= 0.5, top = !slap && isTop(), sp = top ? 0 : slap ? T.slapSp + g.heat * 0.5 : spreadA(), ang = A.a + (Math.random() * 2 - 1) * sp;
     var sure = top && !S.firstTop && !SIM; if (sure) { S.firstTop = true; save(); ang = Math.atan2((g.gx + GW / 2 < 160 ? 192 : 128) - s[0], s[1] - GOAL_Y); }
-    if (top && !A.armed && !sure) ang = Math.atan2((g.gx + GW / 2 < 160 ? 192 : 128) - s[0], s[1] - GOAL_Y);
+    if (top && !A.armed && !sure && s[1] < 400) ang = Math.atan2((g.gx + GW / 2 < 160 ? 192 : 128) - s[0], s[1] - GOAL_Y);
     var dist = (s[1] - GOAL_Y) / Math.cos(A.a), spx = Math.tan(sp) * dist;
     g.puck = { s: 'fly', x: s[0], y: s[1], vx: Math.sin(ang) * FLY * (top ? T.topV : fs), vy: -Math.cos(ang) * FLY * (top ? T.topV : fs), sure: sure, one: one, pierce: far && !slap ? T.pierce : 0, skip: 0, slap: slap, from: s[1], top: top, breath: withBreath, wide: spx > 22,
       first: !!(g.rivGoals.length && g.firstAfter === null), press: !!(g.ch && Math.hypot(g.ch.x - g.px, g.ch.y - g.py) < 80) || g.clock < 3 };
@@ -314,7 +314,7 @@
     if (g.pause > 0) { g.pause -= dt; if (g.pause <= 0) { g.pauseText = null; if (g.done) return finish(); if (g.nextSeg != null) { var ns = g.nextSeg; g.nextSeg = null; return between(ns); } } return; }
     g.T += dt;
     var teaching = g.lesson < 2 && g.seg === 0;
-    var live = WH() === H || g.puck.s !== 'in';
+    var live = WH() === H || g.puck.s !== 'in' || !!g.puck.go;
     if (!teaching && !g.so && live) g.t += dt;
     if (g.soPend) { g.soPend.t -= dt; if (g.soPend.t <= 0) { var sp0 = g.soPend; g.soPend = null; if (sp0.end) { g.done = true; g.endHow = ' В ОВЕРТАЙМЕ'; g.pause = 1.4; g.pauseText = [sp0.lose ? 'ПОРАЖЕНИЕ В ОВЕРТАЙМЕ' : 'ПОБЕДА В ОВЕРТАЙМЕ', '']; return; } return soResult(sp0.sc); } }
     // сирена ждёт, пока шайба долетит
@@ -324,7 +324,7 @@
       else if (g.seg === 3) { log(M.id, 'shootout'); g.so = { n: 0, you: 0, riv: 0 }; g.t = 0; g.defs = []; g.ch = null; g.puck = { s: 'wait' }; marks(); g.pause = 3.4; g.pauseText = ['БУЛЛИТЫ', 'По три попытки. Твой вратарь пропустит первую и возьмёт две следующие. Забей больше одной.']; g.afterPause = soShot; }
       else { g.nextSeg = g.seg + 1; g.pause = 1.0; g.pauseText = ['СКАМЕЙКА', '']; }
       return; }
-    if (!teaching && !g.so && !g.soPend && live) g.press += g.rate * (M.id === 1 ? (WH() > H ? 1.2 : 1) : (WH() > H ? T.rateL : 1) * (0.85 + HK() * g.heat)) * dt; if (g.heat >= 0.5) g.hotPress = (g.hotPress || 0) + dt;
+    if (!teaching && !g.so && !g.soPend && live) g.press += g.rate * (M.id === 1 ? (WH() > H ? 2.6 : 1) : (WH() > H ? T.rateL : 1) * (0.85 + HK() * g.heat)) * dt; if (g.heat >= 0.5) g.hotPress = (g.hotPress || 0) + dt;
     if (g.press >= 1 && !g.so && !g.soPend) { g.press = 0; g.flow = 0; g.topRow = 0; if (M.mateHead) g.mheat = Math.min(1, g.mheat + 0.4); g.riv++; g.rivGoals.push({ at: g.T, cooled: false }); g.firstAfter = null; heatUp(0.3, 'rival_goal'); log(M.id, 'rival_goal'); say('СОПЕРНИК ЗАБИЛ', '#e43b44', 1.6, g.hotPress > 2 && HK() > 0 ? 'ГОРЯЧАЯ ГОЛОВА УСКОРИЛА ЕГО ДАВЛЕНИЕ' : 'ГОЛОВА НАГРЕЛАСЬ: ЛИНИЯ ШИРЕ'); g.hotPress = 0; SFX.riv();
       if (g.seg === 3) { PR = null; breathSound(false); g.puck = { s: 'wait' }; g.soPend = { t: 1.4, end: true, lose: true }; return; } }
     if (g.flow > 0) g.flow -= dt; g.recvAge += dt; if (M.mateHead) { g.mheat = Math.max(0, g.mheat - 0.02 * dt); if (g.mheat >= 0.5) g.mateHot += dt; }
@@ -377,6 +377,7 @@
     if (dg) { PR = null; breathSound(false); return dg === 'poke' ? miss('ПОТЕРЯ', 'ВРАТАРЬ ВЫБИЛ ШАЙБУ: НЕ ЛЕЗЬ В ЕГО ЗОНУ', false, 'poke') : miss('ПОТЕРЯ', 'СЛИШКОМ БЛИЗКО К ЗАЩИТНИКУ: ОБЪЕЗЖАЙ', false, 'steal'); }
     if (p.s === 'in' && p.t < 0.45 && p.t > 0 && !g.so && !g.safe && g.lesson >= 9 && (WH() === H || g.faceoff)) { var ik = 1 - p.t / 0.45, st2 = stick(), ipx = g.mate.x + 20 + (st2[0] - g.mate.x - 20) * ik, ipy = g.mate.y + 20 + (st2[1] - g.mate.y - 20) * ik; if (hitDef(ipx, ipy)) return miss('ПЕРЕХВАТ', 'ЗАЩИТНИК ПЕРЕХВАТИЛ ПАС: ОТКРОЙСЯ ПАРТНЁРУ', false, 'icept'); }
     if (p.s === 'in' && M.mateHead && p.t < 0.45 && !p.rolled && !g.so) { p.rolled = true; if (g.mheat >= 0.5 && !g.safe && Math.random() < 0.4 * g.mheat) return miss('ПАС НЕТОЧНЫЙ', 'ПАРТНЁР КИПИТ: ЕГО ПАС НЕ ДОШЁЛ', true, 'badpass'); }
+    if (p.s === 'in' && WH() > H && !g.so && !p.go && p.t < 0.7) p.go = true;
     if (p.s === 'in' && WH() > H && !g.so && !p.cut && p.t < 0.7) { p.cut = true; if (g.zoneNext) { g.zoneNext = false; var zs = Math.random() < 0.5 ? 1 : -1; g.px = 160 + zs * 76; g.py = 300; g.vx = 0; g.vy = 0; g.ax = 0; g.ay = 0; g.cam = null; g.wipe = 0.3; g.ch = null; g.mate = { x: zs > 0 ? 30 - EX : 290 + EX, y: 150 }; g.faceoff = true; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } p.t = Math.max(p.t, 1.9); if (M.oneT && !S.oneTaught) { S.oneTaught = true; save(); g.pause = 5.5; g.pauseText = ['БРОСОК В КАСАНИЕ', 'Вратарь поймал шайбу: вбрасывание в зоне. Партнёр отдаст пас из угла. Встань так, чтобы линия паса была зелёной. Правый палец оттяни заранее и держи. Шайба у тебя: сразу отпускай.']; }
       say('ВБРАСЫВАНИЕ В ЗОНЕ', '#fee761', 1.1, M.oneT ? 'ОТКРОЙСЯ ПОД ПАС: МОЖНО В КАСАНИЕ' : 'ОТКРОЙСЯ ПОД ПАС ПАРТНЁРА'); }
       else if (Math.hypot(g.px - 160, g.py - (SY())) > 60) { g.px = 160; g.py = SY(); g.vx = 0; g.vy = 0; g.ax = 0; g.ay = -1; g.cam = null; g.wipe = 0.3; g.ch = null; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } } }
