@@ -372,7 +372,8 @@
     if (dg) { PR = null; breathSound(false); return dg === 'poke' ? miss('ПОТЕРЯ', 'ВРАТАРЬ ВЫБИЛ ШАЙБУ: НЕ ЛЕЗЬ В ЕГО ЗОНУ', false, 'poke') : miss('ПОТЕРЯ', 'СЛИШКОМ БЛИЗКО К ЗАЩИТНИКУ: ОБЪЕЗЖАЙ', false, 'steal'); }
     if (p.s === 'in' && p.t < 0.45 && p.t > 0 && !g.so && !g.safe && g.lesson >= 9 && WH() === H) { var ik = 1 - p.t / 0.45, st2 = stick(), ipx = g.mate.x + 20 + (st2[0] - g.mate.x - 20) * ik, ipy = g.mate.y + 20 + (st2[1] - g.mate.y - 20) * ik; if (hitDef(ipx, ipy)) return miss('ПЕРЕХВАТ', 'ЗАЩИТНИК ПЕРЕХВАТИЛ ПАС: ОТКРОЙСЯ ПАРТНЁРУ', false, 'icept'); }
     if (p.s === 'in' && M.mateHead && p.t < 0.45 && !p.rolled && !g.so) { p.rolled = true; if (g.mheat >= 0.5 && !g.safe && Math.random() < 0.4 * g.mheat) return miss('ПАС НЕТОЧНЫЙ', 'ПАРТНЁР КИПИТ: ЕГО ПАС НЕ ДОШЁЛ', true, 'badpass'); }
-    if (p.s === 'in' && WH() > H && !g.so && !p.cut && p.t < 0.7) { p.cut = true; if (Math.hypot(g.px - 160, g.py - (SY())) > 60) { g.px = 160; g.py = SY(); g.vx = 0; g.vy = 0; g.ax = 0; g.ay = -1; g.cam = null; g.wipe = 0.3; g.ch = null; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } } }
+    if (p.s === 'in' && WH() > H && !g.so && !p.cut && p.t < 0.7) { p.cut = true; if (g.zoneNext) { g.zoneNext = false; var zs = Math.random() < 0.5 ? 1 : -1; g.px = 160 + zs * 76; g.py = 300; g.vx = 0; g.vy = 0; g.ax = 0; g.ay = 0; g.cam = null; g.wipe = 0.3; g.ch = null; g.mate = { x: zs > 0 ? 30 : 290, y: 262 }; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } p.t = Math.max(p.t, 0.9); say('ВБРАСЫВАНИЕ В ЗОНЕ', '#fee761', 1.1, M.oneT ? 'ПАС ИДЁТ СРАЗУ: МОЖНО В КАСАНИЕ' : 'ВРАТАРЬ ЗАФИКСИРОВАЛ ШАЙБУ'); }
+      else if (Math.hypot(g.px - 160, g.py - (SY())) > 60) { g.px = 160; g.py = SY(); g.vx = 0; g.vy = 0; g.ax = 0; g.ay = -1; g.cam = null; g.wipe = 0.3; g.ch = null; if (PL) { PL.ox = PL.x; PL.oy = PL.y; } } }
     if (p.s === 'in') { p.t -= dt; if (p.t <= 0 && !danger()) { g.puck = { s: 'ready' }; g.recvAge = 0; if (g.safe) { g.safe = false; g.grace = 1.25; } g.recv = 0.35; SFX.pass(); buzz(10); g.clock = g.so ? 6 : CLOCK + (WH() > H ? 4 : 0); if (M.chase && M.chase[g.seg] && g.sit !== 'pp') { var sp1 = [[58, 150], [262, 150], [58, 350], [262, 350], [160, 135], [160, 355], [40, 250], [280, 250]].filter(function (q) { return Math.hypot(q[0] - g.px, q[1] - g.py) > 120; }), sq = sp1[Math.floor(Math.random() * sp1.length)] || [58, 150]; g.ch = { x: sq[0], y: sq[1], v: M.chase[g.seg] * (g.sit === 'pk' ? 1.12 : 1) }; } } }
     else if (p.s === 'ready') { if (g.lesson >= 9) g.clock -= dt; if (g.clock <= 0) { PR = null; breathSound(false); miss('ПОТЕРЯ', 'ПОЗДНО: ВРЕМЯ НА БРОСОК ВЫШЛО', false, 'late'); } }
     else if (p.s === 'fly') {
@@ -396,6 +397,7 @@
           nextPuck(T.goalT); if (WH() > H && !g.so && g.seg !== 3 && g.lesson >= 9) { g.cele = { n: 0 }; g.bump = [0, 0, 0, 0, 0]; G.puck.cut = true; G.puck.t = Math.max(G.puck.t, 2.3); }
           if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, sc: true }; } else if (g.seg === 3) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, end: true }; }
         } else { if (inNet) g.gheat = Math.min(1, g.gheat + G.mg.shotGain);
+          if (saved && inNet && WH() > H && !g.so && g.lesson >= 9 && M.id > 1) g.zoneNext = true;
           if (saved && inNet) miss('СЕЙВ', seen ? (g.mg.mirror ? 'ЗЕРКАЛО ЧИТАЕТ ЩЕЛЧОК: НУЖЕН ПРИЦЕЛ' : 'ХОЛОДНЫЙ ВРАТАРЬ ВИДИТ ЩЕЛЧОК ИЗДАЛЕКА') : !p.top && p.from < 230 ? 'ВБЛИЗИ ВРАТАРЬ ВЫХОДИТ: НУЖЕН ТОЧНЫЙ ВЫДОХ' : p.top ? 'БРОСИЛ ПРЯМО ВО ВРАТАРЯ: ЦЕЛЬСЯ В УГОЛ' : g.gheat < 0.33 ? 'ВРАТАРЬ ХОЛОДНЫЙ: ОН УСПЕЛ' : 'ВРАТАРЬ БЫЛ НА ЛИНИИ', false, 'save');
           else if (Math.abs(p.x - NET_L) < 9 || Math.abs(p.x - NET_R) < 9) miss('ШТАНГА!', p.wide ? 'ЛИНИЯ БЫЛА ШИРОКОЙ' : 'ЧУТЬ ТОЧНЕЕ', true, 'post');
           else miss('МИМО', p.wide ? 'ЛИНИЯ БЫЛА ШИРОКОЙ: ЗАМРИ ПЕРЕД БРОСКОМ' : 'ЛИНИЯ СМОТРЕЛА МИМО ВОРОТ', false, 'wide'); }
@@ -698,7 +700,7 @@
       { label: 'ЛОЖУСЬ ВОВРЕМЯ', dots: [['Голова', 2]], vals: ['Дисциплина', 'Ответственность', 'Трудолюбие'], apply: function () { preSet(6, { heat: 0, breathK: 0.95 }); S.form = Math.min(3, (S.form == null ? 1 : S.form) + 1); return ['Холодный старт', 'Форма +1: выдох быстрее']; } },
       { label: 'ДОИГРЫВАЮ В ПРИСТАВКУ ДО НОЧИ', dots: [['Голова', 2]], vals: ['Радость игры'], apply: function () { preSet(6, { heat: 0.35, breathK: 1.1 }); S.form = Math.max(0, (S.form == null ? 1 : S.form) - 1); return ['Тёплый старт', 'Форма −1: герой не выспался, выдох длиннее']; } },
       { label: 'ДО ПОЛУНОЧИ РАЗБИРАЮ СВОИ ОШИБКИ', dots: [['Голова', 1], ['Доверие', 1]], vals: ['Упорство', 'Честность'], apply: function () { preSet(6, { heat: 0.2, breathK: 1.1 }); S.trust = Math.min(3, S.trust + 1); return ['Доверие +1: утром тренер увидел твои вопросы', 'Но голова тёплая и выдох длиннее']; } }], done, 'МАТЧ 6 · НАКАНУНЕ'); } });
-  MATCHES.push({ id: 7, name: 'ДЕРБИ', team: 'Докеры', rival: 'Провокатор и Горячий',
+  MATCHES.push({ id: 7, name: 'ДЕРБИ', team: 'Докеры', rival: 'Провокатор и Горячий', oneT: true,
     about: 'Городское дерби: «Докеры» тоже из Ледогорска. Главный матч месяца. Три отрезка, три разных условия, и никто не подсказывает. В воротах по очереди Провокатор и Горячий.',
     g: PROVOK, segG: [PROVOK, HOT, HOT], noise: [1, 0, 1], noHints: true, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 16, rateK: 0.76, push: 0.22, goalPush: 0.05, gsp: 1.05, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'В каждом отрезке первый бросок был с выдохом', s3: function (r) { return r.firstAll; },
@@ -708,7 +710,7 @@
 
   /* ---------- матчи 8-12: черновик, сюжетный конец пути «Талант» ---------- */
   var WALL = { gain: 0.1, shotGain: 0, cool: 0.16, speed: 1.05 }, CLOCK1 = { gain: 0.2, shotGain: 0, cool: 0.1, speed: 1 }, CLOCK3 = { gain: 0.15, shotGain: 0, cool: 0.12, speed: 1.3 }, MIRROR = { gain: 0.25, shotGain: 0, cool: 0.08, speed: 1, mirror: true };
-  MATCHES.push({ id: 8, name: 'В ЗОНЕ', team: 'Маяк', rival: 'Стена', flow: true,
+  MATCHES.push({ id: 8, name: 'В ЗОНЕ', team: 'Маяк', rival: 'Стена', flow: true, oneT: true,
     about: 'Новое: поток. Три идеальных гола подряд, и на восемь секунд выдох и пас становятся быстрее. Любой промах или гол соперника его обрывает.',
     g: WALL, riv: [[14, 30], [12, 26], [10, 22, 32]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 15, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'Вошёл в поток', s3: function (r) { return r.flows >= 1; },
