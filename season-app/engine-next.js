@@ -265,7 +265,8 @@
   function miss(text, why, soft, kind) {
     var g = G, wasFace = g.faceoff; g.faceoff = false; g.streak = 0; g.missRow++; g.topRow = 0; g.flow = 0; if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') { g.losses++; if (g.seg >= 2) g.lossesEnd = (g.lossesEnd || 0) + 1; } if (kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') g.safe = true;
     if ((kind === 'steal' || kind === 'poke' || kind === 'late' || kind === 'icept') && g.lesson >= 9 && !g.so && !(kind === 'icept' && wasFace)) g.press = Math.min(0.99, g.press + tv('push') * (M.id <= 3 ? 1 : 1.3)); heatUp(kind === 'badpass' ? 0.05 : soft || kind === 'poke' || kind === 'steal' || kind === 'icept' ? 0.1 : 0.22, kind); if (kind === 'badpass') g.safe = true; log(M.id, 'miss', { kind: kind });
-    say(text, soft ? '#fee761' : '#e43b44', 1.7, why); if (soft) SFX.post(); else SFX.bad(); nextPuck(soft ? 1.6 : 1.9); if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.2, sc: false }; }
+    say(text, soft ? '#fee761' : '#e43b44', 1.7, why); if (soft) SFX.post(); else SFX.bad(); nextPuck(soft ? 1.6 : 1.9);
+    if (M.fight && !g.fightDone && !S.nofight && !SIM && !g.so && g.seg >= 1 && g.seg < 3 && g.segLen - g.t > 8 && (kind === 'save' || kind === 'block' || kind === 'steal' || kind === 'wide')) fightStart(); if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.2, sc: false }; }
   }
   // стержень: два быстрых тапа левым пальцем. При холодной голове не тратится
   var DEEDS = { calm: ['Спокойствие', 'Смирение'], disc: ['Дисциплина', 'Уважение'], grit: ['Упорство', 'Трудолюбие'], brave: ['Смелость'], resp: ['Ответственность', 'Честность'], joy: ['Радость игры', 'Любопытство', 'Верность команде'] };
@@ -313,6 +314,7 @@
     if (g.grace > 0) g.grace -= dt; if (g.recv > 0) g.recv -= dt; if (g.msgT > 0) g.msgT -= dt; if (g.flash > 0) g.flash -= dt; if (g.jump > 0) g.jump -= dt; if (g.net > 0) g.net -= dt; if (g.shake > 0) g.shake -= dt;
     g.parts.forEach(function (q) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 520 * dt; q.l -= dt; }); g.parts = g.parts.filter(function (q) { return q.l > 0; });
     if (g.pause > 0) { g.pause -= dt; if (g.pause <= 0) { g.pauseText = null; if (g.done) return finish(); if (g.nextSeg != null) { var ns = g.nextSeg; g.nextSeg = null; return between(ns); } } return; }
+    if (g.fight) return fightStep(dt);
     g.T += dt;
     var teaching = g.lesson < 2 && g.seg === 0;
     var live = WH() === H || g.puck.s !== 'in' || !!g.puck.go;
@@ -454,6 +456,46 @@
     BENCH.forEach(function (y, i) { var b = g.bump && g.bump[i] > 0 ? Math.round(Math.sin(g.bump[i] / 0.3 * Math.PI) * 6) : 0, x = Math.round(-46 + 37 * e) - EX; cx.drawImage(img('mate.png') || spr.me, x, y - 27 - b, 51, 54); R(OUT, x + 49, y - 8 - b, 10, 9); R('#ffffff', x + 50, y - 7 - b, 8, 7); });
     R('#b86f50', -EX, 466, 9, 236); R('#8a5140', 7 - EX, 466, 2, 236);
   }
+  /* ---------- провокация и шуточная драка: раз за матч, начать её сам игрок не может, только ответить ---------- */
+  var FB = { x: 70, y: 318, w: 180, h: 54 };
+  function fightStart() { var g = G; g.fightDone = true; g.fight = { ph: 'prov', t: 3.6, calm: 0 }; g.heat = Math.max(g.heat, 0.8); g.shake = 0.5; PL = PR = null; breathSound(false); SFX.bad(); buzz([40, 30, 40]); log(M.id, 'fight_prov'); }
+  function fightAnswer() { var g = G, f = g.fight; f.ph = 'brawl'; f.t = 5.4; f.beat = 0; f.side = Math.random() < 0.5 ? 'L' : 'R'; f.done = false; f.hits = 0; f.miss = 0; f.win0 = 0.6 * (1 - 0.5 * g.heat); PL = PR = null; SFX.shot(); buzz(30); }
+  function fightTap(q) { var g = G, f = g.fight;
+    if (f.ph === 'prov') { if (q[0] > FB.x && q[0] < FB.x + FB.w && q[1] > FB.y && q[1] < FB.y + FB.h) { fightAnswer(); return true; } return false; }
+    if (f.ph === 'brawl') { var side = (q[0] < W / 2) ? 'L' : 'R'; if (!f.done && side === f.side && f.beat <= f.win0) { f.hits++; f.done = true; f.pop = 0.2; SFX.post(); buzz(15); burst(160 + (Math.random() - 0.5) * 60, 200, 5, ['#fee761', '#ffffff']); } else if (!f.done) { f.miss++; f.done = true; f.ouch = 0.2; buzz(8); } return true; }
+    return true; }
+  function fightEnd(kind) { var g = G, f = g.fight; f.ph = 'out'; f.t = 2.6; f.res = kind; PL = PR = null;
+    if (kind === 'walk') { g.heat = Math.max(0, g.heat - 0.45); g.gheat = Math.min(1, g.gheat + 0.3); S.trust = Math.min(3, (S.trust || 0) + 1); SFX.full(); }
+    else { S.trust = Math.max(0, (S.trust || 0) - 1); S.room = Math.min(3, (S.room || 0) + 1); g.t = Math.min(g.segLen - 1, g.t + 6); g.press = Math.min(0.95, g.press + 0.25);
+      if (kind === 'win') { g.heat = Math.min(g.heat, 0.4); g.gheat = Math.min(1, g.gheat + 0.5); SFX.top(); } else { g.heat = 1; SFX.riv(); } }
+    save(); log(M.id, 'fight', { r: kind, hits: f.hits || 0 }); }
+  function fightStep(dt) { var g = G, f = g.fight; g.T += dt; if (g.shake > 0) g.shake -= dt; g.parts.forEach(function (q) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 520 * dt; q.l -= dt; }); g.parts = g.parts.filter(function (q) { return q.l > 0; });
+    f.t -= dt;
+    if (f.ph === 'prov') { var held = PR && Math.hypot(PR.ox - PR.x, PR.oy - PR.y) >= 12; if (held) { f.calm += dt; if (!f.snd) { f.snd = true; breathSound(true); } } else { f.calm = Math.max(0, f.calm - dt * 2); if (f.snd) { f.snd = false; breathSound(false); } }
+      if (f.calm >= 1.3) { breathSound(false); return fightEnd('walk'); } if (f.t <= 0) { breathSound(false); return fightEnd('walk'); } }
+    else if (f.ph === 'brawl') { f.beat += dt; if (f.pop > 0) f.pop -= dt; if (f.ouch > 0) f.ouch -= dt; if (f.beat >= 0.6) { if (!f.done) f.miss++; f.beat = 0; f.done = false; f.side = f.side === 'L' ? 'R' : 'L'; if (Math.random() < 0.3) f.side = f.side === 'L' ? 'R' : 'L'; } if (f.t <= 0) return fightEnd(f.hits >= 5 ? 'win' : 'lose'); }
+    else if (f.t <= 0) { var r = f.res; g.fight = null; if (r !== 'walk') { g.pause = 3.6; g.pauseText = ['УДАЛЕНИЕ', 'Оба на скамейке штрафников. Команда играла без тебя: шесть секунд матча ушли, соперник давил. Доверие тренера ниже, раздевалка это запомнит.']; } } }
+  function fightDraw() { var g = G, f = g.fight, me = img(S.role === 'D' ? 'hero_d.png' : 'hero_f.png') || spr.me, he = img('defender.png') || spr.def;
+    cx.fillStyle = 'rgba(14,12,24,.72)'; cx.fillRect(-EX, 0, W + 2 * EX, H); cx.textAlign = 'center';
+    function T1(t, y, c, sz) { cx.font = (sz || 14) + 'px "Press Start 2P", monospace'; cx.fillStyle = OUT; cx.fillText(t, W / 2 + 2, y + 2); cx.fillStyle = c; cx.fillText(t, W / 2, y); }
+    if (f.ph === 'prov') { var sh = Math.round(Math.sin(g.T * 30) * 2), push = Math.round(Math.abs(Math.sin(g.T * 5)) * 10);
+      cx.drawImage(me, 76 - push + sh, 150, 102, 108); cx.save(); cx.translate(244 - push, 150); cx.scale(-1, 1); cx.drawImage(he, 0, 0, 102, 108); cx.restore();
+      T1(tr('ПРОВОКАЦИЯ'), 96, '#e43b44'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('ТЕБЯ ТОЛКНУЛИ ПОСЛЕ СВИСТКА'), W / 2, 122);
+      var pk = 1 + 0.06 * Math.sin(g.T * 10), bw = FB.w * pk, bh = FB.h * pk; R(OUT, W / 2 - bw / 2 - 4, FB.y + FB.h / 2 - bh / 2 - 4, bw + 8, bh + 8); R(Math.floor(g.T * 5) % 2 ? '#e43b44' : '#f6757a', W / 2 - bw / 2, FB.y + FB.h / 2 - bh / 2, bw, bh); cx.font = '14px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('ОТВЕТИТЬ'), W / 2, FB.y + 20);
+      R('#262b44', 60, 290, 200, 8); R('#fee761', 60, 290, Math.max(0, 200 * f.t / 3.6), 8);
+      if (f.calm > 0) { cx.strokeStyle = '#2ce8f5'; cx.lineWidth = 6; cx.beginPath(); cx.arc(W / 2, 204, 74, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, f.calm / 1.3)); cx.stroke(); } }
+    else if (f.ph === 'brawl') { var jx = Math.round(Math.sin(g.T * 40) * 3), jy = Math.round(Math.cos(g.T * 33) * 3);
+      for (var i = 0; i < 9; i++) { var a = i * 0.7 + g.T * 3, rr = 34 + 10 * Math.sin(g.T * 9 + i); cx.fillStyle = i % 2 ? '#c0cbdc' : '#ffffff'; cx.beginPath(); cx.arc(W / 2 + jx + Math.cos(a) * 30, 204 + jy + Math.sin(a) * 22, rr, 0, 6.3); cx.fill(); }
+      [[-52, -30, '#b86f50', 30, 4], [40, -40, '#b86f50', 4, 30], [-58, 28, '#e43b44', 16, 12], [44, 30, '#3b55b8', 16, 12], [0, -58, '#feae34', 12, 10]].forEach(function (o, k) { var w = Math.sin(g.T * 14 + k * 2) * 8; R(OUT, W / 2 + o[0] + w - 1, 204 + o[1] - w - 1, o[3] + 2, o[4] + 2); R(o[2], W / 2 + o[0] + w, 204 + o[1] - w, o[3], o[4]); });
+      for (var st = 0; st < 5; st++) { var sa = g.T * 4 + st * 1.26; R('#fee761', W / 2 + Math.cos(sa) * 84 - 3, 204 + Math.sin(sa) * 60 - 3, 6, 6); R('#ffffff', W / 2 + Math.cos(sa) * 84 - 1, 204 + Math.sin(sa) * 60 - 5, 2, 10); }
+      T1(tr('ДРАКА'), 84, '#fee761'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('БЕЙ ТОЙ РУКОЙ, ЧТО ГОРИТ'), W / 2, 110);
+      var act = !f.done && f.beat <= f.win0; [['L', 12 - EX, tr('ЛЕВОЙ')], ['R', W / 2 + 4, tr('ПРАВОЙ')]].forEach(function (b) { var on = f.side === b[0], bw2 = W / 2 - 16 + EX; R(OUT, b[1] - 3, 327, bw2 + 6, 86); R(on ? (act ? '#fee761' : '#8a6a2a') : '#262b44', b[1], 330, bw2, 80); cx.font = '10px "Press Start 2P", monospace'; cx.fillStyle = on ? OUT : '#5a6988'; cx.fillText(b[2], b[1] + bw2 / 2, 364); });
+      cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#63c74d'; cx.fillText(tr('ПОПАЛ') + ' ' + f.hits, 90, 300); cx.fillStyle = '#e43b44'; cx.fillText(tr('МИМО') + ' ' + f.miss, 230, 300);
+      R('#262b44', 60, 430, 200, 8); R('#fee761', 60, 430, Math.max(0, 200 * f.t / 5.4), 8); }
+    else { var r = f.res; if (r === 'walk') { cx.drawImage(me, 109, 150, 102, 108); T1(tr('НЕ ОТВЕТИЛ'), 96, '#2ce8f5'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('ТРИБУНЫ СВИСТЯТ. ТРЕНЕР КИВАЕТ'), W / 2, 284); cx.fillStyle = '#63c74d'; cx.fillText(tr('ДОВЕРИЕ +1 · ИХ ВРАТАРЬ ЗАКИПАЕТ'), W / 2, 304); }
+      else { cx.drawImage(me, 60, 170, 76, 81); cx.save(); cx.translate(260, 170); cx.scale(-1, 1); cx.drawImage(he, 0, 0, 76, 81); cx.restore(); R('#b86f50', 40, 250, 240, 8); var hx2 = r === 'win' ? 222 : 98; R(OUT, hx2 - 9, 286 + Math.round(Math.sin(g.T * 8) * 2) - 1, 20, 14); R(r === 'win' ? '#f4f4f4' : '#fee761', hx2 - 8, 286 + Math.round(Math.sin(g.T * 8) * 2), 18, 12);
+        T1(tr(r === 'win' ? 'ТВОЯ ВЗЯЛА' : 'ТЕБЕ ДОСТАЛОСЬ'), 96, r === 'win' ? '#fee761' : '#e43b44'); cx.font = '8px "Press Start 2P", monospace'; cx.fillStyle = '#ffffff'; cx.fillText(tr('ОБА НА СКАМЕЙКЕ ШТРАФНИКОВ'), W / 2, 124); cx.fillStyle = '#feae34'; cx.fillText(tr('РАЗДЕВАЛКА +1 · ДОВЕРИЕ −1'), W / 2, 318); } }
+    cx.textAlign = 'left'; }
   function draw() {
     var g = G, p = g.puck, sh = g.shake > 0 ? 3 : 0, nk = g.net > 0 ? Math.round(Math.sin(g.net * 40) * 2) : 0, jy = g.jump > 0 ? Math.round(Math.sin(g.jump / 0.5 * Math.PI) * 10) : 0, s = stick();
     cx.setTransform(1, 0, 0, 1, EX, 0); cx.textBaseline = 'top'; R('#181425', -EX, 0, W + 2 * EX, H);
@@ -540,6 +582,7 @@
     if (g.noise > 0) { var na = 0.1 + 0.07 * Math.sin(g.T * 14); cx.fillStyle = 'rgba(228,59,68,' + na.toFixed(2) + ')'; cx.fillRect(-EX, 0, W + 2 * EX, 26); cx.fillRect(-EX, 0, 12, H); cx.fillRect(W + EX - 12, 0, 12, H); }
     if (g.nudge > 0 && g.core && g.pause <= 0) { cx.font = '8px "Press Start 2P", monospace'; cx.textAlign = 'center'; R(OUT, 12, 58, 172, 20); R(Math.floor(g.T * 4) % 2 ? '#2ce8f5' : '#ffffff', 14, 60, 168, 16); cx.fillStyle = '#181425'; cx.fillText(tr('ГОЛОВА ГОРИТ: ТАП-ТАП'), 98, 64); }
     if (g.wipe > 0) { cx.fillStyle = 'rgba(223,233,245,' + Math.min(1, g.wipe / 0.3).toFixed(2) + ')'; cx.fillRect(-EX, 0, W + 2 * EX, H); }
+    if (g.fight) fightDraw();
     if (g.flash > 0) { cx.fillStyle = 'rgba(255,255,255,' + (g.flash * 1.4).toFixed(2) + ')'; cx.fillRect(-EX, 0, W + 2 * EX, H); }
     cx.textAlign = 'center';
     if (g.msgT > 0 && g.pause <= 0) { cx.font = '14px "Press Start 2P", monospace'; cx.fillStyle = OUT; cx.fillText(g.msg, W / 2 + 2, 152); cx.fillStyle = g.msgC; cx.fillText(g.msg, W / 2, 150);
@@ -600,6 +643,7 @@
   function bind() {
     function pos(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * (W + 2 * EX) - EX, (e.clientY - r.top) / r.height * H]; }
     cv.addEventListener('pointerdown', function (e) { e.preventDefault(); if (!G) return; var q = pos(e); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      if (G.fight && (G.fight.ph !== 'prov' ? (fightTap(q), true) : fightTap(q))) return;
       if ((q[0] < W / 2) !== !!S.lefty) PL = { id: e.pointerId, ox: q[0], oy: q[1], x: q[0], y: q[1], sx: q[0], sy: q[1], t0: performance.now() };
       else PR = { id: e.pointerId, ox: q[0], oy: q[1], x: q[0], y: q[1], mv: 0, sp: 0, t0: performance.now() }; });
     cv.addEventListener('pointermove', function (e) { if (!G) return; var q = pos(e);
@@ -656,6 +700,7 @@
     screen('НАСТРОЙКИ', '<span class="tag">НАСТРОЙКИ</span>' + tg('sound', S.sound, 'ЗВУК: ВКЛЮЧЁН', 'ЗВУК: ВЫКЛЮЧЕН') + tg('music', S.music !== false, 'МУЗЫКА: ВКЛЮЧЕНА', 'МУЗЫКА: ВЫКЛЮЧЕНА') +
       tg('lang', S.lang !== 'en', 'ЯЗЫК: РУССКИЙ', 'LANGUAGE: ENGLISH (draft, matches 1-7)') +
       tg('fast1', !S.fast1, 'ВХОД: ОБЫЧНЫЙ. Сначала экраны, потом лёд', 'ВХОД ДЛЯ ТЕСТА: сразу на лёд, амплуа после первого отрезка') +
+      tg('nofight', !S.nofight, 'СТЫЧКИ: ВКЛЮЧЕНЫ. Шуточная драка, не чаще раза за матч', 'СТЫЧКИ: ВЫКЛЮЧЕНЫ') +
       tg('short', !S.short, 'ПЛОЩАДКА: ДЛИННАЯ. Камера едет за игроком', 'ПЛОЩАДКА: КОРОТКАЯ, как раньше') +
       tg('lefty', !S.lefty, 'РУКИ: ОБЫЧНО. Ведёт левая рука, бросает правая', 'РУКИ: ДЛЯ ЛЕВШИ. Ведёт правая рука, бросает левая') +
       '<button class="btn btn--ghost" type="button" data-act="savecode">ПЕРЕНЕСТИ ПРОГРЕСС</button><button class="btn btn--ghost" type="button" data-act="logs">ЖУРНАЛ ТЕСТА</button><button class="btn btn--ghost" type="button" data-act="parent">ДЛЯ РОДИТЕЛЕЙ</button><button class="btn btn--ghost" type="button" data-act="wipeask">НАЧАТЬ ЗАНОВО</button>',
@@ -716,7 +761,7 @@
       { label: 'ЛОЖУСЬ ВОВРЕМЯ', dots: [['Голова', 2]], vals: ['Дисциплина', 'Ответственность', 'Трудолюбие'], apply: function () { preSet(6, { heat: 0, breathK: 0.95 }); S.form = Math.min(3, (S.form == null ? 1 : S.form) + 1); return ['Холодный старт', 'Форма +1: выдох быстрее']; } },
       { label: 'ДОИГРЫВАЮ В ПРИСТАВКУ ДО НОЧИ', dots: [['Голова', 2]], vals: ['Радость игры'], apply: function () { preSet(6, { heat: 0.35, breathK: 1.1 }); S.form = Math.max(0, (S.form == null ? 1 : S.form) - 1); return ['Тёплый старт', 'Форма −1: герой не выспался, выдох длиннее']; } },
       { label: 'ДО ПОЛУНОЧИ РАЗБИРАЮ СВОИ ОШИБКИ', dots: [['Голова', 1], ['Доверие', 1]], vals: ['Упорство', 'Честность'], apply: function () { preSet(6, { heat: 0.2, breathK: 1.1 }); S.trust = Math.min(3, S.trust + 1); return ['Доверие +1: утром тренер увидел твои вопросы', 'Но голова тёплая и выдох длиннее']; } }], done, 'МАТЧ 6 · НАКАНУНЕ'); } });
-  MATCHES.push({ id: 7, name: 'ДЕРБИ', team: 'Докеры', rival: 'Провокатор и Горячий', oneT: true,
+  MATCHES.push({ id: 7, name: 'ДЕРБИ', team: 'Докеры', rival: 'Провокатор и Горячий', fight: true, oneT: true,
     about: 'Городское дерби: «Докеры» тоже из Ледогорска. Главный матч месяца. Три отрезка, три разных условия, и никто не подсказывает. В воротах по очереди Провокатор и Горячий.',
     g: PROVOK, segG: [PROVOK, HOT, HOT], noise: [1, 0, 1], noHints: true, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 16, rateK: 1.0, push: 0.22, goalPush: 0.05, gsp: 1.05, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'В каждом отрезке первый бросок был с выдохом', s3: function (r) { return r.firstAll; },
@@ -895,7 +940,7 @@
       a.loss += (r.log['miss:steal'] || 0) + (r.log['miss:poke'] || 0) + (r.log['miss:icept'] || 0) + (r.log['miss:late'] || 0); }
     return a;
   }
-  window.__simRun = simRun;
+  window.__simRun = simRun; window.__fight = function () { if (G) { G.fightDone = false; fightStart(); } };
   var KMAP = { ArrowLeft: 'l', ArrowRight: 'r', ArrowUp: 'u', ArrowDown: 'd', KeyA: 'l', KeyD: 'r', KeyW: 'u', KeyS: 'd' };
   window.addEventListener('keydown', function (e) { if (KMAP[e.code] && view === 'play') { KEYS[KMAP[e.code]] = true; e.preventDefault(); } });
   window.addEventListener('keyup', function (e) { if (KMAP[e.code]) KEYS[KMAP[e.code]] = false; });
