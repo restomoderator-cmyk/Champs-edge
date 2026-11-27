@@ -162,12 +162,13 @@
     var sc = SCENE.data[SC.key], last = SC.i === sc.lines.length - 1;
     if (view !== 'scene' || !document.getElementById('scn')) { view = 'scene';
       screen(sc.title, '<span class="tag tag--mute">' + sc.title + '</span><canvas id="scn" width="640" height="440" data-act="scn" style="width:100%;height:auto;border:4px solid var(--slate);cursor:pointer" role="img"></canvas><p class="note" id="scnwho"></p>',
-        '<button class="btn" type="button" data-act="scn" id="scnbtn">ДАЛЬШЕ ▶</button><button class="btn btn--ghost" type="button" data-act="scnskip">ПРОПУСТИТЬ СЦЕНУ</button>'); }
+        '<div style="display:flex;gap:8px"><button class="btn btn--ghost" type="button" data-act="scnback" id="scnback" style="flex:0 0 36%">◀ НАЗАД</button><button class="btn" type="button" data-act="scn" id="scnbtn">ДАЛЬШЕ ▶</button></div><button class="btn btn--ghost" type="button" data-act="scnskip">ПРОПУСТИТЬ СЦЕНУ</button>'); }
     var cvs = document.getElementById('scn'); SCENE.draw(cvs.getContext('2d'), SC.key, SC.i);
     cvs.setAttribute('aria-label', SCENE.cast[sc.lines[SC.i][0]].name + ': ' + SCENE.text(SC.key, SC.i));
     document.getElementById('scnwho').textContent = SCENE.cast[sc.lines[SC.i][0]].name + ' · ' + (SC.i + 1) + ' из ' + sc.lines.length;
-    document.getElementById('scnbtn').textContent = last ? 'ДАЛЬШЕ ▶▶' : 'ДАЛЬШЕ ▶';
+    document.getElementById('scnbtn').textContent = last ? 'ДАЛЬШЕ ▶▶' : 'ДАЛЬШЕ ▶'; document.getElementById('scnback').disabled = SC.i === 0;
   }
   function playScene(key, done) { SC = { key: key, i: 0, done: done }; log(+key.charAt(0), 'scene', { k: key }); scnShow(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (SC && view === 'scene') scnShow(); }); }
   function scnNext() { if (!SC) return; if (SC.i < SCENE.data[SC.key].lines.length - 1) { SC.i++; return scnShow(); } scnEnd(false); }
+  function scnBack() { if (SC && SC.i > 0) { SC.i--; scnShow(); } }
   function scnEnd(skipped) { if (!SC) return; var d = SC.done; S.sc = S.sc || {}; S.sc[SC.key] = 1; save(); if (skipped) log(+SC.key.charAt(0), 'scene_skip', { k: SC.key, at: SC.i + 1 }); SC = null; d(); }

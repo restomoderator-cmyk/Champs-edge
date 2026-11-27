@@ -52,14 +52,14 @@ import os as _os
 rep("  function runMatch(id) {", open(_os.path.dirname(_os.path.abspath(__file__)) + '/scenes-next.js', encoding='utf-8').read() + "  function runMatch(id) {")
 rep("    var m = MATCHES[id - 1]; pick = {}; log(id, 'open');", "    if (!(id === 1 && !S.role && !S.fast1) && scnWant(id + 'a')) return playScene(id + 'a', function () { runMatch(id); });\n    var m = MATCHES[id - 1]; pick = {}; log(id, 'open');")
 rep("    if (id === 1 && !S.life[1]) return life(1, home);", "    if (scnWant(id + 'b')) return playScene(id + 'b', function () { after(id); });\n    if (id === 1 && !S.life[1]) return life(1, home);")
-rep("    if (a === 'savecode') return saveCode();", "    if (a === 'scn') return scnNext();\n    if (a === 'scnskip') return scnEnd(true);\n    if (a === 'savecode') return saveCode();")
-rep("case 'fast_entry':", "case 'scene': x = 'сцена ' + r.k; break;\n      case 'scene_skip': x = 'пропустил сцену ' + r.k + ' на реплике ' + r.at; break;\n      case 'fast_entry':")
+rep("    if (a === 'savecode') return saveCode();", "    if (a === 'scn') return scnNext();\n    if (a === 'scnback') return scnBack();\n    if (a === 'scnskip') return scnEnd(true);\n    if (a === 'savecode') return saveCode();")
+rep("case 'fast_entry':", "case 'scene': x = 'сцена ' + r.k; break;\n      case 'buzzer': x = 'ГОЛ С СИРЕНОЙ: на последних секундах отрезка'; break;\n      case 'scene_skip': x = 'пропустил сцену ' + r.k + ' на реплике ' + r.at; break;\n      case 'fast_entry':")
 # Пачка 27 ноября: имя героя, сцена после выбора игрока, тексты без повторов
 rep("if (S.askRole && G) { S.askRole = false; save(); return FLOW(); } return brief(MATCHES[0]); }", "if (S.askRole && G) { S.askRole = false; save(); return FLOW(); } return runMatch(1); }")
 rep("S.role = pick.role; S.num = pick.num; save(); log(1, 'player'", "S.role = pick.role; S.num = pick.num; S.name = pick.name ? String(pick.name).slice(0, 12) : (S.name || ''); save(); log(1, 'player'")
 rep("placeholder=\"Свой номер: от 1 до 99\" aria-label=\"Свой номер\" value=\"' + esc(own) + '\">',", "placeholder=\"Свой номер: от 1 до 99\" aria-label=\"Свой номер\" value=\"' + esc(own) + '\">' +\n      '<h2 class=\"h2\">ИМЯ</h2><input class=\"inp\" data-inp=\"name\" maxlength=\"12\" placeholder=\"Как тебя зовут в игре\" aria-label=\"Имя в игре\" value=\"' + esc(pick.name || S.name || '') + '\"><p class=\"note\">Имя остаётся только на этом устройстве. Можно не вводить.</p>',")
 rep("about: 'Юниорская лига. Ты в команде «Северный Ветер» из Ледогорска. Тренер выпускает тебя в первой смене. Вратарь соперника новичок: двигается медленно.'", "about: 'Вратарь соперника новичок: двигается медленно. Самое время попробовать всё.'")
-rep("горячая голова сразу остывает. Один раз за матч.", "горячая голова сразу остывает. Один раз за отрезок.", 2)
+rep("горячая голова сразу остывает. Один раз за матч.", "горячая голова сразу остывает. Потом его надо зарядить заново.", 2)
 # На время тестов на главном экране только первые LIMIT матчей
 rep("if (m.id === 22) h +=", "if (m.id > LIMIT) return;\n      if (m.id === 22) h +=")
 rep("if (!S.done[MATCHES[i].id] && !MATCHES[i].pool) return MATCHES[i].id;", "if (!S.done[MATCHES[i].id] && !MATCHES[i].pool && MATCHES[i].id <= LIMIT) return MATCHES[i].id;")
