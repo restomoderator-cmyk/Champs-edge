@@ -245,11 +245,11 @@
   function shoot(slap) {
     var g = G, p = g.puck; if (p.s !== 'ready' || g.pause > 0) return;
     var s = stick(), A = aim(); slap = !!slap && !A.armed; var one = !!M.oneT && !slap && A.armed && g.recvAge < 0.6; var far = S.role === 'D' && s[1] > 262, fs = slap || one ? 1.5 : far ? T.dFar : 1; g.lastSlap = slap;
-    var b = slap ? 0 : Math.min(1, g.breath), withBreath = b >= 0.5, top = !slap && isTop(), sp = top ? 0 : slap ? T.slapSp + g.heat * 0.5 : spreadA(), ang = A.a + (Math.random() * 2 - 1) * sp;
+    var b = slap ? 0 : Math.min(1, g.breath), withBreath = b >= 0.5, wheels = M.id <= 2 && s[1] < 400, fullNoAim = !slap && isTop() && !A.armed && !wheels, top = !slap && isTop() && (A.armed || wheels), sp = top ? 0 : slap ? T.slapSp + g.heat * 0.5 : spreadA(), ang = A.a + (Math.random() * 2 - 1) * sp;
     var sure = top && !S.firstTop && !SIM; if (sure) { S.firstTop = true; save(); ang = Math.atan2((g.gx + GW / 2 < 160 ? 192 : 128) - s[0], s[1] - GOAL_Y); }
-    if (top && !A.armed && !sure && s[1] < 400) ang = Math.atan2((g.gx + GW / 2 < 160 ? 192 : 128) - s[0], s[1] - GOAL_Y);
+    if (top && !A.armed && !sure && wheels) ang = Math.atan2((g.gx + GW / 2 < 160 ? 192 : 128) - s[0], s[1] - GOAL_Y);
     var dist = (s[1] - GOAL_Y) / Math.cos(A.a), spx = Math.tan(sp) * dist;
-    g.puck = { s: 'fly', x: s[0], y: s[1], vx: Math.sin(ang) * FLY * (top ? T.topV : fs), vy: -Math.cos(ang) * FLY * (top ? T.topV : fs), sure: sure, one: one, pierce: far && !slap ? T.pierce : 0, skip: 0, slap: slap, from: s[1], top: top, breath: withBreath, wide: spx > 22,
+    g.puck = { s: 'fly', x: s[0], y: s[1], vx: Math.sin(ang) * FLY * (top ? T.topV : fs), vy: -Math.cos(ang) * FLY * (top ? T.topV : fs), sure: sure, noAimFull: fullNoAim, one: one, pierce: far && !slap ? T.pierce : 0, skip: 0, slap: slap, from: s[1], top: top, breath: withBreath, wide: spx > 22,
       first: !!(g.rivGoals.length && g.firstAfter === null), press: !!(g.ch && Math.hypot(g.ch.x - g.px, g.ch.y - g.py) < 80) || g.clock < 3 };
     if (withBreath) { if (++g.breathRow >= 3) { g.breathRow = 0; deed('disc'); } } else g.breathRow = 0;
     g.shots++; if (withBreath) g.breathShots++; if (spx <= 14) g.narrow++; g.trail = [];
@@ -289,12 +289,13 @@
   var CITY = { 'Северный Ветер': 'Ледогорск', 'Докеры': 'Ледогорск', 'Кометы': 'Синеозёрск', 'Вьюга': 'Буранск', 'Кедры': 'Кедроград', 'Айсберг': 'Порт-Северный', 'Прибой': 'Южная Гавань', 'Ледокол': 'Усть-Ледовск', 'Маяк': 'Маячный', 'Полюс': 'Полярск', 'Утёс': 'Утёсовск', 'Туман': 'Туманск', 'Северная Звезда': 'Звездоград', 'Сталевары': 'Сталегорск', 'Горняки': 'Седогорск', 'Буровики': 'Нефтеозёрск' };
   function cityOf(t) { return CITY[t] ? ', ' + CITY[t] : ''; }
   var TIPS = { flow: ['ПОТОК', 'Три идеальных гола подряд, и на восемь секунд выдох и пас быстрее. Промах его обрывает.'],
+    aim: ['ТЕПЕРЬ ЦЕЛЬСЯ САМ', 'Раньше бросок сам шёл в свободный угол. Больше нет. Тяни палец броска от того угла, куда хочешь попасть. Белая метка на воротах: угол открыт. Красная: там вратарь.'],
     oneT: ['БРОСОК В КАСАНИЕ', 'Оттяни палец броска ещё до паса и отпусти сразу, как принял шайбу. Только с холодной головой.'],
     mate: ['ГОЛОВА ПАРТНЁРА', 'Полоска над партнёром. Когда она красная, его пас может не дойти. Твой гол её остужает.'],
     mirror: ['ВРАТАРЬ-ЗЕРКАЛО', 'Он идёт за твоим прицелом, пока ты держишь палец. После выдоха плавно сдвинь прицел и сразу бросай. Резкий рывок пальцем собьёт выдох.'],
     noise: ['ШУМ ТРИБУН', 'Линия дрожит. Короткий тап пальцем, которым ведёшь игрока: твоё слово уберёт шум.'] };
   function tipOnce(k) { if (!G || M.noHints || SIM) return; S.tips = S.tips || {}; if (S.tips[k]) return; S.tips[k] = 1; save(); G.tipQ.push({ a: TIPS[k][0], b: TIPS[k][1], t: 6 }); }
-  function matchTips() { if (M.flow) tipOnce('flow'); if (M.oneT) tipOnce('oneT'); if (M.mateHead) tipOnce('mate'); if (G.mg && G.mg.mirror) tipOnce('mirror'); }
+  function matchTips() { if (M.id >= 3) tipOnce('aim'); if (M.flow) tipOnce('flow'); if (M.oneT) tipOnce('oneT'); if (M.mateHead) tipOnce('mate'); if (G.mg && G.mg.mirror) tipOnce('mirror'); }
   function useWord() {
     var g = G; if (!g || g.pause > 0 || !(g.noise > 0)) return;
     g.noise = 0; g.shield = 4.5; g.trig++; if (g.tip && g.tip.a === TIPS.noise[0]) g.tip.t = 0; log(M.id, 'word'); say(String(S.reset && S.reset.w ? S.reset.w : 'Здесь').toUpperCase() + '!', '#2ce8f5', 1.2, 'ШУМ УШЁЛ'); SFX.full(); buzz(15); return true;
@@ -407,7 +408,7 @@
           if (g.so) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, sc: true }; } else if (g.seg === 3) { g.puck = { s: 'wait' }; g.soPend = { t: 1.3, end: true }; }
         } else { if (inNet) g.gheat = Math.min(1, g.gheat + G.mg.shotGain);
           if (saved && inNet && WH() > H && !g.so && g.lesson >= 9 && M.id > 1) g.zoneNext = true;
-          if (saved && inNet) miss('СЕЙВ', seen ? (g.mg.mirror ? 'ЗЕРКАЛО ЧИТАЕТ ЩЕЛЧОК: НУЖЕН ПРИЦЕЛ' : 'ХОЛОДНЫЙ ВРАТАРЬ ВИДИТ ЩЕЛЧОК ИЗДАЛЕКА') : !p.top && p.from < 230 ? 'ВБЛИЗИ ВРАТАРЬ ВЫХОДИТ: НУЖЕН ТОЧНЫЙ ВЫДОХ' : p.top ? 'БРОСИЛ ПРЯМО ВО ВРАТАРЯ: ЦЕЛЬСЯ В УГОЛ' : g.gheat < 0.33 ? 'ВРАТАРЬ ХОЛОДНЫЙ: ОН УСПЕЛ' : 'ВРАТАРЬ БЫЛ НА ЛИНИИ', false, 'save');
+          if (saved && inNet) miss('СЕЙВ', p.noAimFull ? 'ВЫДОХ БЫЛ, ПРИЦЕЛА НЕТ: ТЯНИ ПАЛЕЦ В УГОЛ' : seen ? (g.mg.mirror ? 'ЗЕРКАЛО ЧИТАЕТ ЩЕЛЧОК: НУЖЕН ПРИЦЕЛ' : 'ХОЛОДНЫЙ ВРАТАРЬ ВИДИТ ЩЕЛЧОК ИЗДАЛЕКА') : !p.top && p.from < 230 ? 'ВБЛИЗИ ВРАТАРЬ ВЫХОДИТ: НУЖЕН ТОЧНЫЙ ВЫДОХ' : p.top ? 'БРОСИЛ ПРЯМО ВО ВРАТАРЯ: ЦЕЛЬСЯ В УГОЛ' : g.gheat < 0.33 ? 'ВРАТАРЬ ХОЛОДНЫЙ: ОН УСПЕЛ' : 'ВРАТАРЬ БЫЛ НА ЛИНИИ', false, 'save');
           else if (Math.abs(p.x - NET_L) < 9 || Math.abs(p.x - NET_R) < 9) miss('ШТАНГА!', p.wide ? 'ЛИНИЯ БЫЛА ШИРОКОЙ' : 'ЧУТЬ ТОЧНЕЕ', true, 'post');
           else miss('МИМО', p.wide ? 'ЛИНИЯ БЫЛА ШИРОКОЙ: ЗАМРИ ПЕРЕД БРОСКОМ' : 'ЛИНИЯ СМОТРЕЛА МИМО ВОРОТ', false, 'wide'); }
       }
@@ -480,7 +481,7 @@
       cx.fillStyle = 'rgba(' + col + ',' + ((top ? 0.55 : 0.28) * al) + ')'; cx.beginPath(); cx.moveTo(s[0] - 2, s[1]); cx.lineTo(x1, GOAL_Y + 2); cx.lineTo(x2, GOAL_Y + 2); cx.lineTo(s[0] + 2, s[1]); cx.closePath(); cx.fill();
       cx.strokeStyle = 'rgba(' + col + ',' + (0.95 * al) + ')'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(s[0], s[1]); cx.lineTo(x1, GOAL_Y + 2); cx.moveTo(s[0], s[1]); cx.lineTo(x2, GOAL_Y + 2); cx.stroke();
       if (PR && !M.blind) { var lb = laneBlocked(s, A.a, top); if (lb) { cx.strokeStyle = OUT; cx.lineWidth = 7; cx.beginPath(); cx.moveTo(s[0], s[1]); cx.lineTo(lb[0], lb[1]); cx.stroke(); cx.strokeStyle = '#e43b44'; cx.lineWidth = 4; cx.beginPath(); cx.moveTo(s[0], s[1]); cx.lineTo(lb[0], lb[1]); cx.stroke(); R(OUT, lb[0] - 12, lb[1] - 5, 24, 10); R(OUT, lb[0] - 5, lb[1] - 12, 10, 24); R('#e43b44', lb[0] - 11, lb[1] - 4, 22, 8); R('#e43b44', lb[0] - 4, lb[1] - 11, 8, 22); } }
-      if (PR) { var blocked = (!g.empty && Math.abs(xc - (g.gx + GW / 2)) < saveHalf(top, s[1], false)) || xc < NET_L + 2 || xc > NET_R - 2; R(blocked ? '#e43b44' : '#ffffff', x1 - 1, GOAL_Y - 1, Math.max(3, x2 - x1 + 2), 3);
+      if (PR) { var blocked = (!g.empty && Math.abs(xc - (g.gx + GW / 2)) < saveHalf(top, s[1], false)) || xc < NET_L + 2 || xc > NET_R - 2; var mw = Math.max(12, x2 - x1 + 2), mx0 = (x1 + x2) / 2 - mw / 2; R(OUT, mx0 - 2, GOAL_Y - 5, mw + 4, 10); R(blocked ? '#e43b44' : '#ffffff', mx0, GOAL_Y - 3, mw, 6);
         if (g.breath > 0.03) { cx.strokeStyle = top ? '#2ce8f5' : '#ffffff'; cx.lineWidth = top ? 5 : 3; cx.beginPath(); cx.arc(s[0], s[1], 28 - 21 * Math.min(1, g.breath), 0, 6.3); cx.stroke(); } }
       // поправка из разбора: где вратарь окажется к моменту броска
       if (g.ghost && g.playSeg === 2) { var fx = g.gx + g.gdir * (g.gspeed || 0) * (dy / FLY); if (fx < NET_L) fx = NET_L + (NET_L - fx); if (fx > NET_R - GW) fx = (NET_R - GW) - (fx - (NET_R - GW)); cx.strokeStyle = 'rgba(44,232,245,.9)'; cx.lineWidth = 2; cx.strokeRect(Math.round(fx), 66, GW, 30); cx.fillStyle = '#0b7c8a'; cx.fillText('БУДЕТ ТУТ', Math.round(fx) + GW / 2, 122); }
@@ -700,7 +701,7 @@
   function preSet(id, o) { S.pre = S.pre || {}; S.pre[id] = o; }
   MATCHES.push({ id: 5, name: 'ЧУЖИЕ ТРИБУНЫ', team: 'Прибой', rival: 'Провокатор',
     about: 'Выезд. Трибуны гудят, и линия броска начинает дрожать. Новый приём: твоё слово. Короткий тап левым пальцем, и шум уходит на несколько секунд.',
-    g: PROVOK, riv: [[20], [12, 28], [10, 24]], defs: [2, 2, 2], chase: [30, 36, 40], noise: [1, 1, 1], tune: { topR: 16, rateK: 1.12, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.4, chaseM: null },
+    g: PROVOK, riv: [[20], [12, 28], [10, 24]], defs: [2, 2, 2], chase: [30, 36, 40], noise: [1, 1, 1], tune: { topR: 16, rateK: 1.0, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.4, chaseM: null },
     star3: 'Трижды убрал шум своим словом', s3: function (r) { return r.trig >= 3; },
     life: { h: 'ТРИГГЕР ФОКУСА', t: 'Десять раз за тренировку скажи себе своё слово в тот момент, когда внимание ушло. Слово то же, что в игре.' },
     pre: function (done) { decide(5, 'phone', 'Вечер перед выездом. В телефоне пишут про завтрашний матч и про тебя.', [
@@ -708,7 +709,7 @@
       { label: 'ТЕЛЕФОН В ДРУГУЮ КОМНАТУ', dots: [['Голова', 2]], vals: ['Дисциплина', 'Спокойствие', 'Ответственность'], apply: function () { preSet(5, { heat: 0 }); return ['Завтра выйдешь с холодной головой']; } }], done, 'МАТЧ 5 · НАКАНУНЕ'); } });
   MATCHES.push({ id: 6, name: 'НОЧЬ ПЕРЕД ИГРОЙ', team: 'Ледокол', rival: 'Часы',
     about: 'Как герой провёл вечер, так он и начнёт матч. Вратарь «Часы» ездит ровно и замирает у каждой штанги. Поймай его ритм: бросай в дальний угол, пока он стоит.',
-    g: { gain: 0.1, shotGain: 0, cool: 0.16, speed: 1.25, clock: true }, riv: [[14, 30], [12, 26], [10, 22, 32]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 15, rateK: 0.68, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
+    g: { gain: 0.1, shotGain: 0, cool: 0.16, speed: 1.25, clock: true }, riv: [[14, 30], [12, 26], [10, 22, 32]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 15, rateK: 0.8, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'Ни одного броска с горячей головой', s3: function (r) { return r.shots > 0 && r.hotShots === 0; },
     life: { h: 'ОДНА МИКРОПРИВЫЧКА', t: 'Выбери одну маленькую привычку на неделю и привяжи её к тому, что уже делаешь каждый день. Одну, а не три.' },
     pre: function (done) { decide(6, 'evening', 'Вечер перед игрой. Завтра сильный соперник.', [
@@ -717,7 +718,7 @@
       { label: 'ДО ПОЛУНОЧИ РАЗБИРАЮ СВОИ ОШИБКИ', dots: [['Голова', 1], ['Доверие', 1]], vals: ['Упорство', 'Честность'], apply: function () { preSet(6, { heat: 0.2, breathK: 1.1 }); S.trust = Math.min(3, S.trust + 1); return ['Доверие +1: утром тренер увидел твои вопросы', 'Но голова тёплая и выдох длиннее']; } }], done, 'МАТЧ 6 · НАКАНУНЕ'); } });
   MATCHES.push({ id: 7, name: 'ДЕРБИ', team: 'Докеры', rival: 'Провокатор и Горячий', oneT: true,
     about: 'Городское дерби: «Докеры» тоже из Ледогорска. Главный матч месяца. Три отрезка, три разных условия, и никто не подсказывает. В воротах по очереди Провокатор и Горячий.',
-    g: PROVOK, segG: [PROVOK, HOT, HOT], noise: [1, 0, 1], noHints: true, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 16, rateK: 0.87, push: 0.22, goalPush: 0.05, gsp: 1.05, segT: 35, paceK: 1.3, chaseM: null },
+    g: PROVOK, segG: [PROVOK, HOT, HOT], noise: [1, 0, 1], noHints: true, riv: [[12, 28], [10, 24], [8, 20, 30]], defs: [2, 2, 2], chase: [37, 41, 45], tune: { topR: 16, rateK: 1.0, push: 0.22, goalPush: 0.05, gsp: 1.05, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'В каждом отрезке первый бросок был с выдохом', s3: function (r) { return r.firstAll; },
     dec: { 1: { key: 'partner', q: 'Партнёр ошибся, и вам забили. Он садится рядом и молчит.', opts: function () { return [
       { label: '«ЗАБУДЬ. СЛЕДУЮЩАЯ СМЕНА НАША»', dots: [['Раздевалка', 2]], vals: ['Верность команде', 'Уважение', 'Спокойствие', 'Смирение'], apply: function () { S.room = Math.min(3, S.room + 1); G.fast = true; return ['Раздевалка +1', 'Партнёр ожил: пас идёт быстрее']; } },
@@ -727,7 +728,7 @@
   var WALL = { gain: 0.1, shotGain: 0, cool: 0.16, speed: 1.05 }, CLOCK1 = { gain: 0.2, shotGain: 0, cool: 0.1, speed: 1 }, CLOCK3 = { gain: 0.15, shotGain: 0, cool: 0.12, speed: 1.3 }, MIRROR = { gain: 0.25, shotGain: 0, cool: 0.08, speed: 1, mirror: true };
   MATCHES.push({ id: 8, name: 'В ЗОНЕ', team: 'Маяк', rival: 'Зеркало', flow: true, oneT: true,
     about: 'Новое: поток. Три идеальных гола подряд, и на восемь секунд выдох и пас становятся быстрее. Любой промах или гол соперника его обрывает. Вратарь «Зеркало» идёт за твоим прицелом.',
-    g: MIRROR, riv: [[14, 30], [12, 26], [10, 22, 32]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 15, rateK: 0.62, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
+    g: MIRROR, riv: [[14, 30], [12, 26], [10, 22, 32]], defs: [2, 2, 2], chase: [36, 40, 44], tune: { topR: 15, rateK: 0.72, push: 0.2, goalPush: 0.05, gsp: 1, segT: 35, paceK: 1.3, chaseM: null },
     star3: 'Вошёл в поток', s3: function (r) { return r.flows >= 1; },
     life: { h: 'ТВОЙ ЛУЧШИЙ МАТЧ', t: 'Вспомни свой лучший матч и что ты делал за час до него. Три вещи. Это начало твоего ритуала.' },
     pre: function (done) { function opt(label, vals) { return { label: label, dots: [['Голова', 1]], vals: vals, apply: function () { preSet(8, { heat: 0, breathK: 0.95 }); S.ritual = label; return ['Это теперь твой ритуал перед игрой', 'Холодный старт']; } }; }
