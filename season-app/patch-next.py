@@ -60,5 +60,8 @@ rep("S.role = pick.role; S.num = pick.num; save(); log(1, 'player'", "S.role = p
 rep("placeholder=\"Свой номер: от 1 до 99\" aria-label=\"Свой номер\" value=\"' + esc(own) + '\">',", "placeholder=\"Свой номер: от 1 до 99\" aria-label=\"Свой номер\" value=\"' + esc(own) + '\">' +\n      '<h2 class=\"h2\">ИМЯ</h2><input class=\"inp\" data-inp=\"name\" maxlength=\"12\" placeholder=\"Как тебя зовут в игре\" aria-label=\"Имя в игре\" value=\"' + esc(pick.name || S.name || '') + '\"><p class=\"note\">Имя остаётся только на этом устройстве. Можно не вводить.</p>',")
 rep("about: 'Юниорская лига. Ты в команде «Северный Ветер» из Ледогорска. Тренер выпускает тебя в первой смене. Вратарь соперника новичок: двигается медленно.'", "about: 'Вратарь соперника новичок: двигается медленно. Самое время попробовать всё.'")
 rep("горячая голова сразу остывает. Один раз за матч.", "горячая голова сразу остывает. Один раз за отрезок.", 2)
+# На время тестов на главном экране только первые LIMIT матчей
+rep("if (m.id === 22) h +=", "if (m.id > LIMIT) return;\n      if (m.id === 22) h +=")
+rep("if (!S.done[MATCHES[i].id] && !MATCHES[i].pool) return MATCHES[i].id;", "if (!S.done[MATCHES[i].id] && !MATCHES[i].pool && MATCHES[i].id <= LIMIT) return MATCHES[i].id;")
 assert chr(8212) not in s
 open(p,'w',encoding='utf-8').write(s)

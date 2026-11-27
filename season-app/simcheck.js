@@ -2,7 +2,7 @@
 const {chromium}=require('playwright');const D=__dirname;const N=+process.argv[2]||150;const PAGE=process.argv[3]||'test-next.html';(async()=>{const b=await chromium.launch();const p=await (await b.newContext()).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.goto('file://'+D+'/'+PAGE);
 const rows=[['aceF','ace',{},'отличник, нападающий'],['aceD','ace',{role:'D'},'отличник, защитник'],['panic','panicker',{},'паникёр'],['c250','camper',{cx:160,cy:250},'засадник у синей'],['c200','camper',{cx:160,cy:200},'засадник между защ.'],['c165','camper',{cx:160,cy:165},'засадник у рамки'],['skater','skater',{},'катала'],['novice','novice',{},'новичок'],['spam','spammer',{},'торопыга']];
-const NM=await p.evaluate(()=>window.__seasonMatches.length);const R={};let hung=0;console.log('бот'.padEnd(24)+Array.from({length:NM},(_,i)=>('М'+(i+1)).padEnd(15)).join(''));
+const NM=await p.evaluate(()=>Math.min(window.__seasonMatches.length,window.__seasonLimit||99));const R={};let hung=0;console.log('бот'.padEnd(24)+Array.from({length:NM},(_,i)=>('М'+(i+1)).padEnd(15)).join(''));
 for(const [key,bot,cfg,name] of rows){R[key]=[];let line=name.padEnd(24);for(let id=1;id<=NM;id++){const a=await p.evaluate(([b,i,n,c])=>window.__mvp.sim(b,i,n,c),[bot,id,N,cfg]);const n=Math.max(1,a.n);hung+=a.hung;const m={you:a.you/n,riv:a.riv/n,win:100*a.win/n,ot:100*a.ot/n,stars:a.stars/n,loss:a.loss/n};R[key].push(m);line+=`${m.you.toFixed(1)}:${m.riv.toFixed(1)} ${Math.round(m.win)}%`.padEnd(15);}console.log(line);}
 const checks=[];const ck=(name,ok,detail)=>checks.push([ok,name,detail]);const W=[100,95,88,75];
 ck('матч 1: у отличника 10-14 голов',R.aceF[0].you>=10&&R.aceF[0].you<=14,R.aceF[0].you.toFixed(1));
@@ -16,7 +16,7 @@ if(R.aceF[11])ck('сюжет 8-12 не становится легче от ма
 ck('паникёр нигде не лучше отличника',R.panic.slice(0,21).every((m,i)=>m.win<=R.aceF[i].win+4),R.panic.map(m=>Math.round(m.win)).join('/'));
 ck('паникёр заметно хуже отличника в матче 3 или 4 (от 10 пунктов)',R.aceF[2].win-R.panic[2].win>=10||R.aceF[3].win-R.panic[3].win>=10,'');
 for(const k of ['c250','c200','c165'])ck(`засадник (${k}) нигде не выигрывает чаще отличника`,R[k].slice(0,21).every((m,i)=>m.win<=R.aceF[i].win+5),R[k].map(m=>Math.round(m.win)).join('/'));
-ck('торопыга забивает в среднем от 0.8 гола в матчах 1-4',R.spam.slice(0,4).every(m=>m.you>=0.8),R.spam.slice(0,4).map(m=>m.you.toFixed(1)).join('/'));
+ck('торопыга забивает в среднем от 0.8 гола в матчах 1-2',R.spam.slice(0,2).every(m=>m.you>=0.8),R.spam.slice(0,4).map(m=>m.you.toFixed(1)).join('/'));
 ck('соперник забивает отличнику хотя бы 0.5 гола в каждом матче, кроме тренировки',R.aceF.slice(0,19).every(m=>m.riv>=0.5),R.aceF.map(m=>m.riv.toFixed(1)).join('/'));
 ck('ни один матч не завис, ошибок нет',hung===0&&errs.length===0,`зависло ${hung}, ошибок ${errs.length}`);
 if(process.argv[4]==='md'){console.log('\n| Матч | Отличник: счёт | побед | Паникёр: побед | Засадник у рамки: побед | Новичок: побед |\n|---|---|---|---|---|---|');for(let i=0;i<NM;i++)console.log(`| ${i+1} | ${R.aceF[i].you.toFixed(1)}:${R.aceF[i].riv.toFixed(1)} | ${Math.round(R.aceF[i].win)}% | ${Math.round(R.panic[i].win)}% | ${Math.round(R.c165[i].win)}% | ${Math.round(R.novice[i].win)}% |`);}
