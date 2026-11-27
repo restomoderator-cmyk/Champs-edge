@@ -7,7 +7,7 @@
   // откуда начинается атака: у центра; пока идёт обучение первого матча, сразу в зоне, чтобы ворота были видны
   function SY() { return WH() > H && G && G.lesson >= 9 ? (M && M.id === 1 ? 440 : WH() - 120) : 320; }
   // настройки баланса: одна таблица, по одному числу на матч там, где матчи различаются
-  var T = { topK: 1, paceL: 1.25, rateL: 1.3, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
+  var T = { topK: 1, paceL: 1.25, rateL: 1.2, topV: 1.5, topR: [19, 17, 17, 15], rateK: [0.45, 1.1, 1.5, 1.25], push: [0.04, 0.2, 0.22, 0.2], goalPush: [0, 0.05, 0.05, 0.05], goalT: 2.0, chase: 1.7, gsp: [0.6, 1, 1, 1],
     slapSp: 0.06, seenAdd: 10, dSpread: 1.0, fSpread: 0.85, dTop: 0.7, pierce: 0, dFar: 1.3, dSlap: 1, segT: [25, 35, 35, 35], paceK: [1.3, 1.25, 1.3, 1], chaseM: [null, [0, 28, 32], [26, 32, 36], null] };
   window.__seasonTune = T;
   function tv(k) { var a = T[k]; if (M.tune && k in M.tune) return M.tune[k]; return M.id - 1 < a.length ? a[M.id - 1] : a[a.length - 1]; }
