@@ -9,7 +9,7 @@
       sht: { name: 'ШТАНГА', shirt: '#2ce8f5', hair: '#feae34' },
       bat: { name: 'БАТЯ', shirt: '#2ce8f5', hair: '#3e2731', stubble: true },
       ded: { name: 'ДЕД', shirt: '#3a4466', hair: '#c0cbdc', beard: true },
-      anya: { name: 'АНЯ', shirt: '#63c74d', hair: '#9e2835', long: true }
+      anya: { name: 'АНЯ', shirt: '#feae34', hair: '#9e2835', long: true }
     };
     function head(c, x, y, s, o) {
       function P(col, px, py, w, h) { R(c, col, x + px * s, y + py * s, w * s, h * s); }
@@ -65,30 +65,26 @@
       [70, 230].forEach(function (lx) { var lg = c.createRadialGradient(lx, 20, 4, lx, 110, 150); lg.addColorStop(0, warm ? 'rgba(254,231,97,0.34)' : 'rgba(192,230,255,0.3)'); lg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = lg; c.fillRect(0, 0, 320, 220); R(c, '#ffffff', lx - 10, 6, 20, 3); R(c, '#3a4466', lx - 12, 3, 24, 3); });
       R(c, '#181425', 150, 198, 12, 7); R(c, '#c0cbdc', 151, 203, 10, 2);
     }
-    // Вечер, старая машина сестры: видны двое в окнах
-    function car(c, st) {
+    // Вечер, дорога до арены пешком
+    function street(c) {
       var g = c.createLinearGradient(0, 0, 0, 220); g.addColorStop(0, '#181425'); g.addColorStop(0.7, '#3a2f55'); g.addColorStop(1, '#262b44'); c.fillStyle = g; c.fillRect(0, 0, 320, 220);
       for (var i = 0; i < 26; i++) R(c, '#ffffff', (i * 53) % 320, (i * 29) % 60, 1, 1);
-      for (var b = 0; b < 7; b++) { var bx = b * 50 - 10, bh = 40 + (b * 37) % 40; R(c, '#262b44', bx, 132 - bh, 42, bh); for (var w = 0; w < 6; w++) if ((b + w) % 3) R(c, '#feae34', bx + 6 + (w % 3) * 12, 132 - bh + 8 + Math.floor(w / 3) * 14, 5, 6); }
-      [40, 280].forEach(function (lx) { R(c, '#5a6988', lx, 60, 3, 110); R(c, '#fee761', lx - 6, 56, 15, 5); var lg = c.createRadialGradient(lx, 62, 2, lx, 110, 80); lg.addColorStop(0, 'rgba(254,231,97,0.35)'); lg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = lg; c.fillRect(0, 40, 320, 180); });
-      R(c, '#3a4466', 0, 172, 320, 48); R(c, '#262b44', 0, 172, 320, 3); for (var d = 0; d < 320; d += 40) R(c, '#fee761', d + 6, 196, 20, 2);
-      A(c, '#000000', 0.35, 46, 176, 232, 6);
-      R(c, '#e43b44', 50, 130, 224, 42); R(c, sh('#e43b44', -0.35), 50, 160, 224, 12); R(c, sh('#e43b44', 0.2), 50, 130, 224, 2);
-      R(c, '#e43b44', 92, 92, 140, 40); R(c, sh('#e43b44', 0.2), 92, 92, 140, 2); R(c, '#181425', 98, 98, 60, 32); R(c, '#181425', 166, 98, 60, 32); R(c, sh('#e43b44', -0.35), 158, 92, 8, 80);
-      R(c, '#fee761', 266, 140, 8, 8); R(c, '#9e2835', 50, 140, 5, 8); R(c, '#c0cbdc', 150, 148, 10, 2); R(c, '#c0cbdc', 216, 148, 10, 2); R(c, sh('#e43b44', -0.5), 70, 150, 30, 3);
-      [[78, 164], [226, 164]].forEach(function (p) { R(c, '#181425', p[0], p[1], 26, 16); R(c, '#181425', p[0] + 4, p[1] - 4, 18, 24); R(c, '#8b9bb4', p[0] + 8, p[1] + 3, 10, 10); });
-      c.save(); c.beginPath(); c.rect(98, 98, 60, 32); c.rect(166, 98, 60, 32); c.clip();
-      R(c, st.you.shirt, 108, 124, 40, 10); head(c, 116, 100, 2, st.you); R(c, st.anya.shirt, 176, 124, 40, 10); head(c, 184, 100, 2, st.anya);
-      c.restore();
-      A(c, '#ffffff', 0.12, 100, 98, 10, 32); A(c, '#ffffff', 0.12, 168, 98, 10, 32);
-      if (st.you.emote) emote(c, st.you.emote, 140, 84); if (st.anya.emote) emote(c, st.anya.emote, 208, 84);
+      for (var b = 0; b < 7; b++) { var bx = b * 50 - 10, bh = 40 + (b * 37) % 40; R(c, '#262b44', bx, 150 - bh, 42, bh); for (var w = 0; w < 6; w++) if ((b + w) % 3) R(c, '#feae34', bx + 6 + (w % 3) * 12, 150 - bh + 8 + Math.floor(w / 3) * 14, 5, 6); }
+      R(c, '#5a6988', 0, 150, 320, 30); R(c, '#8b9bb4', 0, 150, 320, 2); for (var t = 0; t < 320; t += 26) R(c, '#3a4466', t, 152, 1, 28);
+      R(c, '#3a4466', 0, 180, 320, 40); R(c, '#262b44', 0, 180, 320, 3); for (var d = 0; d < 320; d += 40) R(c, '#fee761', d + 6, 200, 20, 2);
+      [40, 280].forEach(function (lx) { R(c, '#5a6988', lx, 60, 3, 100); R(c, '#fee761', lx - 6, 56, 15, 5); var lg = c.createRadialGradient(lx, 62, 2, lx, 120, 90); lg.addColorStop(0, 'rgba(254,231,97,0.35)'); lg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = lg; c.fillRect(0, 40, 320, 180); });
     }
-    function bubble(c, text, tx, kind) {
-      c.setTransform(1, 0, 0, 1, 0, 0); c.font = '600 26px Handjet, "Arial Narrow", sans-serif'; c.textBaseline = 'top';
-      var ls = [], line = ''; text.split(' ').forEach(function (w) { var t = line ? line + ' ' + w : w; if (c.measureText(t).width > 560 && line) { ls.push(line); line = w; } else line = t; }); if (line) ls.push(line);
-      c.setTransform(2, 0, 0, 2, 0, 0); var bh = ls.length * 14 + 8, by = 6, col = kind === 'hard' ? '#fee761' : kind === 'low' ? '#c0cbdc' : '#ffffff';
-      R(c, '#0e0c18', 12, by + 2, 300, bh); R(c, col, 10, by, 300, bh); R(c, col, tx, by + bh, 5, 3); R(c, col, tx + 1, by + bh + 3, 3, 3);
-      c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = INK; ls.forEach(function (l, n) { c.fillText(l, 36, (by + 4) * 2 + n * 28); }); c.setTransform(2, 0, 0, 2, 0, 0);
+    // Пузырь: крупный текст, табличка с именем говорящего, хвост тянется к его голове
+    function bubble(c, text, name, hx, hy, kind) {
+      c.setTransform(1, 0, 0, 1, 0, 0); c.font = '600 36px Handjet, "Arial Narrow", sans-serif'; c.textBaseline = 'top';
+      var ls = [], line = ''; text.split(' ').forEach(function (w) { var t = line ? line + ' ' + w : w; if (c.measureText(t).width > 572 && line) { ls.push(line); line = w; } else line = t; }); if (line) ls.push(line);
+      c.setTransform(2, 0, 0, 2, 0, 0); var bh = ls.length * 18 + 8, by = 15, col = kind === 'hard' ? '#fee761' : kind === 'low' ? '#c0cbdc' : '#ffffff', tx = Math.max(24, Math.min(296, hx));
+      c.fillStyle = '#0e0c18'; c.beginPath(); c.moveTo(tx - 8, by + bh); c.lineTo(tx + 10, by + bh); c.lineTo(hx + 2, hy + 2); c.closePath(); c.fill();
+      R(c, '#0e0c18', 10, by + 2, 304, bh); R(c, col, 8, by, 304, bh);
+      c.fillStyle = col; c.beginPath(); c.moveTo(tx - 6, by + bh - 1); c.lineTo(tx + 6, by + bh - 1); c.lineTo(hx, hy); c.closePath(); c.fill();
+      c.setTransform(1, 0, 0, 1, 0, 0); c.font = '16px "Press Start 2P", monospace'; var nw = c.measureText(name).width + 20; c.setTransform(2, 0, 0, 2, 0, 0);
+      R(c, '#0e0c18', 8, 2, nw / 2 + 2, 14); R(c, '#2ce8f5', 8, 2, nw / 2, 13);
+      c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = INK; c.fillText(name, 26, 10); c.font = '600 36px Handjet, "Arial Narrow", sans-serif'; ls.forEach(function (l, n) { c.fillText(l, 30, (by + 3) * 2 + n * 36); }); c.setTransform(2, 0, 0, 2, 0, 0);
     }
     // Реплика: [кто, текст, 'кто=эмоция:значок:поза кто=...', вид пузыря]. Состояние копится от реплики к реплике.
     var DATA = {
@@ -108,7 +104,7 @@
         ['ded', 'Забивать хотят все. Я спрашиваю, какой ты, когда не забивается.', 'ded=stern you=wow:dots'],
         ['sht', 'Отвечай честно. Он всё равно узнает.', 'sht=smirk you=norm', 'low']
       ] },
-      '3a': { title: 'ПО ДОРОГЕ НА ИГРУ', bg: 'car', cast: { you: [0, 0, ''], anya: [0, 0, ''] }, lines: [
+      '3a': { title: 'ПО ДОРОГЕ НА ИГРУ', bg: 'street', cast: { you: [96, 118, 'stand'], anya: [176, 118, 'stand'] }, lines: [
         ['anya', 'Ты молчишь уже четыре светофора.', 'anya=smirk you=sad'],
         ['you', 'Там в составе все на голову выше меня.', 'you=sad:sweat'],
         ['anya', 'В прямом смысле?', 'anya=norm'],
@@ -150,9 +146,12 @@
     function draw(c, key, i) {
       var sc = DATA[key], st = stateAt(sc, i), who = sc.lines[i][0], tx;
       c.imageSmoothingEnabled = false; c.setTransform(2, 0, 0, 2, 0, 0);
-      if (sc.bg === 'car') { car(c, st); tx = who === 'you' ? 126 : 194; }
-      else { room(c, sc.warm); Object.keys(st).sort(function (a, b) { return st[a].y - st[b].y; }).forEach(function (k) { if (st[k].on && st[k].x != null) big(c, st[k].x, st[k].y, st[k]); }); tx = st[who].x + 14; }
-      bubble(c, text(key, i), Math.max(16, Math.min(296, tx)), sc.lines[i][3]);
+      if (sc.bg === 'street') street(c); else room(c, sc.warm);
+      var ord = Object.keys(st).sort(function (a, b) { return st[a].y - st[b].y; }).filter(function (k) { return st[k].on && st[k].x != null; });
+      ord.forEach(function (k) { big(c, st[k].x, st[k].y, st[k]); });
+      // говорящий в свету, остальные чуть в тени
+      c.fillStyle = 'rgba(14,12,24,.38)'; c.fillRect(0, 0, 320, 220); big(c, st[who].x, st[who].y, st[who]);
+      bubble(c, text(key, i), CAST[who].name, st[who].x + 13, st[who].y + (st[who].pose === 'slump' ? 3 : -5), sc.lines[i][3]);
     }
     function text(key, i) { return DATA[key].lines[i][1].replace('{name}', S.name ? S.name + '.' : 'Меня зовут...'); }
     return { data: DATA, draw: draw, cast: CAST, text: text };
